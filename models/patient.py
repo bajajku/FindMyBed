@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from utils.constants import ARRIVAL_TIMES
 
 @dataclass
@@ -13,6 +13,7 @@ class Patient:
     specialNeeds: List[str]
     arrival_time: int
     assignedHospital: str = ""
+    homeHospital: Optional[str] = None
 
     def get_arrival_time_index(self) -> int:
         return ARRIVAL_TIMES.index(self.arrival_time)

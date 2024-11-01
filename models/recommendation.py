@@ -46,7 +46,7 @@ class HospitalRecommendation:
             trigger='process_input',
             source='input',
             dest='service_determination',
-            after='determine_services'
+            after=['home_hospital_check', 'determine_services']
         )
         self.machine.add_transition(
             trigger='determine_service',
@@ -85,6 +85,14 @@ class HospitalRecommendation:
         
         for hospital in self.hospitals:
             hospital.discharge_patients(time_index, arrived_discharged)
+
+    def home_hospital_check(self) -> None:
+        """Adds Patient's Home Hospital in hospital's list if Applicable."""
+        if not self.patient or not self.patient.homeHospital:
+            return
+        if self.patient.homeHospital not in self.available_hospitals:
+            self.available_hospitals.append(self.patient.homeHospital)
+        logging.info(f"Patient's preferred hospital added to Available Hospital List: {self.patient.homeHospital.name}")
 
     def determine_services(self) -> None:
         """Filter hospitals based on service availability and occupancy rate."""
@@ -142,8 +150,10 @@ class HospitalRecommendation:
         if not self.patient:
             return
 
-        if self.available_hospitals:
-            self.selected_hospital = self.available_hospitals[0]
+        top_hospitals = self.get_top_hospitals()
+        
+        if top_hospitals:
+            self.selected_hospital = top_hospitals[0]
             success = self.selected_hospital.admit_patient(self.patient)
             
             if success:
@@ -155,6 +165,24 @@ class HospitalRecommendation:
         else:
             self.queue.append(self.patient)
             logging.warning("No suitable hospital found. Patient added to queue.")
+
+    def get_top_hospitals(self) -> List[Hospital]:
+        """
+        Return the top 3 hospitals from available hospitals, prioritizing the home hospital if it's present.
+        
+        Returns:
+            List of top 3 Hospital objects.
+        """
+        # Prioritize home hospital if it exists in the available hospitals list
+        if self.patient and self.patient.homeHospital in self.available_hospitals:
+            top_hospitals = [self.patient.homeHospital] + [
+                hospital for hospital in self.available_hospitals if hospital != self.patient.homeHospital
+            ]
+        else:
+            top_hospitals = self.available_hospitals
+        
+        # Return the top 3 hospitals
+        return top_hospitals[:3]
 
     def run(self, patient: Patient) -> None:
         """

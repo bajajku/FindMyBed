@@ -7,7 +7,7 @@ from utils.data_loader import DataLoader
 from utils.geographic import generate_patient_coords
 
 def simulate_hospital_system(num_days, excel):
-    global total_patients # Declare total_patients as global within the function
+    total_patients = 0 # Declare total_patients as global within the function
 
     data_loader = DataLoader()
     data_loader.load_data(excel_file=excel)

@@ -1,6 +1,7 @@
 import random
 from typing import List, Tuple
 from models.patient import Patient
+import numpy as np
 from utils.constants import *
 
 class Hospital:
@@ -74,4 +75,53 @@ class Hospital:
             self.patients.append(patient)
             patient.assignedHospital = self.name
             return True
+        return False
+    
+    def discharge_patients(self, time_index, arrivedDischarged):
+        """ Discharge patients based on the discharge rate at the patient's arrival time """
+ 
+        # Determine the number of patients to discharge for each bed type
+        num_discharged_intensive = np.random.poisson(self.get_discharge_rate(time_index, "Intensive"))
+        num_discharged_intermediate = np.random.poisson(self.get_discharge_rate(time_index, "Intermediate"))
+        print(f"{num_discharged_intensive} {num_discharged_intermediate}")
+ 
+        # Discharge intensive care patients
+        discharged_count = 0
+        discharged_count_intensive = 0
+        discharged_count_intermediate = 0
+        for _ in range(num_discharged_intensive):
+            if not self.patients:  # Check if the patient list is empty
+                break
+            for i, patient in enumerate(self.patients):
+                if patient.bedType == "Intensive":
+                    self.patients.pop(i)
+                    self.available_beds[0] += 1
+                    arrivedDischarged[self.name][1] += 1
+                    discharged_count += 1
+                    discharged_count_intensive += 1
+                    break  # Exit inner loop to find the next matching patient
+ 
+        # Discharge intermediate care patients
+        for _ in range(num_discharged_intermediate):
+            if not self.patients:  # Check if the patient list is empty
+                break
+            for i, patient in enumerate(self.patients):
+                if patient.bedType == "Intermediate":
+                    self.patients.pop(i)
+                    self.available_beds[1] += 1
+                    arrivedDischarged[self.name][1] += 1
+                    discharged_count += 1
+                    discharged_count_intermediate += 1
+                    break  # Exit inner loop to find the next matching patie
+ 
+        # Print results for discharged patients
+        print(f"{self.name}: Discharged intensive: {discharged_count_intensive} intermediate: {discharged_count_intermediate}  total: {discharged_count} patients at time {ARRIVAL_TIMES[time_index]}")
+ 
+        return discharged_count  # Total discharged for both types
+ 
+    def can_treat_patient(self, patient):
+        if patient.patientType == 'Maternal':
+            return any(special_need in self.maternal_services for special_need in patient.specialNeeds)
+        elif patient.patientType == 'Neonatal':
+            return any(special_need in self.neonatal_services for special_need in patient.specialNeeds)
         return False

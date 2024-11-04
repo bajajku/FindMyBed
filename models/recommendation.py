@@ -86,13 +86,27 @@ class HospitalRecommendation:
         for hospital in self.hospitals:
             hospital.discharge_patients(time_index, arrived_discharged)
 
+    def patient_type_check(self) -> None:
+        """
+        Checks for patient type Maternal or Neonatal in order to recognize what lists to use:
+        Based on nicuBedType (if NICU is required):
+            -> For Intensive NICU: Use ocpyRateNicuIntensive and ocpyRateOverallLst.
+            -> For Immediate NICU: Use ocpyRateNicuImmediate and ocpyRateOverallLst.
+            -> For Maternal patients:
+            -> If Neonatal services are required (e.g., the baby may need NICU care post-birth):
+            -> Use ocpyRateObstetrics with either ocpyRateNicuIntensive or ocpyRateNicuImmediate as required, along with ocpyRateOverallLst.
+            -> If only Obstetrics is needed: Use ocpyRateObstetrics alone.
+
+        """
+
+
     def home_hospital_check(self) -> None:
         """Adds Patient's Home Hospital in hospital's list if Applicable."""
         if not self.patient or not self.patient.homeHospital:
             return
         if self.patient.homeHospital not in self.available_hospitals:
             self.available_hospitals.append(self.patient.homeHospital)
-        logging.info(f"Patient's preferred hospital added to Available Hospital List: {self.patient.homeHospital.name}")
+        logging.info(f"Patient's preferred hospital added to Available Hospital List: {self.patient.homeHospital}")
 
     def determine_services(self) -> None:
         """Filter hospitals based on service availability and occupancy rate."""

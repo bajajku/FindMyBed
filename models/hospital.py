@@ -25,6 +25,7 @@ class Hospital:
         self.assigned_patients = 0
         self.total_capacity_intensive = total_capacity_intensive
         self.total_capacity_intermediate = total_capacity_intermediate
+        self.overall_occupancy_rate = 0
         self.prepopulate_patients()
 
     def prepopulate_patients(self) -> None:
@@ -50,11 +51,35 @@ class Hospital:
                         arrival_time=random.choice(ARRIVAL_TIMES)
                     )
                 )
+    
 
+    def get_occupancy_rate_overall(self) -> float:
+        """
+            Calculates overall occupancy rate of the hospital, to check it is less than 90%
+        """
+        self.overall_occupancy_rate = (self.available_beds / self.total_capacity) * 100
+        return self.overall_occupancy_rate
+    
     def get_occupancy_rate(self, bedType: str) -> float:
         if bedType == "Intensive":
             return (self.total_capacity_intensive - self.available_beds[0])/self.total_capacity_intensive
         return (self.total_capacity_intermediate - self.available_beds[1])/self.total_capacity_intermediate
+
+    def get_occupancy_rate_per_patientType_per_bedType(self, patient: Patient) -> float:
+        if patient.patientType == "Neonatal":
+            if patient.bedType == "Intensive":
+                return # NICU_Intensive_Occupancy_Rate
+            elif patient.bedType == "Intermmediate":
+                return # NICU_Intermmediate_Occupancy_Rate
+            
+        elif patient.patientType == "Maternal":
+            if set(patient.specialNeeds).intersection(self.neonatal_services):
+                if patient.bedType == "Intensive":
+                    return # Obsterics_Occupancy_rate + NICU_Intensive_Occupancy_Rate
+                elif patient.bedType == "Intermmediate":
+                    return # Obsterics_Occupancy_rate + NICU_Intermmediate_Occupancy_Rate
+            else:
+                return #  Obsterics only
 
     def get_capacity(self, bedType: str) -> int:
         return self.available_beds[0] if bedType == "Intensive" else self.available_beds[1]

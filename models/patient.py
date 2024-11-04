@@ -6,7 +6,7 @@ from utils.constants import ARRIVAL_TIMES
 class Patient:
     patientType: str
     gpsPos: Tuple[float, float]
-    bedType: str
+    bedType: str = ""
     del24HrPlus: bool
     transportNeedCnt: int
     specialNeedType: str

@@ -14,13 +14,13 @@ class Hospital:
                  total_capacity_intermediate: int):
         self.name = name
         self.geolocation = geolocation
-        self.maternal_services = maternal_services
-        self.neonatal_services = neonatal_services
+        self.maternal_services = set(maternal_services)  # Convert to set for O(1) lookups
+        self.neonatal_services = set(neonatal_services) # Convert to set for O(1) lookups
         self.available_beds = available_beds
         self.discharge_rates = discharge_rates
         self.discharge_rates_intensive = discharge_rates_intensive
         self.discharge_rates_intermediate = discharge_rates_intermediate
-        self.patients = []
+        self.patients = {"Intensive": [], "Intermediate": [], "Obstetrics": []}
         self.total_capacity = total_capacity
         self.assigned_patients = 0
         self.total_capacity_intensive = total_capacity_intensive
@@ -29,29 +29,24 @@ class Hospital:
         self.prepopulate_patients()
 
     def prepopulate_patients(self) -> None:
-        occupied_beds_intensive = round(self.total_capacity_intensive - self.available_beds[0])
-        occupied_beds_intermediate = round(self.total_capacity_intermediate - self.available_beds[1])
-        
-        occupied_beds_intensive = max(0, occupied_beds_intensive)
-        occupied_beds_intermediate = max(0, occupied_beds_intermediate)
+        occupied_beds_intensive = max(0, round(self.total_capacity_intensive - self.available_beds[0]))
+        occupied_beds_intermediate = max(0, round(self.total_capacity_intermediate - self.available_beds[1]))
 
-        # Create dummy patients for both types of beds
+        # Create dummy patients for each bed type
         for bed_type, count in [("Intensive", occupied_beds_intensive), 
                               ("Intermediate", occupied_beds_intermediate)]:
             for _ in range(count):
-                self.patients.append(
-                    Patient(
-                        patientType=random.choice(PATIENT_TYPE),
-                        gpsPos=self.geolocation,
-                        bedType=bed_type,
-                        del24HrPlus=False,
-                        transportNeedCnt=0,
-                        specialNeedType="None",
-                        specialNeeds=["None"],
-                        arrival_time=random.choice(ARRIVAL_TIMES)
-                    )
+                dummy_patient = Patient(
+                    patientType=random.choice(PATIENT_TYPE),
+                    gpsPos=self.geolocation,
+                    bedType=bed_type,
+                    del24HrPlus=False,
+                    transportNeedCnt=0,
+                    specialNeedType="None",
+                    specialNeeds=["None"],
+                    arrival_time=random.choice(ARRIVAL_TIMES)
                 )
-    
+                self.patients[bed_type].append(dummy_patient)
 
     def get_occupancy_rate_overall(self) -> float:
         """
@@ -73,7 +68,8 @@ class Hospital:
                 return # NICU_Intermmediate_Occupancy_Rate
             
         elif patient.patientType == "Maternal":
-            if set(patient.specialNeeds).intersection(self.neonatal_services):
+            has_neonatal_needs = bool(set(patient.specialNeeds) & self.neonatal_services)
+            if has_neonatal_needs:
                 if patient.bedType == "Intensive":
                     return # Obsterics_Occupancy_rate + NICU_Intensive_Occupancy_Rate
                 elif patient.bedType == "Intermmediate":
@@ -90,63 +86,47 @@ class Hospital:
         return self.discharge_rates_intermediate[time_index]
 
     def admit_patient(self, patient: Patient) -> bool:
-        if patient.bedType == "Intensive" and self.available_beds[0] > 0:
-            self.available_beds[0] -= 1
-            self.patients.append(patient)
-            patient.assignedHospital = self.name
-            return True
-        elif patient.bedType == "Intermediate" and self.available_beds[1] > 0:
-            self.available_beds[1] -= 1
-            self.patients.append(patient)
+        bed_index = 0 if patient.bedType == "Intensive" else 1
+        if self.available_beds[bed_index] > 0:
+            self.available_beds[bed_index] -= 1
+            self.patients[patient.bedType].append(patient)
             patient.assignedHospital = self.name
             return True
         return False
     
     def discharge_patients(self, time_index, arrivedDischarged):
         """ Discharge patients based on the discharge rate at the patient's arrival time """
- 
-        # Determine the number of patients to discharge for each bed type
+        
         num_discharged_intensive = np.random.poisson(self.get_discharge_rate(time_index, "Intensive"))
         num_discharged_intermediate = np.random.poisson(self.get_discharge_rate(time_index, "Intermediate"))
         print(f"{num_discharged_intensive} {num_discharged_intermediate}")
- 
-        # Discharge intensive care patients
+
         discharged_count = 0
-        discharged_count_intensive = 0
-        discharged_count_intermediate = 0
-        for _ in range(num_discharged_intensive):
-            if not self.patients:  # Check if the patient list is empty
-                break
-            for i, patient in enumerate(self.patients):
-                if patient.bedType == "Intensive":
-                    self.patients.pop(i)
-                    self.available_beds[0] += 1
-                    arrivedDischarged[self.name][1] += 1
-                    discharged_count += 1
-                    discharged_count_intensive += 1
-                    break  # Exit inner loop to find the next matching patient
- 
-        # Discharge intermediate care patients
-        for _ in range(num_discharged_intermediate):
-            if not self.patients:  # Check if the patient list is empty
-                break
-            for i, patient in enumerate(self.patients):
-                if patient.bedType == "Intermediate":
-                    self.patients.pop(i)
-                    self.available_beds[1] += 1
-                    arrivedDischarged[self.name][1] += 1
-                    discharged_count += 1
-                    discharged_count_intermediate += 1
-                    break  # Exit inner loop to find the next matching patie
- 
-        # Print results for discharged patients
-        print(f"{self.name}: Discharged intensive: {discharged_count_intensive} intermediate: {discharged_count_intermediate}  total: {discharged_count} patients at time {ARRIVAL_TIMES[time_index]}")
- 
-        return discharged_count  # Total discharged for both types
- 
+        discharged_intensive = 0
+        discharged_intermediate = 0
+
+        # Process intensive care discharges
+        for _ in range(min(num_discharged_intensive, len(self.patients["Intensive"]))):
+            self.patients["Intensive"].pop()
+            self.available_beds[0] += 1
+            discharged_intensive += 1
+            discharged_count += 1
+            arrivedDischarged[self.name][1] += 1
+
+        # Process intermediate care discharges
+        for _ in range(min(num_discharged_intermediate, len(self.patients["Intermediate"]))):
+            self.patients["Intermediate"].pop()
+            self.available_beds[1] += 1
+            discharged_intermediate += 1
+            discharged_count += 1
+            arrivedDischarged[self.name][1] += 1
+
+        print(f"{self.name}: Discharged intensive: {discharged_intensive} intermediate: {discharged_intermediate} total: {discharged_count} patients at time {ARRIVAL_TIMES[time_index]}")
+        return discharged_count
+
     def can_treat_patient(self, patient):
         if patient.patientType == 'Maternal':
-            return any(special_need in self.maternal_services for special_need in patient.specialNeeds)
+            return bool(self.maternal_services & set(patient.specialNeeds))
         elif patient.patientType == 'Neonatal':
-            return any(special_need in self.neonatal_services for special_need in patient.specialNeeds)
+            return bool(self.neonatal_services & set(patient.specialNeeds))
         return False

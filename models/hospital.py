@@ -1,5 +1,5 @@
 import random
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from models.patient import Patient
 import numpy as np
 from utils.constants import *
@@ -11,7 +11,9 @@ class Hospital:
                  discharge_rates_intensive: List[float],
                  discharge_rates_intermediate: List[float],
                  total_capacity: int, total_capacity_intensive: int,
-                 total_capacity_intermediate: int):
+                 total_capacity_intermediate: int,
+                 obstetrics_capacity: int = None,
+                 obstetrics_available_beds: int = None):
         self.name = name
         self.geolocation = geolocation
         self.maternal_services = set(maternal_services)  # Convert to set for O(1) lookups
@@ -27,6 +29,11 @@ class Hospital:
         self.total_capacity_intermediate = total_capacity_intermediate
         self.overall_occupancy_rate = 0
         self.prepopulate_patients()
+
+        # Initialize obstetrics-specific attributes if provided
+        if obstetrics_capacity is not None and obstetrics_available_beds is not None:
+            self.obstetrics_capacity = obstetrics_capacity
+            self.obstetrics_available_beds = obstetrics_available_beds
 
     def prepopulate_patients(self) -> None:
         occupied_beds_intensive = max(0, round(self.total_capacity_intensive - self.available_beds[0]))
@@ -50,32 +57,62 @@ class Hospital:
 
     def get_occupancy_rate_overall(self) -> float:
         """
-            Calculates overall occupancy rate of the hospital, to check it is less than 90%
+        Calculates overall occupancy rate of the hospital
         """
-        self.overall_occupancy_rate = (self.available_beds / self.total_capacity) * 100
-        return self.overall_occupancy_rate
+        total_occupied = (
+            (self.total_capacity_intensive - self.available_beds[0]) +
+            (self.total_capacity_intermediate - self.available_beds[1])
+        )
+        total_capacity = self.total_capacity_intensive + self.total_capacity_intermediate
+        return (total_occupied / total_capacity) * 100
     
     def get_occupancy_rate(self, bedType: str) -> float:
         if bedType == "Intensive":
             return (self.total_capacity_intensive - self.available_beds[0])/self.total_capacity_intensive
         return (self.total_capacity_intermediate - self.available_beds[1])/self.total_capacity_intermediate
 
-    def get_occupancy_rate_per_patientType_per_bedType(self, patient: Patient) -> float:
+    def get_occupancy_rate_per_patientType_per_bedType(self, patient: Patient) -> Optional[float]:
+        """
+        Calculate specialized occupancy rates based on patient type and bed requirements.
+        Returns appropriate occupancy rate or None if requirements can't be met.
+        """
         if patient.patientType == "Neonatal":
+            # For NICU cases
             if patient.bedType == "Intensive":
-                return # NICU_Intensive_Occupancy_Rate
-            elif patient.bedType == "Intermmediate":
-                return # NICU_Intermmediate_Occupancy_Rate
+                return self.get_occupancy_rate("Intensive")
+            elif patient.bedType == "Intermediate":
+                return self.get_occupancy_rate("Intermediate")
             
         elif patient.patientType == "Maternal":
             has_neonatal_needs = bool(set(patient.specialNeeds) & self.neonatal_services)
+            
+            # Get obstetrics rate (with fallback)
+            obstetrics_rate = (self.get_obstetrics_occupancy_rate() 
+                              if hasattr(self, 'obstetrics_capacity') 
+                              else self.get_occupancy_rate(patient.bedType))
+            
             if has_neonatal_needs:
+                # Need to consider both obstetrics and NICU rates
                 if patient.bedType == "Intensive":
-                    return # Obsterics_Occupancy_rate + NICU_Intensive_Occupancy_Rate
-                elif patient.bedType == "Intermmediate":
-                    return # Obsterics_Occupancy_rate + NICU_Intermmediate_Occupancy_Rate
+                    nicu_rate = self.get_occupancy_rate("Intensive")
+                    return max(obstetrics_rate, nicu_rate)
+                elif patient.bedType == "Intermediate":
+                    nicu_rate = self.get_occupancy_rate("Intermediate")
+                    return max(obstetrics_rate, nicu_rate)
             else:
-                return #  Obsterics only
+                # Only need obstetrics rate
+                return obstetrics_rate
+            
+        return None
+
+    def get_obstetrics_occupancy_rate(self) -> float:
+        """
+        Calculate obstetrics-specific occupancy rate.
+        This method should be implemented when obstetrics data becomes available.
+        """
+        if hasattr(self, 'obstetrics_capacity') and hasattr(self, 'obstetrics_available_beds'):
+            return (self.obstetrics_capacity - self.obstetrics_available_beds) / self.obstetrics_capacity
+        return None
 
     def get_capacity(self, bedType: str) -> int:
         return self.available_beds[0] if bedType == "Intensive" else self.available_beds[1]

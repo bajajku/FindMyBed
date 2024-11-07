@@ -159,44 +159,73 @@ class HospitalRecommendation:
         logging.info(f"Sorted hospitals by distance: "
                     f"{[hospital.name for hospital in self.available_hospitals]}")
 
+    def get_top_hospitals(self) -> List[Hospital]:
+        """
+        Get top 3 hospitals based on specified criteria and sorting logic.
+        Returns:
+            List[Hospital]: Up to 3 most suitable hospitals, sorted by priority
+        """
+        if not self.patient:
+            return []
+
+        preferred_hospitals = []
+        
+        # 1. Initial Home Hospital Check
+        if self.patient.homeHospital:
+            home_hospital = self.patient.homeHospital
+            if (home_hospital.can_treat_patient(self.patient) and 
+                home_hospital.get_occupancy_rate_overall() < 90):
+                preferred_hospitals.append(home_hospital)
+
+        # 2 & 3. Evaluate Each Hospital based on services and occupancy
+        for hospital in self.hospitals:
+            if hospital in preferred_hospitals:
+                continue
+                
+            # Check if hospital can provide required services
+            if not hospital.can_treat_patient(self.patient):
+                continue
+
+            # Get applicable occupancy rates based on patient type and needs
+            occupancy_rate = hospital.get_occupancy_rate_per_patientType_per_bedType(self.patient)
+            if occupancy_rate is None or occupancy_rate >= 0.9:  # 90% threshold
+                continue
+
+            # If we reach here, hospital meets all criteria
+            preferred_hospitals.append(hospital)
+
+        # 4. Sort hospitals by distance
+        preferred_hospitals.sort(
+            key=lambda h: calculate_distance(h.geolocation, self.patient.gpsPos)
+        )
+
+        # 5. Return top 3 choices
+        return preferred_hospitals[:3]
+
     def recommend_hospital(self) -> None:
-        """Recommend the most suitable hospital or queue the patient."""
+        """
+        Recommend and assign the most suitable hospital or queue the patient.
+        """
         if not self.patient:
             return
 
-        top_hospitals = self.get_top_hospitals()
+        recommended_hospitals = self.get_top_hospitals()
         
-        if top_hospitals:
-            self.selected_hospital = top_hospitals[0]
-            success = self.selected_hospital.admit_patient(self.patient)
+        if not recommended_hospitals:
+            self.queue.append(self.patient)
+            logging.warning("No suitable hospitals found. Patient added to queue.")
+            return
             
-            if success:
-                self.selected_hospital.assigned_patients += 1
-                logging.info(f"Patient assigned to {self.selected_hospital.name}")
-            else:
-                self.queue.append(self.patient)
-                logging.warning("Admission failed. Patient added to queue.")
+        # For simulation compatibility, try to assign to first recommended hospital
+        self.selected_hospital = recommended_hospitals[0]
+        success = self.selected_hospital.admit_patient(self.patient)
+        
+        if success:
+            self.selected_hospital.assigned_patients += 1
+            logging.info(f"Patient assigned to {self.selected_hospital.name}")
         else:
             self.queue.append(self.patient)
-            logging.warning("No suitable hospital found. Patient added to queue.")
-
-    def get_top_hospitals(self) -> List[Hospital]:
-        """
-        Return the top 3 hospitals from available hospitals, prioritizing the home hospital if it's present.
-        
-        Returns:
-            List of top 3 Hospital objects.
-        """
-        # Prioritize home hospital if it exists in the available hospitals list
-        if self.patient and self.patient.homeHospital in self.available_hospitals:
-            top_hospitals = [self.patient.homeHospital] + [
-                hospital for hospital in self.available_hospitals if hospital != self.patient.homeHospital
-            ]
-        else:
-            top_hospitals = self.available_hospitals
-        
-        # Return the top 3 hospitals
-        return top_hospitals[:3]
+            logging.warning("Admission failed. Patient added to queue.")
 
     def run(self, patient: Patient) -> None:
         """

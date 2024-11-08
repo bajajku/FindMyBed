@@ -1,5 +1,5 @@
 import random
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Any
 from models.patient import Patient
 import numpy as np
 from utils.constants import *
@@ -28,32 +28,40 @@ class Hospital:
         self.total_capacity_intensive = total_capacity_intensive
         self.total_capacity_intermediate = total_capacity_intermediate
         self.overall_occupancy_rate = 0
-        self.prepopulate_patients()
 
         # Initialize obstetrics-specific attributes if provided
         if obstetrics_capacity is not None and obstetrics_available_beds is not None:
             self.obstetrics_capacity = obstetrics_capacity
             self.obstetrics_available_beds = obstetrics_available_beds
 
-    def prepopulate_patients(self) -> None:
-        occupied_beds_intensive = max(0, round(self.total_capacity_intensive - self.available_beds[0]))
-        occupied_beds_intermediate = max(0, round(self.total_capacity_intermediate - self.available_beds[1]))
+    def prepopulate_patients(self) -> dict[str, list[Any]]:
+        occupied_beds_intensive = round(self.total_capacity_intensive - self.available_beds[0])
+        occupied_beds_intermediate = round(self.total_capacity_intermediate - self.available_beds[1])
 
-        # Create dummy patients for each bed type
-        for bed_type, count in [("Intensive", occupied_beds_intensive), 
-                              ("Intermediate", occupied_beds_intermediate)]:
+        occupied_beds_intensive = max(0, occupied_beds_intensive)
+        occupied_beds_intermediate = max(0, occupied_beds_intermediate)
+
+        # Create dummy patients for both types of beds
+        for bed_type, count in [("Intensive", occupied_beds_intensive),
+                                ("Intermediate", occupied_beds_intermediate)]:
             for _ in range(count):
-                dummy_patient = Patient(
-                    patientType=random.choice(PATIENT_TYPE),
-                    gpsPos=self.geolocation,
-                    bedType=bed_type,
-                    del24HrPlus=False,
-                    transportNeedCnt=0,
-                    specialNeedType="None",
-                    specialNeeds=["None"],
-                    arrival_time=random.choice(ARRIVAL_TIMES)
-                )
-                self.patients[bed_type].append(dummy_patient)
+                patient = Patient(
+                        patientType=random.choice(PATIENT_TYPE),
+                        gpsPos=self.geolocation,
+                        bedType=bed_type,
+                        del24HrPlus=False,
+                        transportNeedCnt=0,
+                        specialNeedType="None",
+                        specialNeeds=["None"],
+                        arrival_time=random.choice(ARRIVAL_TIMES),
+                        aniGpsPos=[600, 50],
+                        arrived_at_hospital=True,  # Track if the patient has reached the hospital
+                        queue_position=0,  # Initialize queue position
+                        discharged=False,
+                        assignedHospital=self.name
+                    )
+                self.patients[patient.bedType].append(patient)
+        return self.patients
 
     def get_occupancy_rate_overall(self) -> float:
         """
@@ -70,6 +78,9 @@ class Hospital:
         if bedType == "Intensive":
             return (self.total_capacity_intensive - self.available_beds[0])/self.total_capacity_intensive
         return (self.total_capacity_intermediate - self.available_beds[1])/self.total_capacity_intermediate
+
+    def get_total_capacity(self):
+        return f"{self.total_capacity - (self.available_beds[0] + self.available_beds[1])}/{self.total_capacity} occupied"
 
     def get_occupancy_rate_per_patientType_per_bedType(self, patient: Patient) -> Optional[float]:
         """

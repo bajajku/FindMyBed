@@ -11,6 +11,10 @@ class Patient:
     specialNeedType: str
     specialNeeds: List[str]
     arrival_time: int
+    aniGpsPos: list  # Start position at the dispatcher
+    discharged: bool
+    arrived_at_hospital: bool  # Track if the patient has reached the hospital
+    queue_position: int  # Initialize queue position
     bedType: str = ""
     assignedHospital: str = ""
     homeHospital: Optional[str] = None

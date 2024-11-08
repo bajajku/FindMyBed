@@ -88,3 +88,18 @@ MAX_DISTANCE_KM: float = 30.0
 # Occupancy Thresholds
 INTENSIVE_OCCUPANCY_THRESHOLD: float = 1.0
 INTERMEDIATE_OCCUPANCY_THRESHOLD: float = 0.85
+
+#Animation
+SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 800
+WHITE, BLUE, RED = (255, 255, 255), (0, 100, 255), (255, 0, 0)
+
+# Define hospital positions for visualization
+hospital_positions = {
+    "CHU-SJ": (100, 100),
+    "CHUQ": (1000, 100),
+    "CHUS": (100, 550),
+    "CUSM": (1000, 550),
+    "HGJ": (350, 300),
+    "HMR": (550, 550),
+    "": (750,300)
+}

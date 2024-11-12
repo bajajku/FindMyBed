@@ -151,8 +151,8 @@ def simulate_hospital_system(num_days, excel):
                     "Hospital": hospital.name,
                     "Arrived Patients": arrivedDischarged[hospital.name][0],
                     "Discharged Patients": arrivedDischarged[hospital.name][1],
-                    "Intensive Occupancy Rate": max(0, min(1, arrivedDischarged[hospital.name][2]/3)),
-                    "Intermediate Occupancy Rate": max(0, min(1, arrivedDischarged[hospital.name][3]/3))
+                    "Intensive Occupancy Rate": max(0, min(1, arrivedDischarged[hospital.name][2]/24)),
+                    "Intermediate Occupancy Rate": max(0, min(1, arrivedDischarged[hospital.name][3]/24))
                 })
             day += 1
         else:

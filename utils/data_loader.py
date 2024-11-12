@@ -1,3 +1,6 @@
+from itertools import count
+
+import numpy as np
 import pandas as pd
 from typing import List, Tuple
 import ast
@@ -75,10 +78,15 @@ class DataLoader:
         self.maternal_services = df['Maternal Services'].tolist()
         self.neonatal_services = df['Neonatal Services'].tolist()
         self.beds_available = self.parse_into_list_of_lists(df['beds_available'])
+        for i in range(len(self.beds_available)):
+            for j in range(len(self.beds_available[i])):
+                self.beds_available[i][j] = np.random.poisson(self.beds_available[i][j])
         self.total_capacity = df['total_capacity'].tolist()
         self.total_capacity_intensive = df['total_capacity_intensive'].tolist()
         self.total_capacity_intermediate = df['total_capacity_intermediate'].tolist()
         self.avg_beds_available_per_type_ = self.parse_into_list_of_lists(df['average_beds'])
+        self.admissions_per_hour = df['admissions_per_hour'].tolist()
+        self.average_admissions = sum(self.admissions_per_hour)
 
         self.discharge_rates = self.parse_into_list_of_lists(df['Discharge rate'])
         discharge_rates_intensive = self.parse_into_list_of_lists(df['Discharge rate intensive'])
@@ -95,7 +103,7 @@ class DataLoader:
 
         arrival_rates = self.parse_into_list_of_lists(df['Arrival rate'])
         self.arrival_rates = [sum(x) for x in arrival_rates]
-    
+
     def create_hospitals(self):
         # Create Hospital objects
         hospitals = [
@@ -105,9 +113,9 @@ class DataLoader:
                 maternal_services=self.maternal_services[i],
                 neonatal_services=self.neonatal_services[i],
                 available_beds=self.beds_available[i],
-                discharge_rates=self.discharge_rates[i],
-                discharge_rates_intensive=self.discharge_rates_intensive[i],
-                discharge_rates_intermediate=self.discharge_rates_intermediate[i],
+                discharge_rates= sum(self.discharge_rates[i])/len(self.discharge_rates[i]),
+                discharge_rates_intensive=(sum(self.discharge_rates_intensive[i])/len(self.discharge_rates_intensive[i]))/8,
+                discharge_rates_intermediate=(sum(self.discharge_rates_intermediate[i])/len(self.discharge_rates_intermediate[i]))/8,
                 total_capacity=self.total_capacity[i],
                 total_capacity_intensive=self.total_capacity_intensive[i],
                 total_capacity_intermediate=self.total_capacity_intermediate[i]
@@ -115,3 +123,6 @@ class DataLoader:
         ]
 
         return hospitals
+
+    def get_average_admissions(self):
+        return self.average_admissions

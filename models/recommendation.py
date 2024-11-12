@@ -72,19 +72,17 @@ class HospitalRecommendation:
             dest='input'
         )
 
-    def discharge_all_patients(self, arrival_time: int, arrived_discharged: dict) -> None:
+    def discharge_all_patients(self, arrived_discharged: dict) -> None:
         """
         Discharge patients from all hospitals at a given arrival time.
-        
+
         Args:
-            arrival_time: Time of day for patient discharge
             arrived_discharged: Dictionary tracking patient movement
         """
-        time_index = ARRIVAL_TIMES.index(arrival_time)
         logging.info("Discharging patients from all hospitals...")
-        
+
         for hospital in self.hospitals:
-            hospital.discharge_patients(time_index, arrived_discharged)
+            hospital.discharge_patients(arrived_discharged)
 
     def patient_type_check(self) -> None:
         """

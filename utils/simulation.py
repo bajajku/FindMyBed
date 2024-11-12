@@ -46,13 +46,12 @@ def simulate_hospital_system(num_days, excel):
                                "CUSM":[0,0,0,0], "HGJ":[0,0,0,0], "HMR":[0,0,0,0]}
 
             # Loop through each arrival time (9, 14, 21)
-            for arrival_time in ARRIVAL_TIMES:
-                print(f"\n{'*'*10} Arrival Time {arrival_time}:00 {'*'*10}")
-                recommendation_system.discharge_all_patients(arrival_time, arrivedDischarged)
+            for hour in range(24):
+                print(f"\n{'*'*10} Arrival Time {hour}:00 {'*'*10}")
+                recommendation_system.discharge_all_patients(arrivedDischarged)
 
                 # Generate a random number of patients for this arrival time
-                arrival_rate_index = ARRIVAL_TIMES.index(arrival_time)
-                num_patients = np.random.poisson(data_loader.arrival_rates[arrival_rate_index])
+                num_patients = np.random.poisson(data_loader.get_average_admissions())
                 print(f"New patients arriving: {num_patients}")
                 total_patients += num_patients
 
@@ -92,7 +91,7 @@ def simulate_hospital_system(num_days, excel):
                         transportNeedCnt=random.randint(0, 3),
                         specialNeedType=",".join(special_needs),
                         specialNeeds=special_needs,
-                        arrival_time=arrival_time,
+                        arrival_time=hour,
                         aniGpsPos=[600, 50],
                         discharged=False,
                         arrived_at_hospital=False,  # Track if the patient has reached the hospital

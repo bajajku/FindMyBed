@@ -45,7 +45,7 @@ def simulate_hospital_system(num_days, excel):
             arrivedDischarged = {"CHU-SJ":[0,0,0,0], "CHUQ":[0,0,0,0], "CHUS":[0,0,0,0],
                                "CUSM":[0,0,0,0], "HGJ":[0,0,0,0], "HMR":[0,0,0,0]}
 
-            # Loop through each arrival time (9, 14, 21)
+            # Loop through each hour
             for hour in range(24):
                 print(f"\n{'*'*10} Arrival Time {hour}:00 {'*'*10}")
                 recommendation_system.discharge_all_patients(arrivedDischarged)
@@ -156,7 +156,50 @@ def simulate_hospital_system(num_days, excel):
                 })
             day += 1
         else:
-            running = False
+            while running:
+                # Clear the screen
+                screen.fill(WHITE)
+
+                # Draw hospitals
+                draw_hospitals(screen, HOSPITALS)
+                all_patients_arrived = True  # Assume all patients have arrived initially
+
+                # Organize each patient in the queue
+                for hospital_name in hospital_positions:
+                    patients_at_hospital = [
+                        p for p in patients if
+                        p.assignedHospital == hospital_name and p.arrived_at_hospital and not p.discharged
+                    ]
+                    for i, patient in enumerate(patients_at_hospital):
+                        patient.queue_position = i  # Assign queue position based on order of arrival
+
+                # Move and draw each patient who is still in transit
+
+                # Move and draw each patient
+                for patient in patients[:]:
+                    if not patient.discharged:
+                        target_hospital_pos = hospital_positions.get(patient.assignedHospital, (600, 50))
+                        animate_patient_movement(patient, target_hospital_pos)
+
+                        # Draw patient at the updated position
+                        draw_patient(screen, patient, target_hospital_pos)
+
+                    # If the patient hasn't arrived or is not discharged, mark that not all patients have arrived
+                    if not patient.arrived_at_hospital and not patient.discharged:
+                        all_patients_arrived = False
+
+                    # Remove discharged patients from the list
+                    if patient.discharged:
+                        patients.remove(patient)
+
+                # Refresh display
+                pygame.display.flip()
+                clock.tick(60)
+
+                # Check if all patients have arrived and set `running` to False if so
+                if all_patients_arrived:
+                    running = False
+
     # Pause screen after simulation ends
     paused = True
     font = pygame.font.Font(None, 36)

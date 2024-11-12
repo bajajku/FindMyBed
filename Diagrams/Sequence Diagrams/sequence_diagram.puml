@@ -1,0 +1,104 @@
+@startuml
+actor "Transport Centre" as User
+participant "HospitalRecommendation" as HR
+participant "Patient" as P
+participant "Hospital" as H
+database "Queue" as Q
+
+== Initial Patient Assessment ==
+User -> HR: run(patient)
+activate HR
+
+HR -> P: get patient details
+activate P
+P --> HR: return patient type, bed type, special needs
+deactivate P
+
+== Service Determination Phase ==
+HR -> HR: determine_services()
+activate HR
+note right
+    1. Check patient type (Maternal/Neonatal)
+    2. Verify special needs requirements
+    3. Filter hospitals by service availability
+    4. Check occupancy thresholds
+end note
+deactivate HR
+
+== Bed Availability Check ==
+HR -> HR: filter_bed_type()
+activate HR
+note right
+    1. Check intensive/intermediate bed availability
+    2. Filter hospitals based on capacity
+    3. Consider occupancy thresholds:
+       - Intensive: 85%
+       - Intermediate: 90%
+end note
+deactivate HR
+
+== Geographic Assessment ==
+HR -> HR: filter_by_distance()
+activate HR
+note right
+    1. Calculate distance from patient location
+    2. Sort hospitals by proximity
+    3. Consider transport needs
+end note
+deactivate HR
+
+== Hospital Selection Process ==
+HR -> HR: get_top_hospitals()
+activate HR
+note right
+    Priority factors:
+    1. Home hospital preference
+    2. Service availability
+    3. Bed availability
+    4. Geographic proximity
+    5. Transport capabilities
+end note
+
+alt Home Hospital Available
+    HR -> H: check_home_hospital_availability()
+    H --> HR: availability status
+else Find Alternative
+    HR -> H: get_available_hospitals()
+    H --> HR: list of candidates
+end
+deactivate HR
+
+== Hospital Assignment ==
+HR -> HR: recommend_hospital()
+activate HR
+
+alt Suitable Hospital Found
+    HR -> H: admit_patient(patient)
+    activate H
+    
+    alt Admission Successful
+        H -> P: set assignedHospital
+        H --> HR: admission confirmed
+        HR --> User: assignment successful
+    else Admission Failed
+        H --> HR: admission failed
+        HR -> Q: add_to_queue(patient)
+        HR --> User: patient queued
+    end
+    deactivate H
+    
+else No Suitable Hospitals
+    HR -> Q: add_to_queue(patient)
+    HR --> User: patient queued
+end
+
+deactivate HR
+
+== Queue Management (if needed) ==
+opt Patient Queued
+    HR -> Q: get_queue_statistics()
+    Q --> HR: queue status
+    HR --> User: display queue information
+end
+
+@enduml

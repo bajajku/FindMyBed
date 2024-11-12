@@ -51,5 +51,5 @@ def animate_patient_movement(patient, target_pos):
     elif patient.aniGpsPos[1] > target_pos[1]:
         patient.aniGpsPos[1] -= 1
 
-    if (patient.aniGpsPos[0], patient.aniGpsPos[1]) == target_pos:
+    if ((patient.aniGpsPos[0], patient.aniGpsPos[1]) == target_pos) and patient.arrived_at_hospital == False:
         patient.arrived_at_hospital = True  # Mark as arrived when at destination

@@ -48,6 +48,7 @@ class Hospital:
                 patient = Patient(
                         patientType=random.choice(PATIENT_TYPE),
                         gpsPos=self.geolocation,
+                        postalCode="None",
                         bedType=bed_type,
                         del24HrPlus=False,
                         transportNeedCnt=0,

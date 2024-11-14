@@ -126,3 +126,37 @@ class DataLoader:
 
     def get_average_admissions(self):
         return self.average_admissions
+
+    def calculate_birth_rates_by_fsa(self, excel_file: str) -> pd.DataFrame:
+        """
+        Loads and processes birth rate data by FSA (Forward Sortation Area) from Excel sheets.
+
+        Args:
+            excel_file (str): Path to the Excel file.
+
+        Returns:
+            pd.DataFrame: DataFrame containing FSA, total births, and birth ratios.
+        """
+        # Load and combine data from specified sheets
+        sheets_to_load = ['All birth 2017', 'Year 2018', 'Year 2019', 'Year 2020', 'Year 2021', 'Year 2022',
+                          'Year 2023']
+        excel_data = pd.read_excel(excel_file, sheet_name=sheets_to_load)
+
+        # Combine all sheets into a single DataFrame
+        combined_data = pd.concat(excel_data.values(), ignore_index=True)
+
+        # Step 1: Keep only relevant columns and drop rows with empty postal codes
+        combined_data = combined_data[['Postal Code (first 3 digits)', 'Date of Birth (YY-MM)']].dropna(
+            subset=['Postal Code (first 3 digits)'])
+
+        # Step 2: Count the number of births per postal code
+        births_by_fsa = combined_data['Postal Code (first 3 digits)'].value_counts().reset_index()
+        births_by_fsa.columns = ['Postal Code (first 3 digits)', 'BirthCount']
+
+        # Step 3: Calculate total population based on non-empty entries
+        total_population = births_by_fsa.shape[0]  # Total number of non-empty rows
+
+        # Step 4: Calculate birth rate per postal code
+        births_by_fsa['BirthRate'] = (births_by_fsa['BirthCount'] / total_population)
+
+        return births_by_fsa

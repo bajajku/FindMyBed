@@ -72,6 +72,17 @@ class HospitalRecommendation:
             dest='input'
         )
 
+# for the report ( patients data )
+    def find_nearest_hospital(self) -> None:
+            hospitals = [hospital for hospital in self.hospitals]
+            hospitals.sort(
+                key=lambda hospital: calculate_distance(
+                    hospital.geolocation,
+                    self.patient.gpsPos
+                )
+            )
+            nearest_hospital = hospitals[0]
+            self.patient.nearestHospital = nearest_hospital.name
     def discharge_all_patients(self, arrived_discharged: dict) -> None:
         """
         Discharge patients from all hospitals at a given arrival time.

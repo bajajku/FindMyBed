@@ -1,4 +1,5 @@
 from typing import List
+from datetime import  datetime
 
 # Patient Types
 PATIENT_TYPE: List[str] = ["Maternal", "Neonatal"]
@@ -102,4 +103,14 @@ hospital_positions = {
     "HGJ": (350, 300),
     "HMR": (550, 550),
     "": (750,300)
+}
+
+# Define the simulator's start date
+START_DATE = datetime.strptime("2023-01-01", "%Y-%m-%d")
+
+ASSUMPTIONS = "Simulation assumes historical trends for patient arrivals and discharges."
+HYPERPARAMETERS = {
+    "Simulation Duration": "One year",
+    "Arrival Rate": "Based on historical hourly averages per hospital",
+    "Discharge Rate": "Based on historical patterns"
 }

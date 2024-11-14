@@ -8,23 +8,26 @@ from models.patient import Patient
 from models.recommendation import HospitalRecommendation
 from utils.constants import *
 from utils.data_loader import DataLoader
-from utils.geographic import generate_patient_coords
+from utils.geographic import generate_patient_coords, fsa_to_coordinates, select_fsa_by_rate, calculate_distance
 from utils.animation import initialize_screen, draw_hospitals, draw_patient, animate_patient_movement
+import pandas as pd
+from datetime import timedelta
 
 screen, clock = initialize_screen()
 data_loader = DataLoader()
 data_loader.load_data(excel_file=EXCEL_PATH)
 HOSPITALS = data_loader.create_hospitals()
 
-def simulate_hospital_system(num_days, excel):
+def simulate_hospital_system(num_days, excel , excel_newdata):
     global total_patients # Declare total_patients as global within the function
 
-
+    births_by_fsa = data_loader.calculate_birth_rates_by_fsa(excel_file=excel_newdata)
     recommendation_system = HospitalRecommendation(HOSPITALS)
     results = []
     hospitalList = ["CHU-SJ", "CHUQ", "CHUS", "CUSM", "HGJ", "HMR"]
     total_patients = 0
     patients = []  # List to hold current patients
+    patients_data = []
 
     for hospital in HOSPITALS:
         hospital_patient_list = hospital.prepopulate_patients()
@@ -40,6 +43,7 @@ def simulate_hospital_system(num_days, excel):
 
         # Loop through each day
         if day < num_days:
+            current_date = START_DATE + timedelta(days=day)
             print(f"\n{'='*20} Day {day + 1} {'='*20}")
 
             arrivedDischarged = {"CHU-SJ":[0,0,0,0], "CHUQ":[0,0,0,0], "CHUS":[0,0,0,0],
@@ -71,7 +75,9 @@ def simulate_hospital_system(num_days, excel):
                 # Create and simulate each patient
                 for i in range(num_patients):
                     patient_type = random.choice(PATIENT_TYPE)
-                    gps_pos = generate_patient_coords(HOSPITALS_CONFIG)
+                    postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)  # Random GPS coordinates
+                    # Test purpose
+                    # gps_pos = generate_patient_coords(HOSPITALS_CONFIG)
 
                     if patient_type == "Maternal":
                         num_special_needs = random.randint(1, 3)
@@ -86,6 +92,7 @@ def simulate_hospital_system(num_days, excel):
                     patient = Patient(
                         patientType=patient_type,
                         gpsPos=gps_pos,
+                        postalCode=postal_code,
                         bedType=bed_type,
                         del24HrPlus=random.choice([True, False]),
                         transportNeedCnt=random.randint(0, 3),
@@ -101,6 +108,33 @@ def simulate_hospital_system(num_days, excel):
                     # Run the patient through the recommendation system
                     print(f"\nProcessing Patient {i + 1}")
                     recommendation_system.run(patient)
+
+                    if patient.assignedHospital != "":
+                        arrivedDischarged[f"{patient.assignedHospital}"][0] += 1
+                        recommendation_system.find_nearest_hospital()
+                        # nearest_distance = calculate_distance(HOSPITALS[patient.nearestHospital].geolocation,patient.gpsPos)
+                        # assigned_distance = calculate_distance(HOSPITALS[patient.assignedHospital].geolocation,patient.gpsPos)
+                        # Record patient data for reporting
+
+                        for hospital in HOSPITALS:
+                            if hospital.name == patient.nearestHospital:
+                                nearest_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
+                            if hospital.name == patient.assignedHospital:
+                                assigned_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
+
+                        patients_data.append({
+                            "Postal Code": patient.postalCode,
+                            "Type": patient.bedType,
+                            "NICU": True if (
+                                        "Prematurity (GA<26 weeks)" in patient.specialNeeds or "Prematurity (GA>26 weeks)" in patient.specialNeeds) else False,
+                            "Date": current_date.strftime("%Y-%m-%d"),
+                            "Month": current_date.month,
+                            "Nearest Hospital": patient.nearestHospital,
+                            "Nearest Distance": nearest_distance,
+                            "Assigned Hospital": patient.assignedHospital,
+                            "Assigned Distance": assigned_distance,
+                            "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital
+                        })
 
                     # Print current hospital capacities
                     for hospital in HOSPITALS:
@@ -148,11 +182,14 @@ def simulate_hospital_system(num_days, excel):
             for hospital in HOSPITALS:
                 results.append({
                     "Day": day + 1,
-                    "Hospital": hospital.name,
+                    "Date": current_date.strftime("%Y-%m-%d"),
+                    "Month": current_date.month,
+                    "Hospital": hospital.name,  # Use the name attribute of the Hospital object
                     "Arrived Patients": arrivedDischarged[hospital.name][0],
                     "Discharged Patients": arrivedDischarged[hospital.name][1],
-                    "Intensive Occupancy Rate": max(0, min(1, arrivedDischarged[hospital.name][2]/24)),
-                    "Intermediate Occupancy Rate": max(0, min(1, arrivedDischarged[hospital.name][3]/24))
+
+                    "Intensive Occupancy Rate": arrivedDischarged[hospital.name][2] / 24,
+                    "Intermediate Occupancy Rate": arrivedDischarged[hospital.name][3] / 24
                 })
             day += 1
         else:
@@ -218,4 +255,10 @@ def simulate_hospital_system(num_days, excel):
     pygame.quit()
     print(total_patients)
     print(recommendation_system.get_queue_size())
+    # Create a DataFrame from the results
+    results_df = pd.DataFrame(results)
+    patients_df = pd.DataFrame(patients_data)
+    # # Save the results to an Excel file
+    results_df.to_excel("output/simulation.xlsx", index=False)
+    patients_df.to_excel("output/patients.xlsx", index=False)
     return results

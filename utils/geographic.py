@@ -6,6 +6,10 @@ import pgeocode
 import pandas as pd
 import numpy as np
 
+from config import EXCEL_PATH
+from utils.data_loader import DataLoader
+
+
 def calculate_distance(coord1: Tuple[float, float], coord2: Tuple[float, float]) -> float:
     return geopy_distance(coord1, coord2).kilometers
 
@@ -42,3 +46,29 @@ def fsa_to_coordinates(births_by_fsa: pd.DataFrame) -> Tuple[float, float]:
             return selected_fsa, (location.latitude, location.longitude)
 
         print("Invalid coordinates returned; selecting a new FSA.")
+
+def get_fsa_center(fsa_code: str) -> Tuple[float, float]:
+    # Initialize geocode for Canadian postal codes
+    geolocator = pgeocode.Nominatim("ca")
+
+    while True:
+        # Query the postal code
+        location = geolocator.query_postal_code(fsa_code)
+
+        # Check if location data is found and valid
+        if location is not None and pd.notna(location.latitude) and pd.notna(location.longitude):
+            return float(location.latitude), float(location.longitude)
+
+        # If invalid, print message and retry
+        print(f"No valid data found for FSA: {fsa_code}. Retrying...")
+
+def get_hospital_coord(hospital_name: str)-> Tuple[float, float]:
+    data_loader = DataLoader()
+    data_loader.load_data(excel_file=EXCEL_PATH)
+    HOSPITALS = data_loader.create_hospitals()
+
+    for hospital in HOSPITALS:
+        if hospital.name == hospital_name:
+            return hospital.geolocation
+
+    return 0,0

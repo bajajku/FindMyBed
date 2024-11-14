@@ -1,9 +1,9 @@
 from config import *
 from utils.simulation import simulate_hospital_system
 from utils.helpers import print_hospital_data
-from utils.visualization import create_pdf_report
 import pandas as pd
-
+from utils.DataVisualizer import *
+from utils.ReportGenerator import *
 
 def main():
     
@@ -14,9 +14,26 @@ def main():
     results_df = pd.read_excel("output/simulation.xlsx")
 
     patients_df = pd.read_excel("output/patients.xlsx")
-    # Create PDF report with all plots
-    create_pdf_report(results_df=results_df, patients_df=patients_df)
+    # Initialize DataVisualizer and ReportGenerator instances
+    visualizer = DataVisualizer(report_path=REPORT)
+    report_generator = ReportGenerator(
+        report_path=REPORT,
+        visualizer=visualizer, results_df=results_df, patients_df=patients_df,
+    )
+
+    # Generate the PDF report
+    report_generator.create_pdf_report()
     print(f"Report generated: {REPORT}")
+
+    # Create tables
+    created_patients_table, created_hospital_table, aggregated_patients_table = visualizer.create_patients_table(
+        patients_df)
+
+    # Save tables to an Excel file with specified sheet names
+    with pd.ExcelWriter("output/patients_tables.xlsx") as writer:
+        created_patients_table.to_excel(writer, sheet_name="Sheet1", index=False)
+        created_hospital_table.to_excel(writer, sheet_name="Sheet2", index=False)
+        aggregated_patients_table.to_excel(writer, sheet_name="Sheet3", index=False)
 
 if __name__ == "__main__":
     main()

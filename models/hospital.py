@@ -7,7 +7,7 @@ from utils.constants import *
 class Hospital:
     def __init__(self, name: str, geolocation: Tuple[float, float], 
                  maternal_services: List[str], neonatal_services: List[str],
-                 available_beds: List[int], discharge_rates: List[float],
+                 available_beds: List[int],
                  discharge_rates_intensive: float,
                  discharge_rates_intermediate: float,
                  total_capacity: int, total_capacity_intensive: int,
@@ -19,7 +19,6 @@ class Hospital:
         self.maternal_services = set(maternal_services)  # Convert to set for O(1) lookups
         self.neonatal_services = set(neonatal_services) # Convert to set for O(1) lookups
         self.available_beds = available_beds
-        self.discharge_rates = discharge_rates
         self.discharge_rates_intensive = discharge_rates_intensive
         self.discharge_rates_intermediate = discharge_rates_intermediate
         self.patients = {"Intensive": [], "Intermediate": [], "Obstetrics": []}

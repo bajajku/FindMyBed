@@ -114,7 +114,6 @@ class DataLoader:
                 maternal_services=self.maternal_services[i],
                 neonatal_services=self.neonatal_services[i],
                 available_beds=self.beds_available[i],
-                discharge_rates= sum(self.discharge_rates[i])/len(self.discharge_rates[i]),
                 discharge_rates_intensive=self.discharge_rates_intensive[i],
                 discharge_rates_intermediate=self.discharge_rates_intermediate[i],
                 total_capacity=self.total_capacity[i],

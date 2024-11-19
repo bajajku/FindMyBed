@@ -21,7 +21,7 @@ class DataLoader:
         self.discharge_rates_intensive = None 
         self.discharge_rates_intermediate = None
         self.total_capacity = None
-        self.otal_capacity_intensive = None 
+        self.total_capacity_intensive = None
         self.total_capacity_intermediate = None
 
     @staticmethod
@@ -88,6 +88,7 @@ class DataLoader:
         self.total_capacity_intermediate = df['total_capacity_intermediate'].tolist()
         self.admissions_per_hour = df['admissions_per_hour'].tolist()
         self.average_admissions = sum(self.admissions_per_hour)
+        self.transfer_percentage = df['transfer_percentage'].tolist()
 
         self.discharge_rates = self.parse_into_list_of_lists(df['Discharge rate'])
         discharge_rates_intensive = df['Discharge rate intensive'].tolist()
@@ -118,7 +119,8 @@ class DataLoader:
                 discharge_rates_intermediate=self.discharge_rates_intermediate[i],
                 total_capacity=self.total_capacity[i],
                 total_capacity_intensive=self.total_capacity_intensive[i],
-                total_capacity_intermediate=self.total_capacity_intermediate[i]
+                total_capacity_intermediate=self.total_capacity_intermediate[i],
+                transfer_percentage=self.transfer_percentage[i]
             ) for i in range(len(self.hospital_names))
         ]
         return hospitals

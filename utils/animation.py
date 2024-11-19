@@ -1,6 +1,6 @@
 # animation.py
 import pygame
-from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT
+from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT, GREEN
 from utils.constants import hospital_positions  # assuming this can be defined in your constants file
 
 def initialize_screen():
@@ -37,9 +37,15 @@ def draw_patient(screen, patient, hospital_pos):
         offset_x = (patient.queue_position % 10) * 15
         offset_y = (patient.queue_position // 10) * 15
         x, y = hospital_pos[0] + offset_x + 5, hospital_pos[1] + offset_y + 60
-        pygame.draw.circle(screen, RED, (x, y), 5)
+        if patient.transferred:
+            pygame.draw.circle(screen, RED, (x, y), 5)
+        else:
+            pygame.draw.circle(screen, GREEN, (x, y), 5)
     else:
-        pygame.draw.circle(screen, RED, patient.aniGpsPos, 5)
+        if patient.transferred:
+            pygame.draw.circle(screen, RED, patient.aniGpsPos, 5)
+        else:
+            pygame.draw.circle(screen, GREEN, patient.aniGpsPos, 5)
 
 def animate_patient_movement(patient, target_pos):
     if patient.aniGpsPos[0] < target_pos[0]:

@@ -12,6 +12,7 @@ class Hospital:
                  discharge_rates_intermediate: float,
                  total_capacity: int, total_capacity_intensive: int,
                  total_capacity_intermediate: int,
+                 transfer_percentage: float,
                  obstetrics_capacity: int = None,
                  obstetrics_available_beds: int = None):
         self.name = name
@@ -27,6 +28,7 @@ class Hospital:
         self.total_capacity_intensive = total_capacity_intensive
         self.total_capacity_intermediate = total_capacity_intermediate
         self.overall_occupancy_rate = 0
+        self.transfer_percentage = transfer_percentage
 
         # Initialize obstetrics-specific attributes if provided
         if obstetrics_capacity is not None and obstetrics_available_beds is not None:
@@ -44,6 +46,8 @@ class Hospital:
         for bed_type, count in [("Intensive", occupied_beds_intensive),
                                 ("Intermediate", occupied_beds_intermediate)]:
             for _ in range(count):
+                transfer_probability = self.transfer_percentage
+                is_transferred = np.random.poisson(transfer_probability / 100) > 0
                 patient = Patient(
                         patientType=random.choice(PATIENT_TYPE),
                         gpsPos=self.geolocation,
@@ -58,7 +62,8 @@ class Hospital:
                         arrived_at_hospital=True,  # Track if the patient has reached the hospital
                         queue_position=0,  # Initialize queue position
                         discharged=False,
-                        assignedHospital=self.name
+                        assignedHospital=self.name,
+                        transferred = bool(is_transferred)
                     )
                 self.patients[patient.bedType].append(patient)
         return self.patients

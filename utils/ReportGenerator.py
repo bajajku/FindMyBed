@@ -1,15 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.patches as mpatches
-
-import seaborn as sns
-import pandas as pd
-import numpy as np
-from config import REPORT
 from utils.constants import *
 
-import scipy as sp
-from scipy.stats import norm
 
 class ReportGenerator:
 
@@ -34,7 +26,6 @@ class ReportGenerator:
     - Discharge Rate: Based on historical patterns
     """
         self.header = "Assumptions and Hyperparameters"
-        self.title = 'Hospital Occupancy Report'
         self.results_df = results_df
         self.patients_df = patients_df
         self.report_path = report_path
@@ -70,35 +61,40 @@ class ReportGenerator:
         plt.axis('off')
         
         # Title
-        plt.text(0.5, 0.95, self.title, 
-                horizontalalignment='center', fontsize=16, fontweight='bold')
+        plt.text(0.5, 0.97, 'Hospital Occupancy Report',
+                 horizontalalignment='center', fontsize=16, fontweight='bold')
         
         # Table of Contents
-        plt.text(0.1, 0.85, 'Table of Contents', fontsize=14, fontweight='bold')
+        plt.text(0.1, 0.90, 'Table of Contents', fontsize=14, fontweight='bold')
 
         # Monthly Occupancy Rates Section
-        plt.text(0.1, 0.75, '1. Monthly Occupancy Rates', fontsize=12)
-        plt.text(0.15, 0.70, '- Intensive Occupancy Rate Distribution', fontsize=10)
-        plt.text(0.15, 0.67, '- Intermediate Occupancy Rate Distribution', fontsize=10)
-        
+        plt.text(0.1, 0.85, '1. Monthly Occupancy Rates', fontsize=12)
+        plt.text(0.15, 0.80, '- Intensive Occupancy Rate Distribution', fontsize=10)
+        plt.text(0.15, 0.77, '- Intermediate Occupancy Rate Distribution', fontsize=10)
+
         # Yearly Occupancy Rates Section
-        plt.text(0.1, 0.60, '2. Yearly Occupancy Rates', fontsize=12)
-        plt.text(0.15, 0.55, '- Intensive Occupancy Rate Distribution', fontsize=10)
-        plt.text(0.15, 0.52, '- Intermediate Occupancy Rate Distribution', fontsize=10)
+        plt.text(0.1, 0.70, '2. Yearly Occupancy Rates', fontsize=12)
+        plt.text(0.15, 0.65, '- Intensive Occupancy Rate Distribution', fontsize=10)
+        plt.text(0.15, 0.62, '- Intermediate Occupancy Rate Distribution', fontsize=10)
 
-        # Patient Distributions Section
-        plt.text(0.1, 0.45, '3. Patient Distributions', fontsize=12)
-        plt.text(0.15, 0.40, '- Yearly Patient Distribution', fontsize=10)
-        plt.text(0.15, 0.37, '- Acceptance Probability for Nearby Patients', fontsize=10)
-        plt.text(0.15, 0.34, '- Accepted Patients by Distance for Each Hospital', fontsize=10)
-        plt.text(0.15, 0.31, '- Probability Distribution of Closest Distances (All Patients)', fontsize=10)
-        plt.text(0.15, 0.28, '- Probability Distribution of Closest Distances (Not Admitted to the Closest Hospital)', fontsize=10)
-
-        # NICU Patient Distributions Section
-        plt.text(0.1, 0.20, '4. NICU Patient Distributions', fontsize=12)
-        plt.text(0.15, 0.15, '- Yearly NICU Patient Distribution', fontsize=10)
-        plt.text(0.15, 0.12, '- Acceptance Probability for NICU Patients', fontsize=10)
-        plt.text(0.15, 0.09, '- Accepted NICU Patients by Distance for Each Hospital', fontsize=10)
+        # Total Patient Distributions Section
+        plt.text(0.1, 0.55, '3. Total Patient Distributions', fontsize=12)
+        plt.text(0.15, 0.50, '- Yearly Total Patient Distribution', fontsize=10)
+        plt.text(0.15, 0.47, '- Acceptance Probability for Total Patients', fontsize=10)
+        plt.text(0.15, 0.44, '- Accepted Total Patients by Distance for Each Hospital', fontsize=10)
+        plt.text(0.15, 0.41, '- Probability Distribution of Closest Distances (All Patients)', fontsize=10)
+        plt.text(0.15, 0.38, '- Probability Distribution of Closest Distances (Not Admitted to Closest Hospital)',
+                 fontsize=10)
+        # Intensive Patient Distributions Section
+        plt.text(0.1, 0.30, '4. Intensive Patient Distributions', fontsize=12)
+        plt.text(0.15, 0.25, '- Yearly Intensive Patient Distribution', fontsize=10)
+        plt.text(0.15, 0.22, '- Acceptance Probability for Intensive Patients', fontsize=10)
+        plt.text(0.15, 0.19, '- Accepted Intensive Patients by Distance for Each Hospital', fontsize=10)
+        # Intermediate Patient Distributions Section
+        plt.text(0.1, 0.15, '5. Intermediate Patient Distributions', fontsize=12)
+        plt.text(0.15, 0.10, '- Yearly Intermediate Patient Distribution', fontsize=10)
+        plt.text(0.15, 0.07, '- Acceptance Probability for Intermediate Patients', fontsize=10)
+        plt.text(0.15, 0.04, '- Accepted Intermediate Patients by Distance for Each Hospital', fontsize=10)
         
         # Save the Table of Contents to the PDF
         pdf.savefig(fig)
@@ -140,15 +136,21 @@ class ReportGenerator:
             self.visualizer.plot_yearly_occupancy_probability(self.results_df,'Intensive Occupancy Rate', 'Yearly Probability Distribution Intensive', pdf)
             self.visualizer.plot_yearly_occupancy_probability(self.results_df,'Intermediate Occupancy Rate', 'Yearly Probability Distribution Intermediate', pdf)
 
-            # Patient distributions
-            self.add_section_header("3. Patient Distributions", pdf)
-            self.visualizer.plot_yearly_patient_distribution(self.patients_df,"Yearly Patients Distribution", pdf)
-            self.visualizer.plot_acceptance_probability(self.patients_df,"Acceptance Probability for Patients in the Vicinity", pdf)
-            self.visualizer.accepted_patients_by_distance(self.patients_df,pdf)
-            self.visualizer.probability_distribution_patients(self.patients_df,pdf)
+            # Total Patient distributions
+            self.add_section_header("3. Total Patient Distributions", pdf)
+            self.visualizer.plot_yearly_patient_distribution(self.patients_df, type="Total", pdf=pdf)
+            self.visualizer.plot_acceptance_probability(self.patients_df, type="Total", pdf=pdf)
+            self.visualizer.accepted_patients_by_distance(self.patients_df, type="Total", pdf=pdf)
+            # self.visualizer.probability_distribution_patients(self.patients_df,pdf)
 
-            # NICU Patient distributions
-            self.add_section_header("4. NICU Patient Distributions", pdf)
-            self.visualizer.plot_yearly_patient_distribution_NICU(self.patients_df,"Yearly NICU Patients Distribution", pdf)
-            self.visualizer.plot_acceptance_probability_NICU(self.patients_df,"Acceptance Probability for NICU Patients in the Vicinity", pdf)
-            self.visualizer.accepted_patients_by_distance_NICU(self.patients_df,pdf)
+            # Intensive Patient distributions
+            self.add_section_header("4. Intensive Patient Distributions", pdf)
+            self.visualizer.plot_yearly_patient_distribution(self.patients_df, type="Intensive", pdf=pdf)
+            self.visualizer.plot_acceptance_probability(self.patients_df, type="Intensive", pdf=pdf)
+            self.visualizer.accepted_patients_by_distance(self.patients_df, type="Intensive", pdf=pdf)
+
+            # Intermediate Patient distributions
+            self.add_section_header("5. Intermediate Patient Distributions", pdf)
+            self.visualizer.plot_yearly_patient_distribution(self.patients_df, type="Intermediate", pdf=pdf)
+            self.visualizer.plot_acceptance_probability(self.patients_df, type="Intermediate", pdf=pdf)
+            self.visualizer.accepted_patients_by_distance(self.patients_df, type="Intermediate", pdf=pdf)

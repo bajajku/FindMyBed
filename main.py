@@ -30,10 +30,11 @@ def main():
         patients_df)
 
     # Save tables to an Excel file with specified sheet names
-    with pd.ExcelWriter("output/patients_tables.xlsx") as writer:
+    with pd.ExcelWriter(TABLE) as writer:
         created_patients_table.to_excel(writer, sheet_name="Sheet1", index=False)
         created_hospital_table.to_excel(writer, sheet_name="Sheet2", index=False)
         aggregated_patients_table.to_excel(writer, sheet_name="Sheet3", index=False)
+        print(f"Table generated: {TABLE}")
 
 if __name__ == "__main__":
     main()

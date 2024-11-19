@@ -146,9 +146,9 @@ class Hospital:
 
     def discharge_patients(self, arrivedDischarged):
         """ Discharge patients based on the discharge rate at the patient's arrival time """
-
-        num_discharged_intensive = np.random.poisson(self.get_discharge_rate("Intensive"))
-        num_discharged_intermediate = np.random.poisson(self.get_discharge_rate("Intermediate"))
+        # Ensure the discharge rates are rounded to integers
+        num_discharged_intensive = int(round(np.random.poisson(self.get_discharge_rate("Intensive"))))
+        num_discharged_intermediate = int(round(np.random.poisson(self.get_discharge_rate("Intermediate"))))
         print(f"{num_discharged_intensive} {num_discharged_intermediate}")
 
         discharged_count = 0

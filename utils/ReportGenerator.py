@@ -9,21 +9,30 @@ class ReportGenerator:
         self.assumptions = """
     Assumptions:
 
-    - Probability Calculations: 
-      Patient arrival and discharge probabilities are calculated by analyzing historical data patterns. These probabilities 
-      are applied to generate patient flow, ensuring that patient distribution reflects typical trends.
+        1. Probability Calculations: 
 
-    - Patient Allocation: 
-      To align with real-world conditions, the probability of assigning a patient to a specific hospital is influenced by factors 
-      such as the distance between hospitals and patients, occupancy rates (intensive and intermediate), and specific service 
-      requirements (e.g., NICU needs).
-    """
+        - Patient arrival and discharge probabilities are derived from historical data patterns. 
+          These probabilities are used to simulate patient flow.
+        2. Patient Allocation:
+
+        - To replicate real-world conditions, patient allocation to specific hospitals is influenced by factors such as:
+            - Distance between hospitals and patient locations.
+            - Occupancy rates for intensive and intermediate care units.
+            - Specific service requirements.
+
+        3. Transported Patients:
+        - The percentage of patients transferred from other hospitals is based on historical data. 
+          These patients are categorized as:
+            - Intensive Transferred, Intensive Not Transferred
+            - Intermediate Transferred, Intermediate Not Transferred
+        - This transport status has been included in the generated patient table file (`patients_table`).
+        """
         self.hyperparameters = """
     Hyperparameters:
 
-    - Simulation Duration: Two years
-    - Arrival Rate: Based on historical averages per hospital for each time slot (9:00, 14:00, 21:00)
-    - Discharge Rate: Based on historical patterns
+        - Simulation Duration: Two years
+        - Arrival Rate: Based on historical averages per hospital for each time slot (9:00, 14:00, 21:00)
+        - Discharge Rate: Based on historical patterns
     """
         self.header = "Assumptions and Hyperparameters"
         self.results_df = results_df
@@ -45,8 +54,8 @@ class ReportGenerator:
 
         # Display header, assumptions, and hyperparameters in the plot
         plt.text(0.5, 0.95, header_text, ha='center', fontsize=14, fontweight='bold')
-        plt.text(0.1, 0.8, assumptions_text, fontsize=10, va='top', wrap=True)
-        plt.text(0.1, 0.4, hyperparameters_text, fontsize=10, va='top', wrap=True)
+        plt.text(0.1, 0.85, assumptions_text, fontsize=10, va='top', wrap=True)
+        plt.text(0.1, 0.25, hyperparameters_text, fontsize=10, va='top', wrap=True)
 
         # Save the figure to the PDF and close it
         pdf.savefig(fig)
@@ -86,7 +95,7 @@ class ReportGenerator:
         plt.text(0.15, 0.38, '- Probability Distribution of Closest Distances (Not Admitted to Closest Hospital)',
                  fontsize=10)
         # Intensive Patient Distributions Section
-        plt.text(0.1, 0.30, '4. Intensive Patient Distributions', fontsize=12)
+        plt.text(0.1, 0.32, '4. Intensive Patient Distributions', fontsize=12)
         plt.text(0.15, 0.25, '- Yearly Intensive Patient Distribution', fontsize=10)
         plt.text(0.15, 0.22, '- Acceptance Probability for Intensive Patients', fontsize=10)
         plt.text(0.15, 0.19, '- Accepted Intensive Patients by Distance for Each Hospital', fontsize=10)

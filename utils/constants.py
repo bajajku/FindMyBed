@@ -92,7 +92,7 @@ INTERMEDIATE_OCCUPANCY_THRESHOLD: float = 0.85
 
 #Animation
 SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 800
-WHITE, BLUE, RED = (255, 255, 255), (0, 100, 255), (255, 0, 0)
+WHITE, BLUE, RED, GREEN = (255, 255, 255), (0, 100, 255), (255, 0, 0), (0,255,0)
 
 # Define hospital positions for visualization
 hospital_positions = {

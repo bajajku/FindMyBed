@@ -124,6 +124,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
 
                         patients_data.append({
                             "Postal Code": patient.postalCode,
+                            "Transferred": patient.transferred,
                             "Type": patient.bedType,
                             "NICU": True if (
                                         "Prematurity (GA<26 weeks)" in patient.specialNeeds or "Prematurity (GA>26 weeks)" in patient.specialNeeds) else False,

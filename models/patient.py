@@ -19,6 +19,7 @@ class Patient:
     bedType: str = ""
     assignedHospital: str = ""
     homeHospital: Optional[str] = None
+    transferred: bool = False
 
     def get_arrival_time_index(self) -> int:
         return ARRIVAL_TIMES.index(self.arrival_time)

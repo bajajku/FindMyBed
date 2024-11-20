@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from typing import List, Tuple
 import ast
+
+from config import EXCEL_PATH
 from models.hospital import Hospital
 
 class DataLoader:
@@ -19,8 +21,11 @@ class DataLoader:
         self.discharge_rates_intensive = None 
         self.discharge_rates_intermediate = None
         self.total_capacity = None
-        self.otal_capacity_intensive = None 
+        self.total_capacity_intensive = None
         self.total_capacity_intermediate = None
+        # new attributes for the new data
+        self.birth_rates_by_fsa = None
+        self.transfer_percentage = None
 
     @staticmethod
     def parse_into_list_of_lists(df_col: pd.Series) -> List[List[float]]:
@@ -84,21 +89,21 @@ class DataLoader:
         self.total_capacity = df['total_capacity'].tolist()
         self.total_capacity_intensive = df['total_capacity_intensive'].tolist()
         self.total_capacity_intermediate = df['total_capacity_intermediate'].tolist()
-        self.avg_beds_available_per_type_ = self.parse_into_list_of_lists(df['average_beds'])
         self.admissions_per_hour = df['admissions_per_hour'].tolist()
         self.average_admissions = sum(self.admissions_per_hour)
+        self.transfer_percentage = df['transfer_percentage'].tolist()
 
         self.discharge_rates = self.parse_into_list_of_lists(df['Discharge rate'])
-        discharge_rates_intensive = self.parse_into_list_of_lists(df['Discharge rate intensive'])
-        discharge_rates_intermediate = self.parse_into_list_of_lists(df['Discharge rate intermediate'])
+        discharge_rates_intensive = df['Discharge rate intensive'].tolist()
+        discharge_rates_intermediate = df['Discharge rate intermediate'].tolist()
 
         # Scale down discharge rates for intensive and intermediate
         scaling_factor = 0.3
         self.discharge_rates_intensive = [
-            [rate * scaling_factor for rate in row] for row in discharge_rates_intensive
+            (rate * scaling_factor) for rate in discharge_rates_intensive
         ]
         self.discharge_rates_intermediate = [
-            [rate * scaling_factor for rate in row] for row in discharge_rates_intermediate
+            (rate * scaling_factor) for rate in discharge_rates_intermediate
         ]
 
         arrival_rates = self.parse_into_list_of_lists(df['Arrival rate'])
@@ -113,15 +118,14 @@ class DataLoader:
                 maternal_services=self.maternal_services[i],
                 neonatal_services=self.neonatal_services[i],
                 available_beds=self.beds_available[i],
-                discharge_rates= sum(self.discharge_rates[i])/len(self.discharge_rates[i]),
-                discharge_rates_intensive=(sum(self.discharge_rates_intensive[i])/len(self.discharge_rates_intensive[i]))/8,
-                discharge_rates_intermediate=(sum(self.discharge_rates_intermediate[i])/len(self.discharge_rates_intermediate[i]))/8,
+                discharge_rates_intensive=self.discharge_rates_intensive[i],
+                discharge_rates_intermediate=self.discharge_rates_intermediate[i],
                 total_capacity=self.total_capacity[i],
                 total_capacity_intensive=self.total_capacity_intensive[i],
-                total_capacity_intermediate=self.total_capacity_intermediate[i]
+                total_capacity_intermediate=self.total_capacity_intermediate[i],
+                transfer_percentage=self.transfer_percentage[i]
             ) for i in range(len(self.hospital_names))
         ]
-
         return hospitals
 
     def get_average_admissions(self):

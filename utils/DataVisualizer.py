@@ -45,13 +45,30 @@ class DataVisualizer:
             "Nearest Distance": "Distance to Closest Hospital"
         })
 
-        # Patient table with postal code, vicinity hospital, and distance to closest hospital
-        created_patients_table = patients_df[[
+        # Create a new column to indicate transferred status for readability
+        patients_df["Type and Transfer Status"] = patients_df.apply(
+            lambda row: f"{row['Type']} Transferred" if row['Transferred'] else f"{row['Type']} Not Transferred", axis=1
+        )
+
+        # Filter for intensive and intermediate patients
+        intensive_patients_df = patients_df[patients_df['Type'] == 'Intensive']
+
+        intermediate_patients_df = patients_df[patients_df['Type'] == 'Intermediate']
+        # Create the intensive patients table
+        intensive_patients_table = intensive_patients_df[[
+            "Type and Transfer Status",
             "Postal Code",
             "Vicinity to Hospital",
             "Distance to Closest Hospital"
         ]]
 
+        # Create the intermediate patients table
+        intermediate_patients_table = intermediate_patients_df[[
+            "Type and Transfer Status",
+            "Postal Code",
+            "Vicinity to Hospital",
+            "Distance to Closest Hospital"
+        ]]
 
         """
         To create a table regarding the hospitals 
@@ -98,7 +115,7 @@ class DataVisualizer:
         ).fillna(0)
 
         # Hospital summary table with hospital name, patient counts, and acceptance percentages
-        created_hospitals_table = hospital_counts_df.reset_index()[[
+        hospitals_table = hospital_counts_df.reset_index()[[
             "Assigned Hospital",  
             "Intermediate Patients",
             "Intensive Patients",
@@ -107,8 +124,9 @@ class DataVisualizer:
             "Percentage of Intensive Accepted by Vicinity Hospital"
         ]]
 
-        postal_agg = []
-        for postal_code, group in patients_df.groupby('Postal Code'):
+        postal_agg_intensive = []
+        postal_agg_intermediate = []
+        for postal_code, group in intensive_patients_df.groupby('Postal Code'):
             # Determine the closest hospital for each postal code based on patient data
             closest_hospital = group['Vicinity to Hospital'].mode()[0]
 
@@ -116,15 +134,25 @@ class DataVisualizer:
             postal_center = get_fsa_center(postal_code)
 
             # Calculate the distance from the center to the closest hospital
-            closest_hospital_coords = get_hospital_coord(closest_hospital)
-            center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
+            # closest_hospital_coords = get_hospital_coord(closest_hospital)
+            # center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
 
             # Compute average and standard deviation of distances to the closest hospital for this postal code
             avg_distance = group['Distance to Closest Hospital'].mean()
-            std_distance = group['Distance to Closest Hospital'].std()
+
+            if len(group['Distance to Closest Hospital']) > 1:
+                std_distance = group['Distance to Closest Hospital'].std()
+                # Calculate the distance from the center to the closest hospital
+                closest_hospital_coords = get_hospital_coord(closest_hospital)
+                center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
+            else:
+                std_distance = 0
+                # If there is only one patient, the average will be the same as the distance for that patient,
+                # rather than the distance from the center.
+                center_distance_to_closest_hospital = avg_distance
 
             # Append the data to the list
-            postal_agg.append({
+            postal_agg_intensive.append({
                 "Postal Code": postal_code,
                 "Closest Hospital": closest_hospital,
                 "Center Distance to Closest Hospital": center_distance_to_closest_hospital,
@@ -133,9 +161,40 @@ class DataVisualizer:
             })
 
         # Convert aggregated list to DataFrame
-        aggregated_patients_table = pd.DataFrame(postal_agg)
+        aggregated_intensive_patients_table = pd.DataFrame(postal_agg_intensive)
 
-        return created_patients_table, created_hospitals_table, aggregated_patients_table
+        for postal_code, group in intermediate_patients_df.groupby('Postal Code'):
+            # Determine the closest hospital for each postal code based on patient data
+            closest_hospital = group['Vicinity to Hospital'].mode()[0]
+            # Calculate the center coordinates of the postal code
+            postal_center = get_fsa_center(postal_code)
+            # Calculate the distance from the center to the closest hospital
+            # closest_hospital_coords = get_hospital_coord(closest_hospital)
+            # center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
+            # Compute average and standard deviation of distances to the closest hospital for this postal code
+            avg_distance = group['Distance to Closest Hospital'].mean()
+            if len(group['Distance to Closest Hospital']) > 1:
+                std_distance = group['Distance to Closest Hospital'].std()
+                # Calculate the distance from the center to the closest hospital
+                closest_hospital_coords = get_hospital_coord(closest_hospital)
+                center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
+            else:
+                std_distance = 0
+                # If there is only one patient, the average will be the same as the distance for that patient,
+                # rather than the distance from the center.
+                center_distance_to_closest_hospital = avg_distance
+            # Append the data to the list
+            postal_agg_intermediate.append({
+                "Postal Code": postal_code,
+                "Closest Hospital": closest_hospital,
+                "Center Distance to Closest Hospital": center_distance_to_closest_hospital,
+                "Average Patient Distance": avg_distance,
+                "Patient Distance Std Dev": std_distance
+            })
+        # Convert aggregated list to DataFrame
+        aggregated_intermediate_patients_table = pd.DataFrame(postal_agg_intermediate)
+
+        return intensive_patients_table, intermediate_patients_table, hospitals_table, aggregated_intensive_patients_table, aggregated_intermediate_patients_table
 
 
 
@@ -239,11 +298,15 @@ class DataVisualizer:
             self.generate_statistics_table(table_data, pdf, table_title)
 
 
-    #patient distribution
-    def plot_yearly_patient_distribution(self,patients_df: pd.DataFrame, title, pdf: PdfPages):
+    #patient distribution for intermediate and intensive
+    def plot_yearly_patient_distribution(self,patients_df: pd.DataFrame, pdf: PdfPages, type:str):
         # Ensure 'Date' column is in datetime format to extract the year
         patients_df['Date'] = pd.to_datetime(patients_df['Date'])
         patients_df['Year'] = patients_df['Date'].dt.year
+
+        # Filter results to include only specified patient type (Intensive or Intermediate)
+        if type != "Total":
+            patients_df = patients_df[patients_df['Type'] == type]
 
         # Calculate total accepted patients per hospital, averaged over all years
         total_accepted = patients_df.groupby(['Year', 'Assigned Hospital']).size().reset_index(name='Total Accepted Patients')
@@ -298,74 +361,7 @@ class DataVisualizer:
         # Add labels and title
         ax.set_xlabel('Hospital')
         ax.set_ylabel('Number of Patients')
-        ax.set_title(title)
-        ax.set_xticks([i + 1.5 * bar_width for i in index])
-        ax.set_xticklabels(avg_distribution['Assigned Hospital'], rotation=45)
-        ax.legend()
-
-        # Display the plot
-        plt.tight_layout()
-        pdf.savefig()
-        plt.close()
-
-    def plot_yearly_patient_distribution_NICU(self, patients_df: pd.DataFrame,  title, pdf: PdfPages):
-        # Ensure 'Date' column is in datetime format to extract the year
-        patients_df['Date'] = pd.to_datetime(patients_df['Date'])
-        patients_df['Year'] = patients_df['Date'].dt.year
-        patients_df = patients_df[patients_df['NICU'] == True]
-        # Calculate total accepted patients per hospital, averaged over all years
-        total_accepted = patients_df.groupby(['Year', 'Assigned Hospital']).size().reset_index(name='Total Accepted Patients')
-        avg_total_accepted = total_accepted.groupby('Assigned Hospital')['Total Accepted Patients'].mean().reset_index()
-        # Calculate accepted patients from vicinity (nearest hospital), averaged over all years
-        accepted_from_vicinity = patients_df[patients_df['is it assigned to the nearest hospital'] == True]
-        accepted_from_vicinity = accepted_from_vicinity.groupby(['Year', 'Nearest Hospital']).size().reset_index(name='Accepted from Vicinity')
-        avg_accepted_from_vicinity = accepted_from_vicinity.groupby('Nearest Hospital')['Accepted from Vicinity'].mean().reset_index()
-
-        # Calculate patients accepted in a hospital where they were not the nearest, averaged over all years
-        accepted_elsewhere_closest = patients_df[patients_df['is it assigned to the nearest hospital'] == False]
-        accepted_elsewhere_closest = accepted_elsewhere_closest.groupby(['Year', 'Assigned Hospital']).size().reset_index(name='Accepted From Elsewhere')
-        avg_accepted_elsewhere_closest = accepted_elsewhere_closest.groupby('Assigned Hospital')['Accepted From Elsewhere'].mean().reset_index()
-
-        # Calculate patients closest to a hospital but admitted elsewhere, averaged over all years
-        closest_admitted_elsewhere = patients_df[patients_df['is it assigned to the nearest hospital'] == False]
-        closest_admitted_elsewhere = closest_admitted_elsewhere.groupby(['Year', 'Nearest Hospital']).size().reset_index(name='Closest but Admitted Elsewhere')
-        avg_closest_admitted_elsewhere = closest_admitted_elsewhere.groupby('Nearest Hospital')['Closest but Admitted Elsewhere'].mean().reset_index()
-
-        # Merge all average dataframes on respective keys
-        avg_distribution = avg_total_accepted.merge(avg_accepted_from_vicinity, left_on='Assigned Hospital', right_on='Nearest Hospital', how='left')
-        avg_distribution = avg_distribution.merge(avg_accepted_elsewhere_closest, on='Assigned Hospital', how='left')
-        avg_distribution = avg_distribution.merge(avg_closest_admitted_elsewhere, left_on='Assigned Hospital', right_on='Nearest Hospital', how='left')
-
-        # Drop the extra 'Nearest Hospital' columns from the merge
-        avg_distribution = avg_distribution.drop(columns=['Nearest Hospital_x', 'Nearest Hospital_y'])
-
-        # Fill NaN values with 0
-        avg_distribution = avg_distribution.fillna(0)
-
-        # Plot the graph
-        fig, ax = plt.subplots(figsize=(12, 6))
-
-        # Set the width of the bars
-        bar_width = 0.2
-        index = range(len(avg_distribution))
-
-        # Plot each type of patient distribution
-        ax.bar(index, avg_distribution['Total Accepted Patients'], bar_width, label='Total Accepted Patients')
-        ax.bar([i + bar_width for i in index], avg_distribution['Accepted from Vicinity'], bar_width, label='Accepted from Vicinity')
-        ax.bar([i + 2 * bar_width for i in index], avg_distribution['Accepted From Elsewhere'], bar_width, label='Accepted From Elsewhere')
-        ax.bar([i + 3 * bar_width for i in index], avg_distribution['Closest but Admitted Elsewhere'], bar_width, label='Closest but Admitted Elsewhere')
-
-        # Add total number at the top of each bar
-        for idx, row in avg_distribution.iterrows():
-            ax.text(idx, row['Total Accepted Patients'], int(row['Total Accepted Patients']), ha='center', va='bottom')
-            ax.text(idx + bar_width, row['Accepted from Vicinity'], int(row['Accepted from Vicinity']), ha='center', va='bottom')
-            ax.text(idx + 2 * bar_width, row['Accepted From Elsewhere'], int(row['Accepted From Elsewhere']), ha='center', va='bottom')
-            ax.text(idx + 3 * bar_width, row['Closest but Admitted Elsewhere'], int(row['Closest but Admitted Elsewhere']), ha='center', va='bottom')
-
-        # Add labels and title
-        ax.set_xlabel('Hospital')
-        ax.set_ylabel('Number of Patients')
-        ax.set_title(title)
+        ax.set_title(f"Yearly {type} Patients Distribution")
         ax.set_xticks([i + 1.5 * bar_width for i in index])
         ax.set_xticklabels(avg_distribution['Assigned Hospital'], rotation=45)
         ax.legend()
@@ -377,10 +373,14 @@ class DataVisualizer:
 
 
     # The probability chart which shows if a patient is in a vicinity of a hospital, what are chances of acceptance by the hospital.
-    def plot_acceptance_probability(self,patients_df: pd.DataFrame ,title, pdf: PdfPages):
+    def plot_acceptance_probability(self,patients_df: pd.DataFrame, pdf: PdfPages ,type:str):
         # Ensure 'Date' column is in datetime format to extract the year
         patients_df['Date'] = pd.to_datetime(patients_df['Date'])
         patients_df['Year'] = patients_df['Date'].dt.year
+
+        # Filter results to include only specified patient type (Intensive or Intermediate)
+        if type != "Total":
+            patients_df = patients_df[patients_df['Type'] == type]
 
         # Calculate total patients in the vicinity for each hospital, averaged over all years
         patients_in_vicinity = patients_df.groupby(['Year', 'Assigned Hospital']).size().reset_index(name='Total Patients in Vicinity')
@@ -411,49 +411,7 @@ class DataVisualizer:
         # Add labels and title
         ax.set_xlabel('Hospital')
         ax.set_ylabel('Probability of Acceptance')
-        ax.set_title(title)
-        ax.set_ylim(0, 1)  # Limit y-axis to [0, 1] for probability
-        ax.legend()
-
-        plt.tight_layout()
-        pdf.savefig()
-        plt.close()
-    # The probability chart which shows if a NICU patient is in a vicinity of a hospital, what are chances of acceptance by the hospital.
-    def plot_acceptance_probability_NICU(self, patients_df: pd.DataFrame,title, pdf: PdfPages):
-        # Ensure 'Date' column is in datetime format to extract the year
-        patients_df['Date'] = pd.to_datetime(patients_df['Date'])
-        patients_df['Year'] = patients_df['Date'].dt.year
-        patients_df = patients_df[patients_df['NICU'] == True]
-        # Calculate total patients in the vicinity for each hospital, averaged over all years
-        patients_in_vicinity = patients_df.groupby(['Year', 'Assigned Hospital']).size().reset_index(name='Total Patients in Vicinity')
-        avg_patients_in_vicinity = patients_in_vicinity.groupby('Assigned Hospital')['Total Patients in Vicinity'].mean().reset_index()
-
-        # Calculate accepted patients from vicinity (nearest hospital), averaged over all years
-        accepted_from_vicinity = patients_df[patients_df['is it assigned to the nearest hospital'] == True]
-        accepted_from_vicinity = accepted_from_vicinity.groupby(['Year', 'Assigned Hospital']).size().reset_index(name='Accepted from Vicinity')
-        avg_accepted_from_vicinity = accepted_from_vicinity.groupby('Assigned Hospital')['Accepted from Vicinity'].mean().reset_index()
-
-        # Merge to get total patients in vicinity and accepted patients from vicinity
-        vicinity_distribution = avg_patients_in_vicinity.merge(avg_accepted_from_vicinity, on='Assigned Hospital', how='left')
-        
-        # Fill NaN values with 0
-        vicinity_distribution = vicinity_distribution.fillna(0)
-        
-        # Calculate probability of acceptance for each hospital
-        vicinity_distribution['Acceptance Probability'] = vicinity_distribution['Accepted from Vicinity'] / vicinity_distribution['Total Patients in Vicinity']
-
-        # Plot the probability chart
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.bar(vicinity_distribution['Assigned Hospital'], vicinity_distribution['Acceptance Probability'], color='skyblue', label='Acceptance Probability')
-
-        # Add probability at the top of each bar
-        for idx, row in vicinity_distribution.iterrows():
-            ax.text(idx, row['Acceptance Probability'], f"{row['Acceptance Probability']:.2f}", ha='center', va='bottom')
-
-        # Add labels and title
-        ax.set_xlabel('Hospital')
-        ax.set_ylabel('Probability of Acceptance')
-        ax.set_title(title)
+        ax.set_title(f"Acceptance Probability for {type} Patients in the Vicinity")
         ax.set_ylim(0, 1)  # Limit y-axis to [0, 1] for probability
         ax.legend()
 
@@ -462,20 +420,23 @@ class DataVisualizer:
         plt.close()
 
     # Another chart per hospital that shows the percentage of accepted patients by distance.
-    def accepted_patients_by_distance(self, results_df: pd.DataFrame,pdf: PdfPages):
+    def accepted_patients_by_distance(self, patients_df: pd.DataFrame,pdf: PdfPages, type:str):
         # Convert the Date column to datetime format
-        results_df['Date'] = pd.to_datetime(results_df['Date'])
+        patients_df['Date'] = pd.to_datetime(patients_df['Date'])
         # manually restrict it for now 
-        results_df = results_df[results_df['Assigned Distance'] < 1000]
+        patients_df = patients_df[patients_df['Assigned Distance'] < 1000]
         # Group distances into bins of 10 km increments
-        results_df = results_df.copy()
-        results_df['Distance Bin'] = (results_df['Assigned Distance'] // 10) * 10
+        patients_df = patients_df.copy()
+        patients_df['Distance Bin'] = (patients_df['Assigned Distance'] // 10) * 10
         # Get the list of unique hospitals for creating individual charts
-        hospitals = results_df['Nearest Hospital'].unique()
+        hospitals = patients_df['Nearest Hospital'].unique()
+        # Filter results to include only specified patient type (Intensive or Intermediate)
+        if type != "Total":
+            patients_df = patients_df[patients_df['Type'] == type]
 
         for hospital in hospitals:
             # Filter the data for the specific hospital
-            hospital_data = results_df[results_df['Assigned Hospital'] == hospital]
+            hospital_data = patients_df[patients_df['Assigned Hospital'] == hospital]
             
             # Total number of accepted patients at this hospital
             total_patients = len(hospital_data)
@@ -497,7 +458,7 @@ class DataVisualizer:
             # Plot the bar chart for this hospital
             plt.figure(figsize=(12, 6))
             plt.bar(distance_percentages.index, distance_percentages, color=colors, width=8)
-            plt.title(f"Percentage of Accepted Patients by Distance for {hospital}")
+            plt.title(f"Percentage of Accepted {type} Patients by Distance for {hospital}")
             plt.xlabel("Distance from Hospital (km)")
             plt.ylabel("Percentage of Patients")
 
@@ -519,77 +480,15 @@ class DataVisualizer:
             pdf.savefig()
             plt.close()
 
-    # Separate the NICU patients 
-
-    # Another chart per hospital that shows the percentage of accepted NICU patients by distance.
-    def accepted_patients_by_distance_NICU(self,results_df: pd.DataFrame, pdf: PdfPages):
-        # Convert the Date column to datetime format
-        results_df['Date'] = pd.to_datetime(results_df['Date'])
-        results_df = results_df[results_df['Assigned Distance'] <= 1000]
-
-        # Filter for NICU patients 
-        results_df = results_df[results_df['NICU'] == True]
-
-        # Group distances into bins of 10 km increments
-        results_df = results_df.copy()
-        results_df['Distance Bin'] = (results_df['Assigned Distance'] // 10) * 10
-
-        # Get the list of unique hospitals for creating individual charts
-        hospitals = results_df['Nearest Hospital'].unique()
-
-        for hospital in hospitals:
-            # Filter the data for the specific hospital
-            hospital_data = results_df[results_df['Assigned Hospital'] == hospital]
-            
-            # Total number of accepted patients at this hospital
-            total_patients = len(hospital_data)
-            
-            # Calculate the percentage of patients in each distance bin
-            distance_counts = hospital_data.groupby('Distance Bin').size()
-            distance_percentages = (distance_counts / total_patients) * 100
-            
-            # Prepare color list for each bin
-            colors = []
-            for bin in distance_percentages.index:
-                # Check if patients in this bin were assigned to the nearest hospital
-                is_nearest = hospital_data[hospital_data['Distance Bin'] == bin]['is it assigned to the nearest hospital'].any()
-                if is_nearest:
-                    colors.append('green')  # Green if closest
-                else:
-                    colors.append('red')    # Red if not closest
-
-            # Plot the bar chart for this hospital
-            plt.figure(figsize=(12, 6))
-            plt.bar(distance_percentages.index, distance_percentages, color=colors, width=8)
-            plt.title(f"Percentage of Accepted NICU Patients by Distance for {hospital}")
-            plt.xlabel("Distance from Hospital (km)")
-            plt.ylabel("Percentage of Patients")
-
-            # Create legend patches 
-            closest_patch = mpatches.Patch(color='green', label='Accepted from Vicinity of the hospital')
-            not_closest_patch = mpatches.Patch(color='red', label='Accepted from Vicinity of other hospitals')
-            
-            # Add legend to the plot
-            plt.legend(handles=[closest_patch, not_closest_patch])
-
-            # Rotate x-axis labels for readability
-            plt.xticks(rotation=45)
-            # Set x-ticks to show fewer labels if there are many bins
-            #plt.xticks(distance_percentages.index[::2])  # Show every other bin     
-            plt.xticks(distance_percentages.index)  # Show every bin with 45-degree rotation for readability  
-            # Save the plot to the PDF
-            pdf.savefig()
-            plt.close()
-
-    def probability_distribution_patients(self, results_df: pd.DataFrame, pdf: PdfPages):
+    def probability_distribution_patients(self, patients_df: pd.DataFrame, pdf: PdfPages):
         # Plot 1: Probability distribution for patients closest to each hospital (regardless of admission)
-        results_df['Date'] = pd.to_datetime(results_df['Date'])
+        patients_df['Date'] = pd.to_datetime(patients_df['Date'])
         
         # Extract year from Date column
-        results_df['Year'] = results_df['Date'].dt.year
+        patients_df['Year'] = patients_df['Date'].dt.year
 
         # Calculate total patient count per hospital for each year
-        yearly_counts = results_df.groupby(['Year', 'Nearest Hospital']).size().reset_index(name='Yearly Patient Count')
+        yearly_counts = patients_df.groupby(['Year', 'Nearest Hospital']).size().reset_index(name='Yearly Patient Count')
         # Define x-values for the patient count range based on observed data
         x_values = np.linspace(0, yearly_counts['Yearly Patient Count'].max() + 10 , 100)
         
@@ -632,13 +531,13 @@ class DataVisualizer:
             self.generate_statistics_table(table_data, pdf, table_title)
 
         # Plot 2: Probability distribution for the number of patients closest to each hospital but admitted elsewhere
-        results_df['Date'] = pd.to_datetime(results_df['Date'])
+        patients_df['Date'] = pd.to_datetime(patients_df['Date'])
         
         # Extract year from Date column
-        results_df['Year'] = results_df['Date'].dt.year
+        patients_df['Year'] = patients_df['Date'].dt.year
         
         # Filter for patients not assigned to the nearest hospital
-        filtered_data = results_df[results_df['is it assigned to the nearest hospital'] == False]
+        filtered_data = patients_df[patients_df['is it assigned to the nearest hospital'] == False]
         
         # Calculate total patient count per hospital for each year
         yearly_counts = filtered_data.groupby(['Year', 'Nearest Hospital']).size().reset_index(name='Yearly Patient Count')

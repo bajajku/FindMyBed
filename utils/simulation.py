@@ -254,8 +254,9 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
                 paused = False
 
     pygame.quit()
-    print(total_patients)
-    print(recommendation_system.get_queue_size())
+    print(f"Total Paitents:{total_patients}")
+    print(f"Queue {recommendation_system.get_queue_size()}")
+    print(f"Patietns who are assigned to the hospitals {total_patients- recommendation_system.get_queue_size()}")
     # Create a DataFrame from the results
     results_df = pd.DataFrame(results)
     patients_df = pd.DataFrame(patients_data)

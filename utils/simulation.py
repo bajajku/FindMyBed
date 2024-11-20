@@ -1,11 +1,13 @@
 import random
 import math
+from time import sleep
 import numpy as np
 from models.patient import Patient
 from models.recommendation import HospitalRecommendation
 from utils.constants import *
 from utils.data_loader import DataLoader
 from utils.geographic import generate_patient_coords
+
 
 def simulate_hospital_system(num_days, excel):
     total_patients = 0 # Declare total_patients as global within the function
@@ -21,8 +23,11 @@ def simulate_hospital_system(num_days, excel):
     for n in range(num_days):
         print(f"\n{'='*20} Day {n + 1} {'='*20}")
 
-        arrivedDischarged = {"CHU-SJ":[0,0,0,0], "CHUQ":[0,0,0,0], "CHUS":[0,0,0,0], 
-                           "CUSM":[0,0,0,0], "HGJ":[0,0,0,0], "HMR":[0,0,0,0]}
+        arrivedDischarged = {
+            hospital: [0, 0, 0, 0,  # Existing counts
+                      0, 0, 0]      # Birth center, antepartum, postpartum occupancy
+            for hospital in hospitalList
+        }
         
         # Loop through each arrival time (9, 14, 21)
         for arrival_time in ARRIVAL_TIMES:
@@ -54,42 +59,75 @@ def simulate_hospital_system(num_days, excel):
                 gps_pos = generate_patient_coords(HOSPITALS_CONFIG)
 
                 if patient_type == "Maternal":
-                    num_special_needs = random.randint(1, 3)
-                    special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, num_special_needs)
+                    # Determine if delivery is within 24 hours
+                    del24HrPlus = random.choice([True, False])
+                    
+                    # Probability that baby will need NICU care (adjust these probabilities as needed)
+                    nicu_needed = random.random() < 0.15  # 15% chance of NICU need
+                    
+                    if nicu_needed:
+                        # Add both maternal and neonatal needs
+                        maternal_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 2))
+                        neonatal_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
+                        special_needs = maternal_needs + neonatal_needs
+                    else:
+                        # Only maternal needs
+                        num_special_needs = random.randint(1, 2)
+                        special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, num_special_needs)
+
+                    # Create maternal patient
+                    patient = Patient(
+                        patientType="Maternal",
+                        gpsPos=gps_pos,
+                        bedType="BirthCenter" if not del24HrPlus else "Antepartum",
+                        del24HrPlus=del24HrPlus,
+                        transportNeedCnt=random.randint(0, 3),
+                        specialNeedType=",".join(special_needs),
+                        specialNeeds=special_needs,
+                        nicu_needed=nicu_needed,  # Add this field to Patient class
+                        arrival_time=arrival_time
+                    )
+                    
                 else:
-                    num_special_needs = random.randint(1, 2)
-                    special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, num_special_needs)
-
-                bed_type = random.choice(BED_TYPE)
-
-                # Create a patient
-                patient = Patient(
-                    patientType=patient_type,
-                    gpsPos=gps_pos,
-                    bedType=bed_type,
-                    del24HrPlus=random.choice([True, False]),
-                    transportNeedCnt=random.randint(0, 3),
-                    specialNeedType=",".join(special_needs),
-                    specialNeeds=special_needs,
-                    arrival_time=arrival_time
-                )
+                    special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
+                    patient = Patient(
+                        patientType="Neonatal",
+                        gpsPos=gps_pos,
+                        bedType=random.choice(["Intensive", "Intermediate"]),
+                        del24HrPlus=None,
+                        transportNeedCnt=random.randint(0, 3),
+                        specialNeedType=",".join(special_needs),
+                        specialNeeds=special_needs,
+                        nicu_needed=True,  # Add this field to Patient class
+                        arrival_time=arrival_time
+                    )
 
                 # Run the patient through the recommendation system
                 print(f"\nProcessing Patient {i + 1}")
                 recommendation_system.run(patient)
+
                 
                 # Print current hospital capacities
                 for hospital in HOSPITALS:
                     print(f"Current capacity for {hospital.name}:")
-                    print(f"  - Intensive Care: {math.floor(hospital.available_beds[0])}/{hospital.total_capacity_intensive}")
-                    print(f"  - Intermediate Care: {math.floor(hospital.available_beds[1])}/{hospital.total_capacity_intermediate}")
-                    print(f"  - Total Available: {math.floor(hospital.available_beds[0] + hospital.available_beds[1])}")
+                    print(f"  - Intensive Care: {hospital.get_occupancy_rate('Intensive'):.2%}")
+                    print(f"  - Intermediate Care: {hospital.get_occupancy_rate('Intermediate'):.2%}")
+                    print(f"  - Birth Center: {hospital.get_occupancy_rate('BirthCenter'):.2%}")
+                    print(f"  - Antepartum: {hospital.get_occupancy_rate('Antepartum'):.2%}")
+                    print(f"  - Postpartum: {hospital.get_occupancy_rate('Postpartum'):.2%}")
+                    print(f"  - Total Available: {hospital.get_occupancy_rate_overall():.2%}")
 
                 if patient.assignedHospital != "":
                     arrivedDischarged[patient.assignedHospital][0] += 1
+                
+
+        
 
         # Record daily statistics
         for hospital in HOSPITALS:
+            print(f"Patient distribution for {hospital.name}:")
+            for bed_type in hospital.patients:
+                print(f"  - {bed_type}: {len(hospital.patients[bed_type])}")
             results.append({
                 "Day": n + 1,
                 "Hospital": hospital.name,
@@ -98,5 +136,6 @@ def simulate_hospital_system(num_days, excel):
                 "Intensive Occupancy Rate": max(0, min(1, arrivedDischarged[hospital.name][2]/3)),
                 "Intermediate Occupancy Rate": max(0, min(1, arrivedDischarged[hospital.name][3]/3))
             })
+        
 
     return results

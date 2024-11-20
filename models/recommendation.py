@@ -81,7 +81,7 @@ class HospitalRecommendation:
             arrived_discharged: Dictionary tracking patient movement
         """
         time_index = ARRIVAL_TIMES.index(arrival_time)
-        logging.info("Discharging patients from all hospitals...")
+        print("Discharging patients from all hospitals...")
         
         for hospital in self.hospitals:
             hospital.discharge_patients(time_index, arrived_discharged)
@@ -106,36 +106,26 @@ class HospitalRecommendation:
             return
         if self.patient.homeHospital not in self.available_hospitals:
             self.available_hospitals.append(self.patient.homeHospital)
-        logging.info(f"Patient's preferred hospital added to Available Hospital List: {self.patient.homeHospital}")
+        print(f"Patient's preferred hospital added to Available Hospital List: {self.patient.homeHospital}")
 
     def determine_services(self) -> None:
         """Filter hospitals based on service availability and occupancy rate."""
         if not self.patient:
             return
 
-        logging.info(f"Determining services for {self.patient.patientType} "
-                    f"patient with needs {self.patient.specialNeeds}")
-
-        # Set occupancy threshold based on bed type
-        occupancy_threshold = (INTENSIVE_OCCUPANCY_THRESHOLD 
-                             if self.patient.bedType == 'Intensive' 
-                             else INTERMEDIATE_OCCUPANCY_THRESHOLD)
-
         self.available_hospitals = [
             hospital for hospital in self.hospitals
-            if (hospital.can_treat_patient(self.patient) and
-                hospital.get_occupancy_rate(self.patient.bedType) < occupancy_threshold)
+            if hospital.can_admit_patient(self.patient)
         ]
 
-        logging.info(f"Available hospitals meeting criteria: "
-                    f"{[hospital.name for hospital in self.available_hospitals]}")
+        print(f"Filtered hospitals based on services and occupancy: {[h.name for h in self.available_hospitals]}")
 
     def filter_bed_type(self) -> None:
         """Filter hospitals based on bed type availability."""
         if not self.available_hospitals or not self.patient:
             return
 
-        logging.info(f"Filtering hospitals by bed type: {self.patient.bedType}")
+        print(f"Filtering hospitals by bed type: {self.patient.bedType}")
         
         self.available_hospitals = [
             hospital for hospital in self.available_hospitals
@@ -147,7 +137,7 @@ class HospitalRecommendation:
         if not self.available_hospitals or not self.patient:
             return
 
-        logging.info(f"Sorting hospitals by distance from patient at {self.patient.gpsPos}")
+        print(f"Sorting hospitals by distance from patient at {self.patient.gpsPos}")
         
         self.available_hospitals.sort(
             key=lambda hospital: calculate_distance(
@@ -156,9 +146,10 @@ class HospitalRecommendation:
             )
         )
 
-        logging.info(f"Sorted hospitals by distance: "
+        print(f"Sorted hospitals by distance: "
                     f"{[hospital.name for hospital in self.available_hospitals]}")
 
+    # Actual recommendation system function, will be used in the actual system
     def get_top_hospitals(self) -> List[Hospital]:
         """
         Get top 3 hospitals based on specified criteria and sorting logic.
@@ -173,35 +164,28 @@ class HospitalRecommendation:
         # 1. Initial Home Hospital Check
         if self.patient.homeHospital:
             home_hospital = self.patient.homeHospital
-            if (home_hospital.can_treat_patient(self.patient) and 
-                home_hospital.get_occupancy_rate_overall() < 90):
+            if home_hospital.can_admit_patient(self.patient):
                 preferred_hospitals.append(home_hospital)
 
-        # 2 & 3. Evaluate Each Hospital based on services and occupancy
+        # 2. Evaluate Each Hospital based on services and occupancy
         for hospital in self.hospitals:
             if hospital in preferred_hospitals:
                 continue
                 
-            # Check if hospital can provide required services
-            if not hospital.can_treat_patient(self.patient):
-                continue
+            # Check occupancy rates based on patient type and needs
+            if hospital.can_admit_patient(self.patient):
+                preferred_hospitals.append(hospital)
 
-            # Get applicable occupancy rates based on patient type and needs
-            occupancy_rate = hospital.get_occupancy_rate_per_patientType_per_bedType(self.patient)
-            if occupancy_rate is None or occupancy_rate >= 0.9:  # 90% threshold
-                continue
-
-            # If we reach here, hospital meets all criteria
-            preferred_hospitals.append(hospital)
-
-        # 4. Sort hospitals by distance
+        # 3. Sort hospitals by distance
         preferred_hospitals.sort(
             key=lambda h: calculate_distance(h.geolocation, self.patient.gpsPos)
         )
 
-        # 5. Return top 3 choices
+        # Return top 3 choices
         return preferred_hospitals[:3]
 
+    # Function to recommend hospital, only for simulation
+    # has no effect on the actual system
     def recommend_hospital(self) -> None:
         """
         Recommend and assign the most suitable hospital or queue the patient.
@@ -222,7 +206,7 @@ class HospitalRecommendation:
         
         if success:
             self.selected_hospital.assigned_patients += 1
-            logging.info(f"Patient assigned to {self.selected_hospital.name}")
+            print(f"Patient assigned to {self.selected_hospital.name}")
         else:
             self.queue.append(self.patient)
             logging.warning("Admission failed. Patient added to queue.")
@@ -235,7 +219,7 @@ class HospitalRecommendation:
             patient: Patient object to process
         """
         self.patient = patient
-        logging.info("\nProcessing new patient...\n")
+        print("\nProcessing new patient...\n")
         
         # Execute state machine transitions
         self.process_input()

@@ -5,6 +5,7 @@ from models.hospital import Hospital
 from utils.constants import *
 from utils.geographic import calculate_distance
 import logging
+from utils.admission import admit_patient
 
 class HospitalRecommendation:
     """
@@ -72,33 +73,6 @@ class HospitalRecommendation:
             dest='input'
         )
 
-    def discharge_all_patients(self, arrival_time: int, arrived_discharged: dict) -> None:
-        """
-        Discharge patients from all hospitals at a given arrival time.
-        
-        Args:
-            arrival_time: Time of day for patient discharge
-            arrived_discharged: Dictionary tracking patient movement
-        """
-        time_index = ARRIVAL_TIMES.index(arrival_time)
-        print("Discharging patients from all hospitals...")
-        
-        for hospital in self.hospitals:
-            hospital.discharge_patients(time_index, arrived_discharged)
-
-    def patient_type_check(self) -> None:
-        """
-        Checks for patient type Maternal or Neonatal in order to recognize what lists to use:
-        Based on nicuBedType (if NICU is required):
-            -> For Intensive NICU: Use ocpyRateNicuIntensive and ocpyRateOverallLst.
-            -> For Immediate NICU: Use ocpyRateNicuImmediate and ocpyRateOverallLst.
-            -> For Maternal patients:
-            -> If Neonatal services are required (e.g., the baby may need NICU care post-birth):
-            -> Use ocpyRateObstetrics with either ocpyRateNicuIntensive or ocpyRateNicuImmediate as required, along with ocpyRateOverallLst.
-            -> If only Obstetrics is needed: Use ocpyRateObstetrics alone.
-
-        """
-
 
     def home_hospital_check(self) -> None:
         """Adds Patient's Home Hospital in hospital's list if Applicable."""
@@ -164,7 +138,8 @@ class HospitalRecommendation:
         # 1. Initial Home Hospital Check
         if self.patient.homeHospital:
             home_hospital = self.patient.homeHospital
-            if home_hospital.can_admit_patient(self.patient):
+            home_hospital_obj = next((h for h in self.hospitals if h.name == home_hospital), None)
+            if home_hospital_obj and home_hospital_obj.can_admit_patient(self.patient):
                 preferred_hospitals.append(home_hospital)
 
         # 2. Evaluate Each Hospital based on services and occupancy
@@ -202,7 +177,7 @@ class HospitalRecommendation:
             
         # For simulation compatibility, try to assign to first recommended hospital
         self.selected_hospital = recommended_hospitals[0]
-        success = self.selected_hospital.admit_patient(self.patient)
+        success = admit_patient(self.selected_hospital, self.patient)
         
         if success:
             self.selected_hospital.assigned_patients += 1

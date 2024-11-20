@@ -2,11 +2,89 @@ import random
 import math
 from time import sleep
 import numpy as np
+from models.hospital import Hospital
 from models.patient import Patient
 from models.recommendation import HospitalRecommendation
 from utils.constants import *
 from utils.data_loader import DataLoader
 from utils.geographic import generate_patient_coords
+from utils.admission import admit_patient
+
+# concerned with simulation
+def discharge_all_patients(hospitals: list[Hospital], arrival_time: int, arrived_discharged: dict) -> None:
+    """
+    Discharge patients from all hospitals at a given arrival time.
+    
+    Args:
+        arrival_time: Time of day for patient discharge
+        arrived_discharged: Dictionary tracking patient movement
+    """
+    time_index = ARRIVAL_TIMES.index(arrival_time)
+    print("Discharging patients from all hospitals...")
+    
+    for hospital in hospitals:
+        discharge_patients(hospital, time_index, arrived_discharged)
+
+
+# this function should be in simulation.py, as Hospital class should only handle patient admissions and discharges.
+def discharge_patients(hospital: Hospital, time_index, arrivedDischarged):
+    discharged_count = 0
+    
+    # NICU discharges
+    num_discharged_intensive = np.random.poisson(hospital.get_discharge_rate(time_index, "Intensive"))
+    num_discharged_intermediate = np.random.poisson(hospital.get_discharge_rate(time_index, "Intermediate"))
+    
+    # Maternal discharges (using similar rates for now)
+    num_discharged_birthcenter = np.random.poisson(hospital.discharge_rates[time_index] * 0.3)
+    num_discharged_antepartum = np.random.poisson(hospital.discharge_rates[time_index] * 0.3)
+    num_discharged_postpartum = np.random.poisson(hospital.discharge_rates[time_index] * 0.3)
+    
+    # Process NICU discharges
+    for bed_type, num_discharge, bed_index in [
+        ("Intensive", num_discharged_intensive, 0),
+        ("Intermediate", num_discharged_intermediate, 1)
+    ]:
+        for _ in range(min(num_discharge, len(hospital.patients[bed_type]))):
+            hospital.patients[bed_type].pop()
+            hospital.available_beds[bed_index] += 1
+            discharged_count += 1
+            arrivedDischarged[hospital.name][1] += 1
+    
+    # Process maternal discharges
+    for bed_type, num_discharge, bed_index in [
+        ("BirthCenter", num_discharged_birthcenter, 2),
+        ("Antepartum", num_discharged_antepartum, 3),
+        ("Postpartum", num_discharged_postpartum, 4)
+    ]:
+        for _ in range(min(num_discharge, len(hospital.patients[bed_type]))):
+            hospital.patients[bed_type].pop()
+            hospital.available_beds[bed_index] += 1
+            discharged_count += 1
+            arrivedDischarged[hospital.name][1] += 1
+    
+    print(f"{hospital.name}: Discharged {discharged_count} patients at time {ARRIVAL_TIMES[time_index]}")
+    return discharged_count
+
+def prepopulate_patients(hospital: Hospital) -> None:
+    occupied_beds_intensive = max(0, round(hospital.total_capacity_intensive - hospital.available_beds[0]))
+    occupied_beds_intermediate = max(0, round(hospital.total_capacity_intermediate - hospital.available_beds[1]))
+
+    # Create dummy patients for each bed type
+    for bed_type, count in [("Intensive", occupied_beds_intensive), 
+                            ("Intermediate", occupied_beds_intermediate)]:
+        for _ in range(count):
+            dummy_patient = Patient(
+                patientType=random.choice(PATIENT_TYPE),
+                gpsPos=hospital.geolocation,
+                bedType=bed_type,
+                del24HrPlus=False,
+                transportNeedCnt=0,
+                specialNeedType="None",
+                specialNeeds=["None"],
+                arrival_time=random.choice(ARRIVAL_TIMES)
+            )
+            hospital.patients[bed_type].append(dummy_patient)
+
 
 
 def simulate_hospital_system(num_days, excel):
@@ -16,6 +94,8 @@ def simulate_hospital_system(num_days, excel):
     data_loader.load_data(excel_file=excel)
 
     HOSPITALS = data_loader.create_hospitals()
+    for hospital in HOSPITALS:
+        prepopulate_patients(hospital)
     recommendation_system = HospitalRecommendation(HOSPITALS)
     results = []
     hospitalList = ["CHU-SJ", "CHUQ", "CHUS", "CUSM", "HGJ", "HMR"]
@@ -32,7 +112,7 @@ def simulate_hospital_system(num_days, excel):
         # Loop through each arrival time (9, 14, 21)
         for arrival_time in ARRIVAL_TIMES:
             print(f"\n{'*'*10} Arrival Time {arrival_time}:00 {'*'*10}")
-            recommendation_system.discharge_all_patients(arrival_time, arrivedDischarged)
+            discharge_all_patients(HOSPITALS, arrival_time, arrivedDischarged)
             
             # Generate a random number of patients for this arrival time
             arrival_rate_index = ARRIVAL_TIMES.index(arrival_time)

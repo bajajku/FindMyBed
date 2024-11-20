@@ -26,14 +26,16 @@ def main():
     print(f"Report generated: {REPORT}")
 
     # Create tables
-    created_patients_table, created_hospital_table, aggregated_patients_table = visualizer.create_patients_table(
-        patients_df)
+    intensive_patients_table, intermediate_patients_table, created_hospital_table, aggregated_intensive_patients_table, aggregated_intermediate_patients_table = visualizer.create_patients_table(patients_df)
 
     # Save tables to an Excel file with specified sheet names
     with pd.ExcelWriter(TABLE) as writer:
-        created_patients_table.to_excel(writer, sheet_name="Sheet1", index=False)
-        created_hospital_table.to_excel(writer, sheet_name="Sheet2", index=False)
-        aggregated_patients_table.to_excel(writer, sheet_name="Sheet3", index=False)
+        created_hospital_table.to_excel(writer, sheet_name="Hospitals", index=False)
+        intensive_patients_table.to_excel(writer, sheet_name="Intensive Patients", index=False)
+        intermediate_patients_table.to_excel(writer, sheet_name="Intermediate Patients", index=False)
+        aggregated_intensive_patients_table.to_excel(writer, sheet_name="Aggregated Intensive Patients", index=False)
+        aggregated_intermediate_patients_table.to_excel(writer, sheet_name="Aggregated Intermediate Patients",
+                                                        index=False)
         print(f"Table generated: {TABLE}")
 
 if __name__ == "__main__":

@@ -23,6 +23,9 @@ class DataLoader:
         self.total_capacity = None
         self.total_capacity_intensive = None
         self.total_capacity_intermediate = None
+        # new attributes for the new data
+        self.birth_rates_by_fsa = None
+        self.transfer_percentage = None
 
     @staticmethod
     def parse_into_list_of_lists(df_col: pd.Series) -> List[List[float]]:

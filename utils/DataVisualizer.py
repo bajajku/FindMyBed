@@ -45,13 +45,30 @@ class DataVisualizer:
             "Nearest Distance": "Distance to Closest Hospital"
         })
 
-        # Patient table with postal code, vicinity hospital, and distance to closest hospital
-        created_patients_table = patients_df[[
+        # Create a new column to indicate transferred status for readability
+        patients_df["Type and Transfer Status"] = patients_df.apply(
+            lambda row: f"{row['Type']} Transferred" if row['Transferred'] else f"{row['Type']} Not Transferred", axis=1
+        )
+
+        # Filter for intensive and intermediate patients
+        intensive_patients_df = patients_df[patients_df['Type'] == 'Intensive']
+
+        intermediate_patients_df = patients_df[patients_df['Type'] == 'Intermediate']
+        # Create the intensive patients table
+        intensive_patients_table = intensive_patients_df[[
+            "Type and Transfer Status",
             "Postal Code",
             "Vicinity to Hospital",
             "Distance to Closest Hospital"
         ]]
 
+        # Create the intermediate patients table
+        intermediate_patients_table = intermediate_patients_df[[
+            "Type and Transfer Status",
+            "Postal Code",
+            "Vicinity to Hospital",
+            "Distance to Closest Hospital"
+        ]]
 
         """
         To create a table regarding the hospitals 
@@ -98,7 +115,7 @@ class DataVisualizer:
         ).fillna(0)
 
         # Hospital summary table with hospital name, patient counts, and acceptance percentages
-        created_hospitals_table = hospital_counts_df.reset_index()[[
+        hospitals_table = hospital_counts_df.reset_index()[[
             "Assigned Hospital",  
             "Intermediate Patients",
             "Intensive Patients",
@@ -107,8 +124,9 @@ class DataVisualizer:
             "Percentage of Intensive Accepted by Vicinity Hospital"
         ]]
 
-        postal_agg = []
-        for postal_code, group in patients_df.groupby('Postal Code'):
+        postal_agg_intensive = []
+        postal_agg_intermediate = []
+        for postal_code, group in intensive_patients_df.groupby('Postal Code'):
             # Determine the closest hospital for each postal code based on patient data
             closest_hospital = group['Vicinity to Hospital'].mode()[0]
 
@@ -116,15 +134,25 @@ class DataVisualizer:
             postal_center = get_fsa_center(postal_code)
 
             # Calculate the distance from the center to the closest hospital
-            closest_hospital_coords = get_hospital_coord(closest_hospital)
-            center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
+            # closest_hospital_coords = get_hospital_coord(closest_hospital)
+            # center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
 
             # Compute average and standard deviation of distances to the closest hospital for this postal code
             avg_distance = group['Distance to Closest Hospital'].mean()
-            std_distance = group['Distance to Closest Hospital'].std()
+
+            if len(group['Distance to Closest Hospital']) > 1:
+                std_distance = group['Distance to Closest Hospital'].std()
+                # Calculate the distance from the center to the closest hospital
+                closest_hospital_coords = get_hospital_coord(closest_hospital)
+                center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
+            else:
+                std_distance = 0
+                # If there is only one patient, the average will be the same as the distance for that patient,
+                # rather than the distance from the center.
+                center_distance_to_closest_hospital = avg_distance
 
             # Append the data to the list
-            postal_agg.append({
+            postal_agg_intensive.append({
                 "Postal Code": postal_code,
                 "Closest Hospital": closest_hospital,
                 "Center Distance to Closest Hospital": center_distance_to_closest_hospital,
@@ -133,9 +161,40 @@ class DataVisualizer:
             })
 
         # Convert aggregated list to DataFrame
-        aggregated_patients_table = pd.DataFrame(postal_agg)
+        aggregated_intensive_patients_table = pd.DataFrame(postal_agg_intensive)
 
-        return created_patients_table, created_hospitals_table, aggregated_patients_table
+        for postal_code, group in intermediate_patients_df.groupby('Postal Code'):
+            # Determine the closest hospital for each postal code based on patient data
+            closest_hospital = group['Vicinity to Hospital'].mode()[0]
+            # Calculate the center coordinates of the postal code
+            postal_center = get_fsa_center(postal_code)
+            # Calculate the distance from the center to the closest hospital
+            # closest_hospital_coords = get_hospital_coord(closest_hospital)
+            # center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
+            # Compute average and standard deviation of distances to the closest hospital for this postal code
+            avg_distance = group['Distance to Closest Hospital'].mean()
+            if len(group['Distance to Closest Hospital']) > 1:
+                std_distance = group['Distance to Closest Hospital'].std()
+                # Calculate the distance from the center to the closest hospital
+                closest_hospital_coords = get_hospital_coord(closest_hospital)
+                center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
+            else:
+                std_distance = 0
+                # If there is only one patient, the average will be the same as the distance for that patient,
+                # rather than the distance from the center.
+                center_distance_to_closest_hospital = avg_distance
+            # Append the data to the list
+            postal_agg_intermediate.append({
+                "Postal Code": postal_code,
+                "Closest Hospital": closest_hospital,
+                "Center Distance to Closest Hospital": center_distance_to_closest_hospital,
+                "Average Patient Distance": avg_distance,
+                "Patient Distance Std Dev": std_distance
+            })
+        # Convert aggregated list to DataFrame
+        aggregated_intermediate_patients_table = pd.DataFrame(postal_agg_intermediate)
+
+        return intensive_patients_table, intermediate_patients_table, hospitals_table, aggregated_intensive_patients_table, aggregated_intermediate_patients_table
 
 
 

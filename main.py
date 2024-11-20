@@ -33,8 +33,8 @@ def main():
         created_hospital_table.to_excel(writer, sheet_name="Hospitals", index=False)
         intensive_patients_table.to_excel(writer, sheet_name="Intensive Patients", index=False)
         intermediate_patients_table.to_excel(writer, sheet_name="Intermediate Patients", index=False)
-        aggregated_intensive_patients_table.to_excel(writer, sheet_name="Aggregated Intensive Patients", index=False)
-        aggregated_intermediate_patients_table.to_excel(writer, sheet_name="Aggregated Intermediate Patients",
+        aggregated_intensive_patients_table.to_excel(writer, sheet_name="Agg Intensive Patients", index=False)
+        aggregated_intermediate_patients_table.to_excel(writer, sheet_name="Agg Intermediate Patients",
                                                         index=False)
         print(f"Table generated: {TABLE}")
 

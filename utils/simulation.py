@@ -35,6 +35,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
 
     running = True
     day = 0  # Initialize day counter
+    font = pygame.font.Font(None, 36) # Use a default font with size 36
 
     while running:
         for event in pygame.event.get():
@@ -148,6 +149,10 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
                         arrivedDischarged[patient.assignedHospital][0] += 1
                 # Clear the screen
                 screen.fill(WHITE)
+
+                # Draw the day counter
+                day_counter_text = font.render(f"Day: {day + 1}, Date: {current_date.date()}", True, (0, 0, 0))  # Black text
+                screen.blit(day_counter_text, (10, 10))  # Position at (10, 10) in the top-left corner
 
                 # Draw hospitals
                 draw_hospitals(screen, HOSPITALS)

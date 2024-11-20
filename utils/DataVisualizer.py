@@ -76,13 +76,13 @@ class DataVisualizer:
 
         # Step 1: Count intermediate and intensive patients by year and hospital
         # Group by 'Vicinity to Hospital' and 'Year', and then calculate the size for each type
-        intermediate_counts = patients_df[patients_df['Type'].str.lower() == 'intermediate'].groupby(['Assigned Hospital', 'Year']).size().unstack(fill_value=0)
-        intensive_counts = patients_df[patients_df['Type'].str.lower() == 'intensive'].groupby(['Assigned Hospital', 'Year']).size().unstack(fill_value=0)
+        intermediate_counts = patients_df[patients_df['Type'].str.lower() == 'intermediate'].groupby('Assigned Hospital').size()
+        intensive_counts = patients_df[patients_df['Type'].str.lower() == 'intensive'].groupby('Assigned Hospital').size()
 
         # Calculate the counts across years for each hospital
         hospital_counts_df = pd.DataFrame({
-            'Intermediate Patients': intermediate_counts.mean(axis=1).astype(int),
-            'Intensive Patients': intensive_counts.mean(axis=1).astype(int)
+            'Intermediate Patients': intermediate_counts,
+            'Intensive Patients': intensive_counts
         })
 
         # Calculate total patients per hospital (intermediate + intensive)

@@ -24,7 +24,6 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
     births_by_fsa = data_loader.calculate_birth_rates_by_fsa(excel_file=excel_newdata)
     recommendation_system = HospitalRecommendation(HOSPITALS)
     results = []
-    hospitalList = ["CHU-SJ", "CHUQ", "CHUS", "CUSM", "HGJ", "HMR"]
     total_patients = 0
     patients = []  # List to hold current patients
     patients_data = []
@@ -36,6 +35,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
     running = True
     day = 0  # Initialize day counter
     font = pygame.font.Font(None, 36) # Use a default font with size 36
+    current_date = START_DATE
 
     while running:
         for event in pygame.event.get():
@@ -75,68 +75,13 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
 
                 # Create and simulate each patient
                 for i in range(num_patients):
-                    patient_type = random.choice(PATIENT_TYPE)
-                    postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)  # Random GPS coordinates
-                    # Test purpose
-                    # gps_pos = generate_patient_coords(HOSPITALS_CONFIG)
-
-                    if patient_type == "Maternal":
-                        num_special_needs = random.randint(1, 3)
-                        special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, num_special_needs)
-                    else:
-                        num_special_needs = random.randint(1, 2)
-                        special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, num_special_needs)
-
-                    bed_type = random.choice(BED_TYPE)
-
-                    # Create a patient
-                    patient = Patient(
-                        patientType=patient_type,
-                        gpsPos=gps_pos,
-                        postalCode=postal_code,
-                        bedType=bed_type,
-                        del24HrPlus=random.choice([True, False]),
-                        transportNeedCnt=random.randint(0, 3),
-                        specialNeedType=",".join(special_needs),
-                        specialNeeds=special_needs,
-                        arrival_time=hour,
-                        aniGpsPos=[600, 50],
-                        discharged=False,
-                        arrived_at_hospital=False,  # Track if the patient has reached the hospital
-                        queue_position=0  # Initialize queue position
-                    )
+                    #create patient
+                    patient = create_patient(hour, births_by_fsa)
                     patients.append(patient)  # Add patient to the list
                     # Run the patient through the recommendation system
                     print(f"\nProcessing Patient {i + 1}")
-                    recommendation_system.run(patient)
 
-                    if patient.assignedHospital != "":
-                        arrivedDischarged[f"{patient.assignedHospital}"][0] += 1
-                        recommendation_system.find_nearest_hospital()
-                        # nearest_distance = calculate_distance(HOSPITALS[patient.nearestHospital].geolocation,patient.gpsPos)
-                        # assigned_distance = calculate_distance(HOSPITALS[patient.assignedHospital].geolocation,patient.gpsPos)
-                        # Record patient data for reporting
-
-                        for hospital in HOSPITALS:
-                            if hospital.name == patient.nearestHospital:
-                                nearest_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
-                            if hospital.name == patient.assignedHospital:
-                                assigned_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
-
-                        patients_data.append({
-                            "Postal Code": patient.postalCode,
-                            "Transferred": patient.transferred,
-                            "Type": patient.bedType,
-                            "NICU": True if (
-                                        "Prematurity (GA<26 weeks)" in patient.specialNeeds or "Prematurity (GA>26 weeks)" in patient.specialNeeds) else False,
-                            "Date": current_date.strftime("%Y-%m-%d"),
-                            "Month": current_date.month,
-                            "Nearest Hospital": patient.nearestHospital,
-                            "Nearest Distance": nearest_distance,
-                            "Assigned Hospital": patient.assignedHospital,
-                            "Assigned Distance": assigned_distance,
-                            "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital
-                        })
+                    process_patient(patient, recommendation_system, HOSPITALS, patients_data, current_date, arrivedDischarged)
 
                     # Print current hospital capacities
                     for hospital in HOSPITALS:
@@ -147,93 +92,19 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
 
                     if patient.assignedHospital != "":
                         arrivedDischarged[patient.assignedHospital][0] += 1
-                # Clear the screen
-                screen.fill(WHITE)
 
-                # Draw the day counter
-                day_counter_text = font.render(f"Day: {day + 1}, Date: {current_date.date()}", True, (0, 0, 0))  # Black text
-                screen.blit(day_counter_text, (10, 10))  # Position at (10, 10) in the top-left corner
-
-                # Draw hospitals
-                draw_hospitals(screen, HOSPITALS)
-
-                # Organize each patient in the queue
-                for hospital_name in hospital_positions:
-                    patients_at_hospital = [
-                        p for p in patients if
-                        p.assignedHospital == hospital_name and p.arrived_at_hospital and not p.discharged
-                    ]
-                    for i, patient in enumerate(patients_at_hospital):
-                        patient.queue_position = i  # Assign queue position based on order of arrival
-
-                # Move and draw each patient
-                for patient in patients[:]:
-                    if not patient.discharged:
-                        target_hospital_pos = hospital_positions.get(patient.assignedHospital, (600, 50))
-                        animate_patient_movement(patient, target_hospital_pos)
-
-                        # Draw patient at the updated position
-                        draw_patient(screen, patient, target_hospital_pos)
-
-                    if patient.discharged:
-                        patients.remove(patient)
-
-
+                update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day, current_date, font)
                 # Refresh display
                 pygame.display.flip()
                 clock.tick(60)
 
 
             # Record daily statistics
-            for hospital in HOSPITALS:
-                results.append({
-                    "Day": day + 1,
-                    "Date": current_date.strftime("%Y-%m-%d"),
-                    "Month": current_date.month,
-                    "Hospital": hospital.name,  # Use the name attribute of the Hospital object
-                    "Arrived Patients": arrivedDischarged[hospital.name][0],
-                    "Discharged Patients": arrivedDischarged[hospital.name][1],
-
-                    "Intensive Occupancy Rate": arrivedDischarged[hospital.name][2] / 24,
-                    "Intermediate Occupancy Rate": arrivedDischarged[hospital.name][3] / 24
-                })
+            record_daily_statistics(day,current_date,HOSPITALS,arrivedDischarged, results)
             day += 1
         else:
             while running:
-                # Clear the screen
-                screen.fill(WHITE)
-
-                # Draw hospitals
-                draw_hospitals(screen, HOSPITALS)
-                all_patients_arrived = True  # Assume all patients have arrived initially
-
-                # Organize each patient in the queue
-                for hospital_name in hospital_positions:
-                    patients_at_hospital = [
-                        p for p in patients if
-                        p.assignedHospital == hospital_name and p.arrived_at_hospital and not p.discharged
-                    ]
-                    for i, patient in enumerate(patients_at_hospital):
-                        patient.queue_position = i  # Assign queue position based on order of arrival
-
-                # Move and draw each patient who is still in transit
-
-                # Move and draw each patient
-                for patient in patients[:]:
-                    if not patient.discharged:
-                        target_hospital_pos = hospital_positions.get(patient.assignedHospital, (600, 50))
-                        animate_patient_movement(patient, target_hospital_pos)
-
-                        # Draw patient at the updated position
-                        draw_patient(screen, patient, target_hospital_pos)
-
-                    # If the patient hasn't arrived or is not discharged, mark that not all patients have arrived
-                    if not patient.arrived_at_hospital and not patient.discharged:
-                        all_patients_arrived = False
-
-                    # Remove discharged patients from the list
-                    if patient.discharged:
-                        patients.remove(patient)
+                all_patients_arrived = update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day-1, current_date, font)
 
                 # Refresh display
                 pygame.display.flip()
@@ -269,3 +140,126 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
     results_df.to_excel("output/simulation.xlsx", index=False)
     patients_df.to_excel("output/patients.xlsx", index=False)
     return results
+
+
+def record_daily_statistics(day, current_date, hospitals, arrivedDischarged, results):
+    for hospital in hospitals:
+        results.append({
+            "Day": day + 1,
+            "Date": current_date.strftime("%Y-%m-%d"),
+            "Month": current_date.month,
+            "Hospital": hospital.name,
+            "Arrived Patients": arrivedDischarged[hospital.name][0],
+            "Discharged Patients": arrivedDischarged[hospital.name][1],
+            "Intensive Occupancy Rate": arrivedDischarged[hospital.name][2] / 24,
+            "Intermediate Occupancy Rate": arrivedDischarged[hospital.name][3] / 24
+        })
+
+
+def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day , current_date, font):
+    """
+    Updates the state of the simulation, animates patient movement, and redraws the screen.
+
+    Args:
+        screen: The pygame screen object.
+        patients: List of patient objects.
+        hospital_positions: Dictionary mapping hospital names to positions.
+        HOSPITALS: List of hospital objects.
+        WHITE: Color code for clearing the screen.
+
+    Returns:
+        bool: Whether all patients have arrived or are discharged.
+    """
+    # Clear the screen
+    screen.fill(WHITE)
+
+    # Draw the day counter
+    day_counter_text = font.render(f"Day: {day + 1}, Date: {current_date.date()}", True, (0, 0, 0))  # Black text
+    screen.blit(day_counter_text, (10, 10))  # Position at (10, 10) in the top-left corner
+
+    # Draw hospitals
+    draw_hospitals(screen, HOSPITALS)
+
+    all_patients_arrived = True  # Assume all patients have arrived initially
+
+    # Organize each patient in the queue
+    for hospital_name in hospital_positions:
+        patients_at_hospital = [
+            p for p in patients if
+            p.assignedHospital == hospital_name and p.arrived_at_hospital and not p.discharged
+        ]
+        for i, patient in enumerate(patients_at_hospital):
+            patient.queue_position = i  # Assign queue position based on order of arrival
+
+    # Move and draw each patient
+    for patient in patients[:]:
+        if not patient.discharged:
+            target_hospital_pos = hospital_positions.get(patient.assignedHospital, (600, 50))
+            animate_patient_movement(patient, target_hospital_pos)
+
+            # Draw patient at the updated position
+            draw_patient(screen, patient, target_hospital_pos)
+
+        # If the patient hasn't arrived or is not discharged, mark that not all patients have arrived
+        if not patient.arrived_at_hospital and not patient.discharged:
+            all_patients_arrived = False
+
+        # Remove discharged patients from the list
+        if patient.discharged:
+            patients.remove(patient)
+
+    return all_patients_arrived
+
+# Patient Processing Logic
+def create_patient(hour, births_by_fsa):
+    patient_type = random.choice(PATIENT_TYPE)
+    postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
+    if patient_type == "Maternal":
+        num_special_needs = random.randint(1, 3)
+        special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, num_special_needs)
+    else:
+        num_special_needs = random.randint(1, 2)
+        special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, num_special_needs)
+
+    bed_type = random.choice(BED_TYPE)
+
+    return Patient(
+        patientType=patient_type,
+        gpsPos=gps_pos,
+        postalCode=postal_code,
+        bedType=bed_type,
+        del24HrPlus=random.choice([True, False]),
+        transportNeedCnt=random.randint(0, 3),
+        specialNeedType=",".join(special_needs),
+        specialNeeds=special_needs,
+        arrival_time=hour,
+        aniGpsPos=[600, 50],
+        discharged=False,
+        arrived_at_hospital=False,
+        queue_position=0
+    )
+
+def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
+    recommendation_system.run(patient)
+    if patient.assignedHospital:
+        arrivedDischarged[f"{patient.assignedHospital}"][0] += 1
+        recommendation_system.find_nearest_hospital()
+        for hospital in hospitals:
+            if hospital.name == patient.nearestHospital:
+                nearest_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
+            if hospital.name == patient.assignedHospital:
+                assigned_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
+
+        patients_data.append({
+            "Postal Code": patient.postalCode,
+            "Transferred": patient.transferred,
+            "Type": patient.bedType,
+            "NICU": "Prematurity (GA<26 weeks)" in patient.specialNeeds or "Prematurity (GA>26 weeks)" in patient.specialNeeds,
+            "Date": current_date.strftime("%Y-%m-%d"),
+            "Month": current_date.month,
+            "Nearest Hospital": patient.nearestHospital,
+            "Nearest Distance": nearest_distance,
+            "Assigned Hospital": patient.assignedHospital,
+            "Assigned Distance": assigned_distance,
+            "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital
+        })

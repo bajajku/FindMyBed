@@ -43,7 +43,7 @@ NEONATAL_SPECIAL_NEEDS: List[str] = [
 ]
 
 # Bed Types
-BED_TYPE: List[str] = ["Intensive", "Intermediate", "BirthCenter","Antepartum", "Postpartum"]
+BED_TYPE: List[str] = ["Intensive", "Intermediate"]
 
 # Time Constants
 ARRIVAL_TIMES: List[int] = [9, 14, 21]

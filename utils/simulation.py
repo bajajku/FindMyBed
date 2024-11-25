@@ -65,45 +65,40 @@ def discharge_patients(hospital, arrivedDischarged):
         f"{hospital.name}: Discharged intensive: {discharged_intensive} intermediate: {discharged_intermediate} total: {discharged_count} patients ")
     return discharged_count
 
-
 def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]]:
-    # Calculate occupied beds for all categories
-    bed_categories = {
-        "Intensive": hospital.total_capacity_intensive - hospital.available_beds[0],
-        "Intermediate": hospital.total_capacity_intermediate - hospital.available_beds[1],
-        "BirthCenter": hospital.birth_center_capacity - hospital.available_beds[2],
-        "Antepartum": hospital.antepartum_capacity - hospital.available_beds[3],
-        "Postpartum": hospital.postpartum_capacity - hospital.available_beds[4]
-    }
+    occupied_beds_intensive = round(hospital.total_capacity_intensive - hospital.available_beds[0])
+    occupied_beds_intermediate = round(hospital.total_capacity_intermediate - hospital.available_beds[1])
 
-    for bed_type in bed_categories:
-        bed_categories[bed_type] = max(0, round(bed_categories[bed_type]))
+    occupied_beds_intensive = max(0, occupied_beds_intensive)
+    occupied_beds_intermediate = max(0, occupied_beds_intermediate)
 
-    for bed_type, count in bed_categories.items():
+    # Create dummy patients for both types of beds
+    for bed_type, count in [("Intensive", occupied_beds_intensive),
+                            ("Intermediate", occupied_beds_intermediate)]:
         for _ in range(count):
             transfer_probability = hospital.transfer_percentage
             is_transferred = np.random.poisson(transfer_probability / 100) > 0
             patient = SimulatedPatient(
-                patientType=random.choice(PATIENT_TYPE),
-                gpsPos=hospital.geolocation,
-                postalCode="None",
-                bedType=bed_type,
-                del24HrPlus=False,
-                transportNeedCnt=0,
-                specialNeedType="None",
-                specialNeeds=["None"],
-                arrival_time=random.choice(ARRIVAL_TIMES),
-                aniGpsPos=[600, 50],
-                arrived_at_hospital=True,  # Track if the patient has reached the hospital
-                nicu_needed=False,
-                queue_position=0,  # Initialize queue position
-                discharged=False,
-                assignedHospital=hospital.name,
-                transferred=bool(is_transferred)
-            )
+                    patientType=random.choice(PATIENT_TYPE),
+                    gpsPos=hospital.geolocation,
+                    postalCode="None",
+                    bedType=bed_type,
+                    del24HrPlus=False,
+                    transportNeedCnt=0,
+                    specialNeedType="None",
+                    specialNeeds=["None"],
+                    arrival_time=random.choice(ARRIVAL_TIMES),
+                    aniGpsPos=[600, 50],
+                    arrived_at_hospital=True,  # Track if the patient has reached the hospital
+                    nicu_needed=False,
+                    queue_position=0,  # Initialize queue position
+                    discharged=False,
+                    assignedHospital=hospital.name,
+                    transferred = bool(is_transferred)
+                )
             hospital.patients[patient.bedType].append(patient)
-
     return hospital.patients
+
 
 
 screen, clock = initialize_screen()
@@ -123,8 +118,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
 
     for hospital in HOSPITALS:
         hospital_patient_list = prepopulate_patients(hospital)
-        for bedType in BED_TYPE:
-            patients = patients + hospital_patient_list[bedType]
+        patients = patients + hospital_patient_list["Intensive"] + hospital_patient_list["Intermediate"]
 
     running = True
     day = 0  # Initialize day counter

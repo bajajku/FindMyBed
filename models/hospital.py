@@ -137,4 +137,5 @@ class Hospital:
             return True
         return False
 
-    
+    def occupied_bed_summary(self):
+        return f"{self.total_capacity - (self.available_beds[0] + self.available_beds[1])}/{self.total_capacity} occupied"

@@ -65,7 +65,7 @@ def discharge_patients(hospital, arrivedDischarged):
         f"{hospital.name}: Discharged intensive: {discharged_intensive} intermediate: {discharged_intermediate} total: {discharged_count} patients ")
     return discharged_count
 
-def prepopulate_patients(hospital: Hospital) -> None:
+def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]]:
     occupied_beds_intensive = round(hospital.total_capacity_intensive - hospital.available_beds[0])
     occupied_beds_intermediate = round(hospital.total_capacity_intermediate - hospital.available_beds[1])
 

@@ -1,7 +1,16 @@
 # animation.py
 import pygame
+
+from config import EXCEL_PATH
 from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT, GREEN
 from utils.constants import hospital_positions  # assuming this can be defined in your constants file
+from utils.data_loader import DataLoader
+from utils.geographic import calculate_distance
+
+data_loader = DataLoader()
+data_loader.load_data(excel_file=EXCEL_PATH)
+HOSPITALS = data_loader.create_hospitals()
+hospital_dict = {hospital.name: hospital for hospital in HOSPITALS}
 
 def initialize_screen():
     pygame.init()
@@ -33,20 +42,60 @@ def draw_hospitals(screen, hospitals):
     text = font.render("Transport Centre", True, WHITE)
     screen.blit(text, (x + 5, y + 5))
 
+
+'''def create_surface_for_hospitals(hospitals):
+    surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    surface.fill(WHITE)  # Fill with background color
+
+    for hospital in hospitals:
+        x, y = hospital_positions[hospital.name]
+        pygame.draw.rect(surface, BLUE, (x, y, 150, 50))
+        font = pygame.font.Font(None, 24)
+        text = font.render(hospital.name, True, WHITE)
+        surface.blit(text, (x + 5, y + 5))
+
+        capacity = hospital.occupied_bed_summary()
+        capacity_text = font.render(capacity, True, WHITE)
+        surface.blit(capacity_text, (x + 5, y + 30))  # Adjust position
+
+    # Drawing Transport Centre
+    x, y = hospital_positions[""]
+    pygame.draw.rect(surface, BLUE, (x, y, 150, 50))
+    font = pygame.font.Font(None, 24)
+    text = font.render("Transport Centre", True, WHITE)
+    surface.blit(text, (x + 5, y + 5))
+
+    return surface
+
+def draw_hospitals(screen, hospitals):
+    surface = create_surface_for_hospitals(hospitals)
+    screen.blit(surface, (0, 0))  # Blit the surface to the screen'''
+
+
+
 def draw_patient(screen, patient, hospital_pos):
+
+    if patient.assignedHospital != "":
+        hospital = hospital_dict.get(patient.assignedHospital)
+        distance = patient.distanceToHospital
+        # Define a max distance for the gradient
+        max_distance = 100
+
+        # Normalize the distance to a 0-1 range
+        normalized_distance = min(distance / max_distance, 1.0)
+        red = int(normalized_distance * 255)
+        green = int((1 - normalized_distance) * 255)
+        color = (red, green, 0)
+    else:
+        color = GREEN
+
     if patient.arrived_at_hospital and not patient.discharged:
         offset_x = (patient.queue_position % 10) * 15
         offset_y = (patient.queue_position // 10) * 15
         x, y = hospital_pos[0] + offset_x + 5, hospital_pos[1] + offset_y + 60
-        if patient.transferred:
-            pygame.draw.circle(screen, RED, (x, y), 5)
-        else:
-            pygame.draw.circle(screen, GREEN, (x, y), 5)
+        pygame.draw.circle(screen, color, (x, y), 5)
     else:
-        if patient.transferred:
-            pygame.draw.circle(screen, RED, patient.aniGpsPos, 5)
-        else:
-            pygame.draw.circle(screen, GREEN, patient.aniGpsPos, 5)
+        pygame.draw.circle(screen, color, patient.aniGpsPos, 5)
 
 def animate_patient_movement(patient, target_pos):
     if patient.aniGpsPos[0] < target_pos[0]:

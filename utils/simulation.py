@@ -31,6 +31,13 @@ def discharge_all_patients(hospitals: list[Hospital], arrived_discharged: dict) 
     for hospital in hospitals:
         discharge_patients(hospital, arrived_discharged)
 
+from concurrent.futures import ThreadPoolExecutor
+
+def discharge_all_patients_parallel(hospitals, arrived_discharged):
+    with ThreadPoolExecutor() as executor:
+        executor.map(lambda h: discharge_patients(h, arrived_discharged), hospitals)
+
+
 
 def discharge_patients(hospital, arrivedDischarged):
     """ Discharge patients based on the discharge rate at the patient's arrival time """
@@ -105,14 +112,6 @@ screen, clock = initialize_screen()
 data_loader = DataLoader()
 data_loader.load_data(excel_file=EXCEL_PATH)
 HOSPITALS = data_loader.create_hospitals()
-for hospital in HOSPITALS:
-    print(f"available beds intensive:{hospital.available_beds[0]}")
-    print(f"available beds intermediate:{hospital.available_beds[1]}")
-    print(f"available beds rest:{hospital.available_beds[2]}")
-    print(f"available beds rest:{hospital.available_beds[3]}")
-    print(f"available beds rest:{hospital.available_beds[4]}")
-          
-          
 def simulate_hospital_system(num_days, excel , excel_newdata):
     global total_patients # Declare total_patients as global within the function
 
@@ -148,7 +147,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
             # Loop through each hour
             for hour in range(24):
                 print(f"\n{'*'*10} Arrival Time {hour}:00 {'*'*10}")
-                discharge_all_patients(HOSPITALS, arrivedDischarged)
+                discharge_all_patients_parallel(HOSPITALS, arrivedDischarged)
 
                 # Generate a random number of patients for this arrival time
                 num_patients = np.random.poisson(data_loader.get_average_admissions())

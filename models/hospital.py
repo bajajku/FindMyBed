@@ -4,6 +4,8 @@ from models.patient import Patient
 import numpy as np
 from utils.constants import *
 
+
+
 class Hospital:
     def __init__(self, name: str, geolocation: Tuple[float, float], 
                  maternal_services: List[str], neonatal_services: List[str],
@@ -148,5 +150,7 @@ class Hospital:
             self.available_beds[bed_index] -= 1
             self.patients[patient.bedType].append(patient)
             patient.assignedHospital = self.name
+            from utils.geographic import calculate_distance
+            patient.distanceToHospital = calculate_distance(self.geolocation, patient.gpsPos)
             return True
         return False

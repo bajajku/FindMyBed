@@ -21,7 +21,7 @@ def draw_hospitals(screen, hospitals):
         screen.blit(text, (x + 5, y + 5))
 
         #Capacity
-        capacity = hospital.get_total_capacity()
+        capacity = f"{hospital.get_occupancy_rate_overall()} occupied"
         capacity_text = font.render(capacity, True, WHITE)
         screen.blit(capacity_text, (x + 5, y + 30))  # Adjust y+30 to position it below the main text
 

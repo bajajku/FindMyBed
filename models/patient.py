@@ -34,6 +34,7 @@ class SimulatedPatient:
     discharged: bool
     arrived_at_hospital: bool  # Track if the patient has reached the hospital
     queue_position: int  # Initialize queue position
+    nicu_needed: Optional[bool] = None
     bedType: str = ""
     assignedHospital: str = ""
     homeHospital: Optional[str] = None

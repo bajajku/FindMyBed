@@ -105,7 +105,14 @@ screen, clock = initialize_screen()
 data_loader = DataLoader()
 data_loader.load_data(excel_file=EXCEL_PATH)
 HOSPITALS = data_loader.create_hospitals()
-
+for hospital in HOSPITALS:
+    print(f"available beds intensive:{hospital.available_beds[0]}")
+    print(f"available beds intermediate:{hospital.available_beds[1]}")
+    print(f"available beds rest:{hospital.available_beds[2]}")
+    print(f"available beds rest:{hospital.available_beds[3]}")
+    print(f"available beds rest:{hospital.available_beds[4]}")
+          
+          
 def simulate_hospital_system(num_days, excel , excel_newdata):
     global total_patients # Declare total_patients as global within the function
 

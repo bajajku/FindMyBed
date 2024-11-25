@@ -206,7 +206,8 @@ class HospitalRecommendation:
             
         # For simulation compatibility, try to assign to first recommended hospital
         self.selected_hospital = recommended_hospitals[0]
-        success = admit_patient(self.selected_hospital, self.patient)
+        #success = admit_patient(self.selected_hospital, self.patient)
+        success = self.selected_hospital.admit_patient(self.patient)
         
         if success:
             transfer_probability = self.selected_hospital.transfer_percentage

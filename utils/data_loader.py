@@ -98,7 +98,7 @@ class DataLoader:
         discharge_rates_intermediate = df['Discharge rate intermediate'].tolist()
 
         for i in range(len(self.hospital_names)):
-            self.beds_available[i].extend([30,30,30])
+            self.beds_available[i].extend([50,50,50])
         # Scale down discharge rates for intensive and intermediate
         scaling_factor = 0.3
         self.discharge_rates_intensive = [

@@ -138,4 +138,15 @@ class Hospital:
         return False
 
     def occupied_bed_summary(self):
-        return f"{self.total_capacity - (self.available_beds[0] + self.available_beds[1])}/{self.total_capacity} occupied"
+        total_occupied = (self.total_capacity_intensive - self.available_beds[0]) + (self.total_capacity_intermediate - self.available_beds[1]) + (self.birth_center_capacity - self.available_beds[2]) + (self.antepartum_capacity - self.available_beds[3]) + (self.postpartum_capacity - self.available_beds[4])
+        total_capacity = self.total_capacity_intensive + self.total_capacity_intermediate
+        return f"{total_occupied}/{total_capacity} occupied"
+
+    def admit_patient(self, patient: Patient) -> bool:
+        bed_index = 0 if patient.bedType == "Intensive" else 1
+        if self.available_beds[bed_index] > 0:
+            self.available_beds[bed_index] -= 1
+            self.patients[patient.bedType].append(patient)
+            patient.assignedHospital = self.name
+            return True
+        return False

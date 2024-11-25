@@ -1,5 +1,5 @@
 import random
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Any
 from models.patient import Patient
 import numpy as np
 from utils.constants import *
@@ -7,12 +7,13 @@ from utils.constants import *
 class Hospital:
     def __init__(self, name: str, geolocation: Tuple[float, float], 
                  maternal_services: List[str], neonatal_services: List[str],
-                 available_beds: List[int], discharge_rates: List[float],
-                 discharge_rates_intensive: List[float],
-                 discharge_rates_intermediate: List[float],
+                 available_beds: List[int],
+                 discharge_rates_intensive: float,
+                 discharge_rates_intermediate: float,
                  total_capacity: int, total_capacity_intensive: int,
                  total_capacity_intermediate: int,
                  birth_center_capacity: int = None,
+                 transfer_percentage = None,
                  antepartum_capacity: int = None,
                  postpartum_capacity: int = None):
         self.name = name
@@ -20,7 +21,6 @@ class Hospital:
         self.maternal_services = set(maternal_services)  # Convert to set for O(1) lookups
         self.neonatal_services = set(neonatal_services) # Convert to set for O(1) lookups
         self.available_beds = available_beds # [intensive, intermediate, birthcenter, antepartum, postpartum]
-        self.discharge_rates = discharge_rates
         self.discharge_rates_intensive = discharge_rates_intensive
         self.discharge_rates_intermediate = discharge_rates_intermediate
         self.patients = {
@@ -31,6 +31,7 @@ class Hospital:
             "Postpartum": []
         }
         self.total_capacity = total_capacity
+        self.transfer_percentage = transfer_percentage
         self.assigned_patients = 0
         self.total_capacity_intensive = total_capacity_intensive
         self.total_capacity_intermediate = total_capacity_intermediate
@@ -122,13 +123,14 @@ class Hospital:
 
     def get_capacity(self, bedType: str) -> int:
         return self.available_beds[0] if bedType == "Intensive" else self.available_beds[1]
-
-    def get_discharge_rate(self, time_index: int, bedType: str) -> float:
+    
+    
+    def get_discharge_rate(self, bedType: str) -> float:
         if bedType == "Intensive":
-            return self.discharge_rates_intensive[time_index]
-        return self.discharge_rates_intermediate[time_index]
+            return self.discharge_rates_intensive
+        return self.discharge_rates_intermediate
 
-    # REQUIRED
+        # REQUIRED
     def can_admit_patient(self, patient: Patient) -> bool:
 
         if self.get_occupancy_rate_per_patientType_per_bedType(patient=patient):

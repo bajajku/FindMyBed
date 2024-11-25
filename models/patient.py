@@ -15,6 +15,29 @@ class Patient:
     bedType: str = ""
     assignedHospital: str = ""
     homeHospital: Optional[str] = None
+    transferred: bool = False
+
+    def get_arrival_time_index(self) -> int:
+        return ARRIVAL_TIMES.index(self.arrival_time)
+    
+@dataclass
+class SimulatedPatient:
+    patientType: str
+    gpsPos: Tuple[float, float]
+    postalCode: str
+    del24HrPlus: bool
+    transportNeedCnt: int
+    specialNeedType: str
+    specialNeeds: List[str]
+    arrival_time: int
+    aniGpsPos: list  # Start position at the dispatcher
+    discharged: bool
+    arrived_at_hospital: bool  # Track if the patient has reached the hospital
+    queue_position: int  # Initialize queue position
+    bedType: str = ""
+    assignedHospital: str = ""
+    homeHospital: Optional[str] = None
+    transferred: bool = False
 
     def get_arrival_time_index(self) -> int:
         return ARRIVAL_TIMES.index(self.arrival_time)

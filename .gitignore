@@ -1,3 +1,10 @@
 venv/
 __pycache__/
 *.pyc
+<<<<<<< HEAD
+/output/
+=======
+output/
+/output/
+#/data/
+>>>>>>> 4a667a9efb842d52121a6e8fa76f15d556a29671

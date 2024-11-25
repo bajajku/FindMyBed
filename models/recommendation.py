@@ -1,4 +1,6 @@
 from typing import List, Optional
+
+import numpy as np
 from transitions import Machine
 from models.patient import Patient
 from models.hospital import Hospital
@@ -72,6 +74,29 @@ class HospitalRecommendation:
             source='hospital_recommendation',
             dest='input'
         )
+
+# for the report ( patients data )
+    def find_nearest_hospital(self) -> None:
+            hospitals = [hospital for hospital in self.hospitals]
+            hospitals.sort(
+                key=lambda hospital: calculate_distance(
+                    hospital.geolocation,
+                    self.patient.gpsPos
+                )
+            )
+            nearest_hospital = hospitals[0]
+            self.patient.nearestHospital = nearest_hospital.name
+    def discharge_all_patients(self, arrived_discharged: dict) -> None:
+        """
+        Discharge patients from all hospitals at a given arrival time.
+
+        Args:
+            arrived_discharged: Dictionary tracking patient movement
+        """
+        logging.info("Discharging patients from all hospitals...")
+
+        for hospital in self.hospitals:
+            hospital.discharge_patients(arrived_discharged)
 
 
     def home_hospital_check(self) -> None:
@@ -171,6 +196,10 @@ class HospitalRecommendation:
         recommended_hospitals = self.get_top_hospitals()
         
         if not recommended_hospitals:
+            transfer_probability = 22.57685376112847
+            is_transferred = np.random.poisson(transfer_probability / 100) > 0
+            self.patient.transferred = bool(is_transferred)
+
             self.queue.append(self.patient)
             logging.warning("No suitable hospitals found. Patient added to queue.")
             return
@@ -180,6 +209,10 @@ class HospitalRecommendation:
         success = admit_patient(self.selected_hospital, self.patient)
         
         if success:
+            transfer_probability = self.selected_hospital.transfer_percentage
+            is_transferred = np.random.poisson(transfer_probability/100)>0
+            self.patient.transferred = bool(is_transferred)
+
             self.selected_hospital.assigned_patients += 1
             print(f"Patient assigned to {self.selected_hospital.name}")
         else:

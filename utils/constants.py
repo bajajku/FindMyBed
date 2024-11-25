@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime
+from datetime import  datetime
 
 # Patient Types
 PATIENT_TYPE: List[str] = ["Maternal", "Neonatal"]
@@ -90,6 +90,31 @@ MAX_DISTANCE_KM: float = 30.0
 INTENSIVE_OCCUPANCY_THRESHOLD: float = 1.0
 INTERMEDIATE_OCCUPANCY_THRESHOLD: float = 0.85
 MATERNAL_OCCUPANCY_THRESHOLD: float = 0.85
+# Define the simulator's start date
+START_DATE = datetime.strptime("2023-01-01", "%Y-%m-%d")
+
+ASSUMPTIONS = "Simulation assumes historical trends for patient arrivals and discharges."
+HYPERPARAMETERS = {
+    "Simulation Duration": "One year",
+    "Arrival Rate": "Based on historical hourly averages per hospital",
+    "Discharge Rate": "Based on historical patterns"
+}
+
+#Animation
+SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 800
+WHITE, BLUE, RED, GREEN = (255, 255, 255), (0, 100, 255), (255, 0, 0), (0,255,0)
+
+# Define hospital positions for visualization
+hospital_positions = {
+    "CHU-SJ": (100, 100),
+    "CHUQ": (1000, 100),
+    "CHUS": (100, 550),
+    "CUSM": (1000, 550),
+    "HGJ": (350, 300),
+    "HMR": (550, 550),
+    "": (750,300)
+}
+
 # Define the simulator's start date
 START_DATE = datetime.strptime("2023-01-01", "%Y-%m-%d")
 

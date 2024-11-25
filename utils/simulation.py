@@ -2,16 +2,22 @@ import random
 import math
 from time import sleep
 import numpy as np
+import pygame
+
+from config import EXCEL_PATH
 from models.hospital import Hospital
-from models.patient import Patient
+from models.patient import Patient, SimulatedPatient
 from models.recommendation import HospitalRecommendation
 from utils.constants import *
 from utils.data_loader import DataLoader
-from utils.geographic import generate_patient_coords
+from utils.geographic import generate_patient_coords, fsa_to_coordinates, select_fsa_by_rate, calculate_distance
+from utils.animation import initialize_screen, draw_hospitals, draw_patient, animate_patient_movement
+import pandas as pd
+from datetime import timedelta
 from utils.admission import admit_patient
 
 # concerned with simulation
-def discharge_all_patients(hospitals: list[Hospital], arrival_time: int, arrived_discharged: dict) -> None:
+def discharge_all_patients(hospitals: list[Hospital], arrived_discharged: dict) -> None:
     """
     Discharge patients from all hospitals at a given arrival time.
     
@@ -19,203 +25,345 @@ def discharge_all_patients(hospitals: list[Hospital], arrival_time: int, arrived
         arrival_time: Time of day for patient discharge
         arrived_discharged: Dictionary tracking patient movement
     """
-    time_index = ARRIVAL_TIMES.index(arrival_time)
+    # time_index = ARRIVAL_TIMES.index(arrival_time)
     print("Discharging patients from all hospitals...")
     
     for hospital in hospitals:
-        discharge_patients(hospital, time_index, arrived_discharged)
+        discharge_patients(hospital, arrived_discharged)
 
 
-# this function should be in simulation.py, as Hospital class should only handle patient admissions and discharges.
-def discharge_patients(hospital: Hospital, time_index, arrivedDischarged):
+def discharge_patients(hospital, arrivedDischarged):
+    """ Discharge patients based on the discharge rate at the patient's arrival time """
+    # Ensure the discharge rates are rounded to integers
+    num_discharged_intensive = int(round(np.random.poisson(hospital.get_discharge_rate("Intensive"))))
+    num_discharged_intermediate = int(round(np.random.poisson(hospital.get_discharge_rate("Intermediate"))))
+    print(f"{num_discharged_intensive} {num_discharged_intermediate}")
+
     discharged_count = 0
-    
-    # NICU discharges
-    num_discharged_intensive = np.random.poisson(hospital.get_discharge_rate(time_index, "Intensive"))
-    num_discharged_intermediate = np.random.poisson(hospital.get_discharge_rate(time_index, "Intermediate"))
-    
-    # Maternal discharges (using similar rates for now)
-    num_discharged_birthcenter = np.random.poisson(hospital.discharge_rates[time_index] * 0.3)
-    num_discharged_antepartum = np.random.poisson(hospital.discharge_rates[time_index] * 0.3)
-    num_discharged_postpartum = np.random.poisson(hospital.discharge_rates[time_index] * 0.3)
-    
-    # Process NICU discharges
-    for bed_type, num_discharge, bed_index in [
-        ("Intensive", num_discharged_intensive, 0),
-        ("Intermediate", num_discharged_intermediate, 1)
-    ]:
-        for _ in range(min(num_discharge, len(hospital.patients[bed_type]))):
-            hospital.patients[bed_type].pop()
-            hospital.available_beds[bed_index] += 1
-            discharged_count += 1
-            arrivedDischarged[hospital.name][1] += 1
-    
-    # Process maternal discharges
-    for bed_type, num_discharge, bed_index in [
-        ("BirthCenter", num_discharged_birthcenter, 2),
-        ("Antepartum", num_discharged_antepartum, 3),
-        ("Postpartum", num_discharged_postpartum, 4)
-    ]:
-        for _ in range(min(num_discharge, len(hospital.patients[bed_type]))):
-            hospital.patients[bed_type].pop()
-            hospital.available_beds[bed_index] += 1
-            discharged_count += 1
-            arrivedDischarged[hospital.name][1] += 1
-    
-    print(f"{hospital.name}: Discharged {discharged_count} patients at time {ARRIVAL_TIMES[time_index]}")
+    discharged_intensive = 0
+    discharged_intermediate = 0
+
+    # Process intensive care discharges
+    for _ in range(min(num_discharged_intensive, len(hospital.patients["Intensive"]))):
+        hospital.patients["Intensive"][0].discharged = True
+        hospital.patients["Intensive"].pop(0)
+        hospital.available_beds[0] += 1
+        discharged_intensive += 1
+        discharged_count += 1
+        arrivedDischarged[hospital.name][1] += 1
+
+    # Process intermediate care discharges
+    for _ in range(min(num_discharged_intermediate, len(hospital.patients["Intermediate"]))):
+        hospital.patients["Intermediate"][0].discharged = True
+        hospital.patients["Intermediate"].pop(0)
+        hospital.available_beds[1] += 1
+        discharged_intermediate += 1
+        discharged_count += 1
+        arrivedDischarged[hospital.name][1] += 1
+
+    print(
+        f"{hospital.name}: Discharged intensive: {discharged_intensive} intermediate: {discharged_intermediate} total: {discharged_count} patients ")
     return discharged_count
 
 def prepopulate_patients(hospital: Hospital) -> None:
-    occupied_beds_intensive = max(0, round(hospital.total_capacity_intensive - hospital.available_beds[0]))
-    occupied_beds_intermediate = max(0, round(hospital.total_capacity_intermediate - hospital.available_beds[1]))
+    occupied_beds_intensive = round(hospital.total_capacity_intensive - hospital.available_beds[0])
+    occupied_beds_intermediate = round(hospital.total_capacity_intermediate - hospital.available_beds[1])
 
-    # Create dummy patients for each bed type
-    for bed_type, count in [("Intensive", occupied_beds_intensive), 
+    occupied_beds_intensive = max(0, occupied_beds_intensive)
+    occupied_beds_intermediate = max(0, occupied_beds_intermediate)
+
+    # Create dummy patients for both types of beds
+    for bed_type, count in [("Intensive", occupied_beds_intensive),
                             ("Intermediate", occupied_beds_intermediate)]:
         for _ in range(count):
-            dummy_patient = Patient(
-                patientType=random.choice(PATIENT_TYPE),
-                gpsPos=hospital.geolocation,
-                bedType=bed_type,
-                del24HrPlus=False,
-                transportNeedCnt=0,
-                specialNeedType="None",
-                specialNeeds=["None"],
-                arrival_time=random.choice(ARRIVAL_TIMES)
-            )
-            hospital.patients[bed_type].append(dummy_patient)
+            transfer_probability = hospital.transfer_percentage
+            is_transferred = np.random.poisson(transfer_probability / 100) > 0
+            patient = SimulatedPatient(
+                    patientType=random.choice(PATIENT_TYPE),
+                    gpsPos=hospital.geolocation,
+                    postalCode="None",
+                    bedType=bed_type,
+                    del24HrPlus=False,
+                    transportNeedCnt=0,
+                    specialNeedType="None",
+                    specialNeeds=["None"],
+                    arrival_time=random.choice(ARRIVAL_TIMES),
+                    aniGpsPos=[600, 50],
+                    arrived_at_hospital=True,  # Track if the patient has reached the hospital
+                    nicu_needed=False,
+                    queue_position=0,  # Initialize queue position
+                    discharged=False,
+                    assignedHospital=hospital.name,
+                    transferred = bool(is_transferred)
+                )
+            hospital.patients[patient.bedType].append(patient)
+    return hospital.patients
 
 
 
-def simulate_hospital_system(num_days, excel):
-    total_patients = 0 # Declare total_patients as global within the function
+screen, clock = initialize_screen()
+data_loader = DataLoader()
+data_loader.load_data(excel_file=EXCEL_PATH)
+HOSPITALS = data_loader.create_hospitals()
 
-    data_loader = DataLoader()
-    data_loader.load_data(excel_file=excel)
+def simulate_hospital_system(num_days, excel , excel_newdata):
+    global total_patients # Declare total_patients as global within the function
 
-    HOSPITALS = data_loader.create_hospitals()
-    for hospital in HOSPITALS:
-        prepopulate_patients(hospital)
+    births_by_fsa = data_loader.calculate_birth_rates_by_fsa(excel_file=excel_newdata)
     recommendation_system = HospitalRecommendation(HOSPITALS)
     results = []
-    hospitalList = ["CHU-SJ", "CHUQ", "CHUS", "CUSM", "HGJ", "HMR"]
-    # Loop through each day
-    for n in range(num_days):
-        print(f"\n{'='*20} Day {n + 1} {'='*20}")
+    total_patients = 0
+    patients = []  # List to hold current patients
+    patients_data = []
 
-        arrivedDischarged = {
-            hospital: [0, 0, 0, 0,  # Existing counts
-                      0, 0, 0]      # Birth center, antepartum, postpartum occupancy
-            for hospital in hospitalList
-        }
-        
-        # Loop through each arrival time (9, 14, 21)
-        for arrival_time in ARRIVAL_TIMES:
-            print(f"\n{'*'*10} Arrival Time {arrival_time}:00 {'*'*10}")
-            discharge_all_patients(HOSPITALS, arrival_time, arrivedDischarged)
-            
-            # Generate a random number of patients for this arrival time
-            arrival_rate_index = ARRIVAL_TIMES.index(arrival_time)
-            num_patients = np.random.poisson(data_loader.arrival_rates[arrival_rate_index])
-            print(f"New patients arriving: {num_patients}")
-            total_patients += num_patients
+    for hospital in HOSPITALS:
+        hospital_patient_list = prepopulate_patients(hospital)
+        patients = patients + hospital_patient_list["Intensive"] + hospital_patient_list["Intermediate"]
 
-            # Store the occupancy rate per time slot for each hospital
-            for hospital in HOSPITALS:
-                occupancy_rates_intensive = max(0, min(1, hospital.get_occupancy_rate("Intensive")))
-                occupancy_rates_intermediate = max(0, min(1, hospital.get_occupancy_rate("Intermediate")))
+    running = True
+    day = 0  # Initialize day counter
+    font = pygame.font.Font(None, 36) # Use a default font with size 36
+    current_date = START_DATE
 
-                # Accumulate occupancy rates for daily average calculation
-                print(f"Hospital: {hospital.name}")
-                print(f"  - Intensive Care Occupancy: {occupancy_rates_intensive:.2%}")
-                print(f"  - Intermediate Care Occupancy: {occupancy_rates_intermediate:.2%}")
-                
-                arrivedDischarged[hospital.name][2] += occupancy_rates_intensive
-                arrivedDischarged[hospital.name][3] += occupancy_rates_intermediate
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-            # Create and simulate each patient
-            for i in range(num_patients):
-                patient_type = random.choice(PATIENT_TYPE)
-                gps_pos = generate_patient_coords(HOSPITALS_CONFIG)
+        # Loop through each day
+        if day < num_days:
+            current_date = START_DATE + timedelta(days=day)
+            print(f"\n{'='*20} Day {day + 1} {'='*20}")
 
-                if patient_type == "Maternal":
-                    # Determine if delivery is within 24 hours
-                    del24HrPlus = random.choice([True, False])
-                    
-                    # Probability that baby will need NICU care (adjust these probabilities as needed)
-                    nicu_needed = random.random() < 0.15  # 15% chance of NICU need
-                    
-                    if nicu_needed:
-                        # Add both maternal and neonatal needs
-                        maternal_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 2))
-                        neonatal_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
-                        special_needs = maternal_needs + neonatal_needs
-                    else:
-                        # Only maternal needs
-                        num_special_needs = random.randint(1, 2)
-                        special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, num_special_needs)
+            arrivedDischarged = {"CHU-SJ":[0,0,0,0], "CHUQ":[0,0,0,0], "CHUS":[0,0,0,0],
+                               "CUSM":[0,0,0,0], "HGJ":[0,0,0,0], "HMR":[0,0,0,0]}
 
-                    # Create maternal patient
-                    patient = Patient(
-                        patientType="Maternal",
-                        gpsPos=gps_pos,
-                        bedType="BirthCenter" if not del24HrPlus else "Antepartum",
-                        del24HrPlus=del24HrPlus,
-                        transportNeedCnt=random.randint(0, 3),
-                        specialNeedType=",".join(special_needs),
-                        specialNeeds=special_needs,
-                        nicu_needed=nicu_needed,  # Add this field to Patient class
-                        arrival_time=arrival_time
-                    )
-                    
-                else:
-                    special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
-                    patient = Patient(
-                        patientType="Neonatal",
-                        gpsPos=gps_pos,
-                        bedType=random.choice(["Intensive", "Intermediate"]),
-                        del24HrPlus=None,
-                        transportNeedCnt=random.randint(0, 3),
-                        specialNeedType=",".join(special_needs),
-                        specialNeeds=special_needs,
-                        nicu_needed=True,  # Add this field to Patient class
-                        arrival_time=arrival_time
-                    )
+            # Loop through each hour
+            for hour in range(24):
+                print(f"\n{'*'*10} Arrival Time {hour}:00 {'*'*10}")
+                discharge_all_patients(HOSPITALS, arrivedDischarged)
 
-                # Run the patient through the recommendation system
-                print(f"\nProcessing Patient {i + 1}")
-                recommendation_system.run(patient)
+                # Generate a random number of patients for this arrival time
+                num_patients = np.random.poisson(data_loader.get_average_admissions())
+                print(f"New patients arriving: {num_patients}")
+                total_patients += num_patients
 
-                
-                # Print current hospital capacities
+                # Store the occupancy rate per time slot for each hospital
                 for hospital in HOSPITALS:
-                    print(f"Current capacity for {hospital.name}:")
-                    print(f"  - Intensive Care: {hospital.get_occupancy_rate('Intensive'):.2%}")
-                    print(f"  - Intermediate Care: {hospital.get_occupancy_rate('Intermediate'):.2%}")
-                    print(f"  - Birth Center: {hospital.get_occupancy_rate('BirthCenter'):.2%}")
-                    print(f"  - Antepartum: {hospital.get_occupancy_rate('Antepartum'):.2%}")
-                    print(f"  - Postpartum: {hospital.get_occupancy_rate('Postpartum'):.2%}")
-                    print(f"  - Total Available: {hospital.get_occupancy_rate_overall():.2%}")
+                    occupancy_rates_intensive = max(0, min(1, hospital.get_occupancy_rate("Intensive")))
+                    occupancy_rates_intermediate = max(0, min(1, hospital.get_occupancy_rate("Intermediate")))
 
-                if patient.assignedHospital != "":
-                    arrivedDischarged[patient.assignedHospital][0] += 1
-                
+                    # Accumulate occupancy rates for daily average calculation
+                    print(f"Hospital: {hospital.name}")
+                    print(f"  - Intensive Care Occupancy: {occupancy_rates_intensive:.2%}")
+                    print(f"  - Intermediate Care Occupancy: {occupancy_rates_intermediate:.2%}")
 
-        
+                    arrivedDischarged[hospital.name][2] += occupancy_rates_intensive
+                    arrivedDischarged[hospital.name][3] += occupancy_rates_intermediate
 
-        # Record daily statistics
-        for hospital in HOSPITALS:
-            print(f"Patient distribution for {hospital.name}:")
-            for bed_type in hospital.patients:
-                print(f"  - {bed_type}: {len(hospital.patients[bed_type])}")
-            results.append({
-                "Day": n + 1,
-                "Hospital": hospital.name,
-                "Arrived Patients": arrivedDischarged[hospital.name][0],
-                "Discharged Patients": arrivedDischarged[hospital.name][1],
-                "Intensive Occupancy Rate": max(0, min(1, arrivedDischarged[hospital.name][2]/3)),
-                "Intermediate Occupancy Rate": max(0, min(1, arrivedDischarged[hospital.name][3]/3))
-            })
-        
+                # Create and simulate each patient
+                for i in range(num_patients):
+                    #create patient
+                    patient = create_patient(hour, births_by_fsa)
+                    patients.append(patient)  # Add patient to the list
+                    # Run the patient through the recommendation system
+                    print(f"\nProcessing Patient {i + 1}")
 
+                    process_patient(patient, recommendation_system, HOSPITALS, patients_data, current_date, arrivedDischarged)
+
+                    # Print current hospital capacities
+                    for hospital in HOSPITALS:
+                        print(f"Current capacity for {hospital.name}:")
+                        print(f"  - Intensive Care: {math.floor(hospital.available_beds[0])}/{hospital.total_capacity_intensive}")
+                        print(f"  - Intermediate Care: {math.floor(hospital.available_beds[1])}/{hospital.total_capacity_intermediate}")
+                        print(f"  - Total Available: {math.floor(hospital.available_beds[0] + hospital.available_beds[1])}")
+
+                    if patient.assignedHospital != "":
+                        arrivedDischarged[patient.assignedHospital][0] += 1
+
+                update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day, current_date, font)
+                # Refresh display
+                pygame.display.flip()
+                clock.tick(60)
+
+
+            # Record daily statistics
+            record_daily_statistics(day,current_date,HOSPITALS,arrivedDischarged, results)
+            day += 1
+        else:
+            while running:
+                all_patients_arrived = update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day-1, current_date, font)
+
+                # Refresh display
+                pygame.display.flip()
+                clock.tick(60)
+
+                # Check if all patients have arrived and set `running` to False if so
+                if all_patients_arrived:
+                    running = False
+
+    # Pause screen after simulation ends
+    paused = True
+    font = pygame.font.Font(None, 36)
+    pause_message = font.render("Simulation complete! Press any key to exit.", True, (0, 0, 0))
+    screen.blit(pause_message, (SCREEN_WIDTH // 2 - pause_message.get_width() // 2, SCREEN_HEIGHT // 2))
+    pygame.display.flip()
+
+    # Wait for user input to exit
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                paused = False
+            elif event.type == pygame.KEYDOWN:
+                paused = False
+
+    pygame.quit()
+    print(f"Total Paitents:{total_patients}")
+    print(f"Queue {recommendation_system.get_queue_size()}")
+    print(f"Patietns who are assigned to the hospitals {total_patients- recommendation_system.get_queue_size()}")
+    # Create a DataFrame from the results
+    results_df = pd.DataFrame(results)
+    patients_df = pd.DataFrame(patients_data)
+    # # Save the results to an Excel file
+    results_df.to_excel("output/simulation.xlsx", index=False)
+    patients_df.to_excel("output/patients.xlsx", index=False)
     return results
+
+
+def record_daily_statistics(day, current_date, hospitals, arrivedDischarged, results):
+    for hospital in hospitals:
+        results.append({
+            "Day": day + 1,
+            "Date": current_date.strftime("%Y-%m-%d"),
+            "Month": current_date.month,
+            "Hospital": hospital.name,
+            "Arrived Patients": arrivedDischarged[hospital.name][0],
+            "Discharged Patients": arrivedDischarged[hospital.name][1],
+            "Intensive Occupancy Rate": arrivedDischarged[hospital.name][2] / 24,
+            "Intermediate Occupancy Rate": arrivedDischarged[hospital.name][3] / 24
+        })
+
+
+def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day , current_date, font):
+    """
+    Updates the state of the simulation, animates patient movement, and redraws the screen.
+
+    Args:
+        screen: The pygame screen object.
+        patients: List of patient objects.
+        hospital_positions: Dictionary mapping hospital names to positions.
+        HOSPITALS: List of hospital objects.
+        WHITE: Color code for clearing the screen.
+
+    Returns:
+        bool: Whether all patients have arrived or are discharged.
+    """
+    # Clear the screen
+    screen.fill(WHITE)
+
+    # Draw the day counter
+    day_counter_text = font.render(f"Day: {day + 1}, Date: {current_date.date()}", True, (0, 0, 0))  # Black text
+    screen.blit(day_counter_text, (10, 10))  # Position at (10, 10) in the top-left corner
+
+    # Draw hospitals
+    draw_hospitals(screen, HOSPITALS)
+
+    all_patients_arrived = True  # Assume all patients have arrived initially
+
+    # Organize each patient in the queue
+    for hospital_name in hospital_positions:
+        patients_at_hospital = [
+            p for p in patients if
+            p.assignedHospital == hospital_name and p.arrived_at_hospital and not p.discharged
+        ]
+        for i, patient in enumerate(patients_at_hospital):
+            patient.queue_position = i  # Assign queue position based on order of arrival
+
+    # Move and draw each patient
+    for patient in patients[:]:
+        if not patient.discharged:
+            target_hospital_pos = hospital_positions.get(patient.assignedHospital, (600, 50))
+            animate_patient_movement(patient, target_hospital_pos)
+
+            # Draw patient at the updated position
+            draw_patient(screen, patient, target_hospital_pos)
+
+        # If the patient hasn't arrived or is not discharged, mark that not all patients have arrived
+        if not patient.arrived_at_hospital and not patient.discharged:
+            all_patients_arrived = False
+
+        # Remove discharged patients from the list
+        if patient.discharged:
+            patients.remove(patient)
+
+    return all_patients_arrived
+
+# Patient Processing Logic
+def create_patient(hour, births_by_fsa):
+    patient_type = random.choice(PATIENT_TYPE)
+    postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
+
+    bed_type = random.choice(BED_TYPE)
+
+    if patient_type == "Maternal":
+        # Determine if delivery is within 24 hours
+        del24HrPlus = random.choice([True, False])
+        
+        # Probability that baby will need NICU care (adjust these probabilities as needed)
+        nicu_needed = random.random() < 0.15  # 15% chance of NICU need
+        
+        if nicu_needed:
+            # Add both maternal and neonatal needs
+            maternal_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 2))
+            neonatal_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
+            special_needs = maternal_needs + neonatal_needs
+        else:
+            # Only maternal needs
+            num_special_needs = random.randint(1, 2)
+            special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, num_special_needs)
+    else:
+        del24HrPlus = False
+        nicu_needed = True
+        special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
+
+    return SimulatedPatient(
+        patientType=patient_type,
+        gpsPos=gps_pos,
+        postalCode=postal_code,
+        bedType=bed_type,
+        del24HrPlus=del24HrPlus,
+        transportNeedCnt=random.randint(0, 3),
+        specialNeedType=",".join(special_needs),
+        specialNeeds=special_needs,
+        arrival_time=hour,
+        aniGpsPos=[600, 50],
+        discharged=False,
+        nicu_needed=nicu_needed,
+        arrived_at_hospital=False,
+        queue_position=0
+    )
+
+def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
+    recommendation_system.run(patient)
+    if patient.assignedHospital:
+        arrivedDischarged[f"{patient.assignedHospital}"][0] += 1
+        recommendation_system.find_nearest_hospital()
+        for hospital in hospitals:
+            if hospital.name == patient.nearestHospital:
+                nearest_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
+            if hospital.name == patient.assignedHospital:
+                assigned_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
+
+        patients_data.append({
+            "Postal Code": patient.postalCode,
+            "Transferred": patient.transferred,
+            "Type": patient.bedType,
+            "NICU": "Prematurity (GA<26 weeks)" in patient.specialNeeds or "Prematurity (GA>26 weeks)" in patient.specialNeeds,
+            "Date": current_date.strftime("%Y-%m-%d"),
+            "Month": current_date.month,
+            "Nearest Hospital": patient.nearestHospital,
+            "Nearest Distance": nearest_distance,
+            "Assigned Hospital": patient.assignedHospital,
+            "Assigned Distance": assigned_distance,
+            "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital
+        })

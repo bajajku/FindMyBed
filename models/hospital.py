@@ -15,7 +15,6 @@ class Hospital:
                  total_capacity: int, total_capacity_intensive: int,
                  total_capacity_intermediate: int,
                  birth_center_capacity: int = None,
-                 transfer_percentage = None,
                  antepartum_capacity: int = None,
                  postpartum_capacity: int = None):
         self.name = name
@@ -33,7 +32,6 @@ class Hospital:
             "Postpartum": []
         }
         self.total_capacity = total_capacity
-        self.transfer_percentage = transfer_percentage
         self.assigned_patients = 0
         self.total_capacity_intensive = total_capacity_intensive
         self.total_capacity_intermediate = total_capacity_intermediate

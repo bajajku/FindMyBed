@@ -15,7 +15,6 @@ class Patient:
     bedType: str = ""
     assignedHospital: str = ""
     homeHospital: Optional[str] = None
-    transferred: bool = False
     distanceToHospital: int = 0
 
     def get_arrival_time_index(self) -> int:
@@ -39,7 +38,6 @@ class SimulatedPatient:
     bedType: str = ""
     assignedHospital: str = ""
     homeHospital: Optional[str] = None
-    transferred: bool = False
     distanceToHospital : int = 0
 
     def get_arrival_time_index(self) -> int:

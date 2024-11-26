@@ -196,10 +196,6 @@ class HospitalRecommendation:
         recommended_hospitals = self.get_top_hospitals()
         
         if not recommended_hospitals:
-            transfer_probability = 22.57685376112847
-            is_transferred = np.random.poisson(transfer_probability / 100) > 0
-            self.patient.transferred = bool(is_transferred)
-
             self.queue.append(self.patient)
             logging.warning("No suitable hospitals found. Patient added to queue.")
             return
@@ -210,10 +206,6 @@ class HospitalRecommendation:
         success = self.selected_hospital.admit_patient(self.patient)
         
         if success:
-            transfer_probability = self.selected_hospital.transfer_percentage
-            is_transferred = np.random.poisson(transfer_probability/100)>0
-            self.patient.transferred = bool(is_transferred)
-
             self.selected_hospital.assigned_patients += 1
             print(f"Patient assigned to {self.selected_hospital.name}")
         else:

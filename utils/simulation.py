@@ -84,8 +84,6 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
     for bed_type, count in [("Intensive", occupied_beds_intensive),
                             ("Intermediate", occupied_beds_intermediate)]:
         for _ in range(count):
-            transfer_probability = hospital.transfer_percentage
-            is_transferred = np.random.poisson(transfer_probability / 100) > 0
             patient = SimulatedPatient(
                     patientType=random.choice(PATIENT_TYPE),
                     gpsPos=hospital.geolocation,
@@ -102,7 +100,6 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
                     queue_position=0,  # Initialize queue position
                     discharged=False,
                     assignedHospital=hospital.name,
-                    transferred = bool(is_transferred),
                     distanceToHospital= random.randint(1, 100)
                 )
             hospital.patients[patient.bedType].append(patient)
@@ -365,7 +362,6 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
 
         patients_data.append({
             "Postal Code": patient.postalCode,
-            "Transferred": patient.transferred,
             "Type": patient.bedType,
             "NICU": "Prematurity (GA<26 weeks)" in patient.specialNeeds or "Prematurity (GA>26 weeks)" in patient.specialNeeds,
             "Date": current_date.strftime("%Y-%m-%d"),

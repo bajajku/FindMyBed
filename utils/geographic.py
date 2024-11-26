@@ -35,7 +35,7 @@ def select_fsa_by_rate(births_by_fsa: pd.DataFrame) -> str:
     """Select an FSA based on a Poisson distribution with a lambda defined by the birth ratio."""
     # Select a random FSA based on Poisson-distributed patient counts
     selected_fsa_row = births_by_fsa.sample(weights=births_by_fsa['BirthRate']).iloc[0]
-    return selected_fsa_row['Postal Code (first 3 digits)']
+    return selected_fsa_row['FSA']
 
 def precompute_postal_codes() -> dict:
     """
@@ -50,6 +50,7 @@ def precompute_postal_codes() -> dict:
             fsa_to_postal_codes[fsa] = []
         fsa_to_postal_codes[fsa].append(code)
     return fsa_to_postal_codes
+
 # Precompute and store the dictionary globally for fast access
 PRECOMPUTED_POSTAL_CODES = precompute_postal_codes()
 

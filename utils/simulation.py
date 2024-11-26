@@ -312,7 +312,7 @@ def create_patient(hour, births_by_fsa):
     patient_type = random.choice(PATIENT_TYPE)
     postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
 
-    bed_type = random.choice(BED_TYPE)
+    bed_type = data_loader.assign_bed_type_poisson()
 
     if patient_type == "Maternal":
         # Determine if delivery is within 24 hours

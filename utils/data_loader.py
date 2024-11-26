@@ -7,6 +7,7 @@ import ast
 
 from config import EXCEL_PATH
 from models.hospital import Hospital
+import random
 
 class DataLoader:
 
@@ -26,7 +27,6 @@ class DataLoader:
         # new attributes for the new data
         self.birth_rates_by_fsa = None
         self.transfer_percentage = None
-
     @staticmethod
     def parse_into_list_of_lists(df_col: pd.Series) -> List[List[float]]:
         """
@@ -91,8 +91,6 @@ class DataLoader:
         self.total_capacity_intermediate = df['total_capacity_intermediate'].tolist()
         self.admissions_per_hour = df['admissions_per_hour'].tolist()
         self.average_admissions = sum(self.admissions_per_hour)
-        self.transfer_percentage = df['transfer_percentage'].tolist()
-
         self.discharge_rates = self.parse_into_list_of_lists(df['Discharge rate'])
         discharge_rates_intensive = df['Discharge rate intensive'].tolist()
         discharge_rates_intermediate = df['Discharge rate intermediate'].tolist()
@@ -100,17 +98,20 @@ class DataLoader:
         for i in range(len(self.hospital_names)):
             self.beds_available[i].extend([50,50,50])
         # Scale down discharge rates for intensive and intermediate
-        scaling_factor = 0.3
+        scaling_factor_intensive = 0.15
+        scaling_factor_intermediate = 0.08
         self.discharge_rates_intensive = [
-            (rate * scaling_factor) for rate in discharge_rates_intensive
+            (rate * scaling_factor_intensive) for rate in discharge_rates_intensive
         ]
         self.discharge_rates_intermediate = [
-            (rate * scaling_factor) for rate in discharge_rates_intermediate
+            (rate * scaling_factor_intermediate) for rate in discharge_rates_intermediate
         ]
 
         arrival_rates = self.parse_into_list_of_lists(df['Arrival rate'])
         self.arrival_rates = [sum(x) for x in arrival_rates]
 
+        self.intensive_rate = df['Bed Type Rate Intensive'].sum()
+        self.intermediate_rate = df['Bed Type Rate Intermediate'].sum()
     def create_hospitals(self):
         # Create Hospital objects
         hospitals = [
@@ -124,8 +125,7 @@ class DataLoader:
                 discharge_rates_intermediate=self.discharge_rates_intermediate[i],
                 total_capacity=self.total_capacity[i],
                 total_capacity_intensive=self.total_capacity_intensive[i],
-                total_capacity_intermediate=self.total_capacity_intermediate[i],
-                transfer_percentage=self.transfer_percentage[i]
+                total_capacity_intermediate=self.total_capacity_intermediate[i]
             ) for i in range(len(self.hospital_names))
         ]
         return hospitals
@@ -133,6 +133,17 @@ class DataLoader:
     def get_average_admissions(self):
         return self.average_admissions
 
+    # To reflect the ratio of intensive and intermediate bed types
+    def assign_bed_type_poisson(self):
+        # Generate a random number between 0 and 1
+        rand_num = random.random()
+
+        # Assign bed type based on the cumulative probability
+        if rand_num <= self.intensive_rate:
+            return 'Intensive'
+        else:
+            return 'Intermediate'
+        
     def calculate_birth_rates_by_fsa(self, excel_file: str) -> pd.DataFrame:
         """
         Loads and processes birth rate data by FSA (Forward Sortation Area) from Excel sheets.
@@ -144,25 +155,30 @@ class DataLoader:
             pd.DataFrame: DataFrame containing FSA, total births, and birth ratios.
         """
         # Load and combine data from specified sheets
-        sheets_to_load = ['All birth 2017', 'Year 2018', 'Year 2019', 'Year 2020', 'Year 2021', 'Year 2022',
-                          'Year 2023']
-        excel_data = pd.read_excel(excel_file, sheet_name=sheets_to_load)
+        sheets_to_load = ['2021-01-11 to 2021-12-31', '2022-10-01 to 2022-12-31', '2023-01-01 to 2023-12-31']
+        excel_data = pd.read_excel(excel_file, sheet_name=sheets_to_load, header=1)
 
         # Combine all sheets into a single DataFrame
         combined_data = pd.concat(excel_data.values(), ignore_index=True)
+        # Rename hospital codes in 'firstSiteCode'
+        rename_map = {
+            'MUHC': 'CUSM',
+            'HSJ': 'CHU-SJ',
+            'MRH': 'HMR',
+            'JGH': 'HGJ'
+        }
+        # Rename the hospital codes in 'firstSiteCode'
+        if 'firstSiteCode' in combined_data.columns:  # Check if the column exists
+            combined_data['firstSiteCode'] = combined_data['firstSiteCode'].replace(rename_map)
 
-        # Step 1: Keep only relevant columns and drop rows with empty postal codes
-        combined_data = combined_data[['Postal Code (first 3 digits)', 'Date of Birth (YY-MM)']].dropna(
-            subset=['Postal Code (first 3 digits)'])
+        # Ensure 'NumberOfBirths' is numeric and handle any missing values
+        combined_data['NumberOfBirths'] = pd.to_numeric(combined_data['NumberOfBirths'], errors='coerce').fillna(0)
 
-        # Step 2: Count the number of births per postal code
-        births_by_fsa = combined_data['Postal Code (first 3 digits)'].value_counts().reset_index()
-        births_by_fsa.columns = ['Postal Code (first 3 digits)', 'BirthCount']
-
-        # Step 3: Calculate total population based on non-empty entries
-        total_population = births_by_fsa.shape[0]  # Total number of non-empty rows
-
-        # Step 4: Calculate birth rate per postal code
-        births_by_fsa['BirthRate'] = (births_by_fsa['BirthCount'] / total_population)
+        # Extract the FSA and calculate total births by FSA
+        combined_data['FSA'] = combined_data['PostalCode'].str[:3]
+        births_by_fsa = combined_data.groupby('FSA')['NumberOfBirths'].sum().reset_index()
+        births_by_fsa.columns = ['FSA', 'TotalBirths']
+        total_births = births_by_fsa['TotalBirths'].sum()
+        births_by_fsa['BirthRate'] = births_by_fsa['TotalBirths'] / total_births
 
         return births_by_fsa

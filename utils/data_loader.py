@@ -98,8 +98,8 @@ class DataLoader:
         for i in range(len(self.hospital_names)):
             self.beds_available[i].extend([50,50,50])
         # Scale down discharge rates for intensive and intermediate
-        scaling_factor_intensive = 0.15
-        scaling_factor_intermediate = 0.06
+        scaling_factor_intensive = 0.09
+        scaling_factor_intermediate = 0.05
         self.discharge_rates_intensive = [
             (rate * scaling_factor_intensive) for rate in discharge_rates_intensive
         ]

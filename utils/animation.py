@@ -5,7 +5,20 @@ from config import EXCEL_PATH
 from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT, GREEN
 from utils.constants import hospital_positions  # assuming this can be defined in your constants file
 from utils.data_loader import DataLoader
-from utils.geographic import calculate_distance
+from matplotlib import cm
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Initialize the colormap
+cmap = cm.get_cmap('viridis')
+gradient_steps = 256  # Number of discrete steps in the gradient
+gradient_table = []
+
+# Precompute the gradient as a lookup table
+for i in range(gradient_steps):
+    normalized_value = 1 - (i / (gradient_steps - 1))  # Range from 0 to 1
+    r, g, b, _ = cmap(normalized_value)  # RGBA values
+    gradient_table.append((int(r * 255), int(g * 255), int(b * 255)))
 
 data_loader = DataLoader()
 data_loader.load_data(excel_file=EXCEL_PATH)
@@ -31,7 +44,7 @@ def draw_hospitals(screen, hospitals):
 
         #Capacity
         capacity = hospital.occupied_bed_summary()
-        
+
         capacity_text = font.render(capacity, True, WHITE)
         screen.blit(capacity_text, (x + 5, y + 30))  # Adjust y+30 to position it below the main text
 
@@ -43,34 +56,17 @@ def draw_hospitals(screen, hospitals):
     screen.blit(text, (x + 5, y + 5))
 
 
-'''def create_surface_for_hospitals(hospitals):
-    surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-    surface.fill(WHITE)  # Fill with background color
-
-    for hospital in hospitals:
-        x, y = hospital_positions[hospital.name]
-        pygame.draw.rect(surface, BLUE, (x, y, 150, 50))
-        font = pygame.font.Font(None, 24)
-        text = font.render(hospital.name, True, WHITE)
-        surface.blit(text, (x + 5, y + 5))
-
-        capacity = hospital.occupied_bed_summary()
-        capacity_text = font.render(capacity, True, WHITE)
-        surface.blit(capacity_text, (x + 5, y + 30))  # Adjust position
-
-    # Drawing Transport Centre
-    x, y = hospital_positions[""]
-    pygame.draw.rect(surface, BLUE, (x, y, 150, 50))
-    font = pygame.font.Font(None, 24)
-    text = font.render("Transport Centre", True, WHITE)
-    surface.blit(text, (x + 5, y + 5))
-
-    return surface
-
-def draw_hospitals(screen, hospitals):
-    surface = create_surface_for_hospitals(hospitals)
-    screen.blit(surface, (0, 0))  # Blit the surface to the screen'''
-
+def get_precomputed_color(value):
+    """
+    Get color from precomputed gradient table based on a normalized value.
+    :param value: Normalized value between 0.0 and 1.0.
+    :return: (R, G, B) tuple.
+    """
+    # Ensure value is clamped between 0 and 1
+    value = max(0, min(value, 1))
+    # Map to the closest index in the gradient table
+    index = int(value * (gradient_steps - 1))
+    return gradient_table[index]
 
 
 def draw_patient(screen, patient, hospital_pos):
@@ -83,9 +79,8 @@ def draw_patient(screen, patient, hospital_pos):
 
         # Normalize the distance to a 0-1 range
         normalized_distance = min(distance / max_distance, 1.0)
-        red = int(normalized_distance * 255)
-        green = int((1 - normalized_distance) * 255)
-        color = (red, green, 0)
+
+        color = get_precomputed_color(normalized_distance)
     else:
         color = GREEN
 
@@ -109,3 +104,64 @@ def animate_patient_movement(patient, target_pos):
 
     if ((patient.aniGpsPos[0], patient.aniGpsPos[1]) == target_pos) and patient.arrived_at_hospital == False:
         patient.arrived_at_hospital = True  # Mark as arrived when at destination
+
+
+def create_viridis_colormap():
+    """
+    Creates an inverted viridis colormap gradient.
+
+    Returns:
+        np.ndarray: A numpy array with the inverted colormap gradient.
+    """
+    gradient = np.linspace(0, 1, 256)  # Create 256 levels for the gradient
+    viridis_colormap = plt.cm.viridis(gradient)  # Apply the viridis colormap to the gradient
+
+    # Reverse the colormap array to invert the colors
+    viridis_colormap = viridis_colormap[::-1]
+
+    # Remove alpha channel (optional), keeping RGB channels
+    viridis_colormap = viridis_colormap[:, :3]
+
+    return viridis_colormap
+
+
+
+def draw_colormap_legend(screen, font, position):
+    """
+    Draws an inverted Viridis colormap legend on the screen, with color and labels.
+
+    Args:
+        screen: The pygame screen object.
+        font: The pygame font object to use for text.
+        position: Tuple (x, y) for the top-left corner of the legend.
+    """
+    # Create the inverted viridis colormap
+    viridis_colormap = create_viridis_colormap()
+
+    x, y = position
+    colormap_width = 256  # Width corresponding to the 256 color levels
+    colormap_height = 30  # Height of the colormap legend
+
+    # Position the colormap at the bottom-right corner
+    colormap_x = screen.get_width() - colormap_width - 100  # 10-pixel padding from right
+    colormap_y = screen.get_height() - colormap_height - 10  # 10-pixel padding from bottom
+
+    # Create a blank surface to hold the horizontal gradient
+    colormap_surface = pygame.Surface((colormap_width, colormap_height))
+
+    # Fill the surface with the gradient (left to right)
+    for i in range(colormap_width):
+        # Get the color from the inverted colormap based on the x position
+        color = viridis_colormap[i]  # Color corresponding to the current position in the inverted colormap
+        pygame.draw.line(colormap_surface, color * 255, (i, 0), (i, colormap_height))
+
+    # Draw the colormap on the screen
+    screen.blit(colormap_surface, (colormap_x, colormap_y))
+
+    # Optionally, add labels to indicate the value range (0 to 1 for colormap)
+    label_start = font.render('0 km', True, (0, 0, 0))
+    label_end = font.render('100 km', True, (0, 0, 0))
+
+    # Position the labels
+    screen.blit(label_start, (colormap_x - 60, colormap_y))
+    screen.blit(label_end, (colormap_x + colormap_width - label_end.get_width() + 85, colormap_y))

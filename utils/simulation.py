@@ -11,7 +11,8 @@ from models.recommendation import HospitalRecommendation
 from utils.constants import *
 from utils.data_loader import DataLoader
 from utils.geographic import generate_patient_coords, fsa_to_coordinates, select_fsa_by_rate, calculate_distance
-from utils.animation import initialize_screen, draw_hospitals, draw_patient, animate_patient_movement
+from utils.animation import initialize_screen, draw_hospitals, draw_patient, animate_patient_movement, \
+    draw_colormap_legend
 import pandas as pd
 from datetime import timedelta
 from utils.admission import admit_patient
@@ -101,7 +102,8 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
                     queue_position=0,  # Initialize queue position
                     discharged=False,
                     assignedHospital=hospital.name,
-                    transferred = bool(is_transferred)
+                    transferred = bool(is_transferred),
+                    distanceToHospital= random.randint(1, 100)
                 )
             hospital.patients[patient.bedType].append(patient)
     return hospital.patients
@@ -273,6 +275,7 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
 
     # Draw hospitals
     draw_hospitals(screen, HOSPITALS)
+    draw_colormap_legend(screen, font, position=(50, 50))
 
     all_patients_arrived = True  # Assume all patients have arrived initially
 

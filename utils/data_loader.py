@@ -89,7 +89,7 @@ class DataLoader:
         self.total_capacity = df['total_capacity'].tolist()
         self.total_capacity_intensive = df['total_capacity_intensive'].tolist()
         self.total_capacity_intermediate = df['total_capacity_intermediate'].tolist()
-        self.admissions_per_hour = df['admissions_per_hour'].tolist()
+        self.admissions_per_hour = df['admissions_transported_per_hour'].tolist()
         self.average_admissions = sum(self.admissions_per_hour)
         self.discharge_rates = self.parse_into_list_of_lists(df['Discharge rate'])
         discharge_rates_intensive = df['Discharge rate intensive'].tolist()
@@ -99,7 +99,7 @@ class DataLoader:
             self.beds_available[i].extend([50,50,50])
         # Scale down discharge rates for intensive and intermediate
         scaling_factor_intensive = 0.15
-        scaling_factor_intermediate = 0.08
+        scaling_factor_intermediate = 0.06
         self.discharge_rates_intensive = [
             (rate * scaling_factor_intensive) for rate in discharge_rates_intensive
         ]

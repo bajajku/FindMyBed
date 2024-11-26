@@ -3,7 +3,7 @@
 Use This file to add Global constants.
 '''
 
-NUMBER_OF_DAYS = 750
+NUMBER_OF_DAYS = 365
 ARRIVAL_TIMES = [9, 14, 21]
 
 

@@ -124,3 +124,10 @@ HYPERPARAMETERS = {
     "Arrival Rate": "Based on historical hourly averages per hospital",
     "Discharge Rate": "Based on historical patterns"
 }
+
+# Constants for button dimensions and colors
+BUTTON_WIDTH = 100
+BUTTON_HEIGHT = 40
+BUTTON_COLOR = (0, 0, 255)
+PAUSED_COLOR = (255, 0, 0)
+PLAY_COLOR = (0, 255, 0)

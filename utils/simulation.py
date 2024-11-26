@@ -5,6 +5,7 @@ import numpy as np
 import pygame
 
 from config import EXCEL_PATH
+from models.PausePlayButton import PausePlayButton
 from models.hospital import Hospital
 from models.patient import Patient, SimulatedPatient
 from models.recommendation import HospitalRecommendation
@@ -111,6 +112,7 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
 
 
 screen, clock = initialize_screen()
+pause_play_button = PausePlayButton(1100, 10)
 data_loader = DataLoader()
 data_loader.load_data(excel_file=EXCEL_PATH)
 HOSPITALS = data_loader.create_hospitals()
@@ -129,6 +131,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
         patients = patients + hospital_patient_list["Intensive"] + hospital_patient_list["Intermediate"]
 
     running = True
+    paused = False
     day = 0  # Initialize day counter
     font = pygame.font.Font(None, 36) # Use a default font with size 36
     current_date = START_DATE
@@ -137,6 +140,18 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if pause_play_button.is_clicked(event.pos):  # Check if the button is clicked
+                    paused = not paused
+                    pause_play_button.toggle(screen)  # Toggle button state
+
+        if paused:
+            # Show paused message
+            pause_message = font.render("Simulation Paused. Press Play to Resume.", True, (255, 0, 0))
+            screen.blit(pause_message, (SCREEN_WIDTH // 2 - pause_message.get_width() // 2, SCREEN_HEIGHT // 2))
+            pygame.display.flip()
+            clock.tick(10)  # Slow down the loop while paused
+            continue  # Skip the simulation steps while paused
 
         # Loop through each day
         if day < num_days:
@@ -190,6 +205,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
                         arrivedDischarged[patient.assignedHospital][0] += 1
 
                 update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day, current_date, font)
+                pause_play_button.draw(screen)
                 # Refresh display
                 pygame.display.flip()
                 clock.tick(60)

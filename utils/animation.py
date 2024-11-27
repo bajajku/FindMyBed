@@ -1,8 +1,10 @@
 # animation.py
+import math
+
 import pygame
 
 from config import EXCEL_PATH
-from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT, GREEN
+from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT, GREEN, AQUAMARINE
 from utils.constants import hospital_positions  # assuming this can be defined in your constants file
 from utils.data_loader import DataLoader
 from matplotlib import cm
@@ -25,17 +27,32 @@ data_loader.load_data(excel_file=EXCEL_PATH)
 HOSPITALS = data_loader.create_hospitals()
 hospital_dict = {hospital.name: hospital for hospital in HOSPITALS}
 
+#load patient icon
+patient_icon = pygame.image.load("icons/patient.png")
+patient_icon = pygame.transform.scale(patient_icon, (20, 20))
+
 def initialize_screen():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Hospital Patient Arrival Simulation")
     clock = pygame.time.Clock()
+
+    # Convert the patient icon after initializing the display
+    global patient_icon
+    patient_icon = patient_icon.convert_alpha()
+
     return screen, clock
 
 def draw_hospitals(screen, hospitals):
     for hospital in hospitals:
         x, y = hospital_positions[hospital.name]
-        pygame.draw.rect(screen, BLUE, (x, y, 150, 50))
+        pygame.draw.rect(screen, AQUAMARINE, (x, y, 150, 50))
+
+        # Draw the border around the hospital
+        border_thickness = 3  # Thickness of the border
+        height = 50 + ((math.ceil(hospital.total_capacity / 10)) * 25 )
+        pygame.draw.rect(screen, AQUAMARINE, (x, y, 255, height), border_thickness)
+
         font = pygame.font.Font(None, 24)
 
         #Hospital Name
@@ -50,7 +67,12 @@ def draw_hospitals(screen, hospitals):
 
     # Drawing Transport Centre
     x, y = hospital_positions[""]
-    pygame.draw.rect(screen, BLUE, (x, y, 150, 50))
+    pygame.draw.rect(screen, AQUAMARINE, (x, y, 150, 50))
+
+    # Draw the border around the hospital
+    border_thickness = 3  # Thickness of the border
+    pygame.draw.rect(screen, AQUAMARINE, (x, y, 255, 175), border_thickness)
+
     font = pygame.font.Font(None, 24)
     text = font.render("Transport Centre", True, WHITE)
     screen.blit(text, (x + 5, y + 5))
@@ -68,6 +90,13 @@ def get_precomputed_color(value):
     index = int(value * (gradient_steps - 1))
     return gradient_table[index]
 
+#Change patient icon color based on the gradient
+def tint_icon_additive(icon, color):
+    tinted_icon = icon.copy()
+    tint_surface = pygame.Surface(icon.get_size(), flags=pygame.SRCALPHA)
+    tint_surface.fill(color + (0,))  # Add alpha if needed
+    tinted_icon.blit(tint_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+    return tinted_icon
 
 def draw_patient(screen, patient, hospital_pos):
 
@@ -85,12 +114,16 @@ def draw_patient(screen, patient, hospital_pos):
         color = GREEN
 
     if patient.arrived_at_hospital and not patient.discharged:
-        offset_x = (patient.queue_position % 10) * 15
-        offset_y = (patient.queue_position // 10) * 15
-        x, y = hospital_pos[0] + offset_x + 5, hospital_pos[1] + offset_y + 60
-        pygame.draw.circle(screen, color, (x, y), 5)
+        offset_x = (patient.queue_position % 10) * 25
+        offset_y = (patient.queue_position // 10) * 25
+        x, y = hospital_pos[0] + offset_x + 15, hospital_pos[1] + offset_y + 60
+
+        tinted_icon = tint_icon_additive(patient_icon, color)
+        screen.blit(tinted_icon, (x - patient_icon.get_width() // 2, y - patient_icon.get_height() // 2))
     else:
-        pygame.draw.circle(screen, color, patient.aniGpsPos, 5)
+        x, y = patient.aniGpsPos
+        tinted_icon = tint_icon_additive(patient_icon, color)
+        screen.blit(tinted_icon, (x - patient_icon.get_width() // 2, y - patient_icon.get_height() // 2))
 
 def animate_patient_movement(patient, target_pos):
     if patient.aniGpsPos[0] < target_pos[0]:

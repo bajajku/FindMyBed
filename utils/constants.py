@@ -87,7 +87,7 @@ MIN_DISTANCE_KM: float = 5.0
 MAX_DISTANCE_KM: float = 30.0
 
 # Occupancy Thresholds
-INTENSIVE_OCCUPANCY_THRESHOLD: float = 1.0
+INTENSIVE_OCCUPANCY_THRESHOLD: float = 0.95
 INTERMEDIATE_OCCUPANCY_THRESHOLD: float = 0.85
 MATERNAL_OCCUPANCY_THRESHOLD: float = 0.85
 # Define the simulator's start date
@@ -101,18 +101,19 @@ HYPERPARAMETERS = {
 }
 
 #Animation
-SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 800
-WHITE, BLUE, RED, GREEN = (255, 255, 255), (0, 100, 255), (255, 0, 0), (0,255,0)
+SCREEN_WIDTH, SCREEN_HEIGHT = 1320, 800
+WHITE, BLUE, RED, GREEN = (255, 255, 255), (0,0,255), (255, 0, 0), (0,255,0)
+AQUAMARINE = (102, 205, 170)
 
 # Define hospital positions for visualization
 hospital_positions = {
     "CHU-SJ": (100, 100),
-    "CHUQ": (1000, 100),
+    "CHUQ": (1050, 100),
     "CHUS": (100, 550),
-    "CUSM": (1000, 550),
-    "HGJ": (350, 300),
+    "CUSM": (1050, 550),
+    "HGJ": (365, 300),
     "HMR": (550, 550),
-    "": (750,300)
+    "": (785,300)
 }
 
 # Define the simulator's start date

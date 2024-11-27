@@ -291,9 +291,18 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
 
     # Draw hospitals
     draw_hospitals(screen, HOSPITALS)
+
+    #Draw colormap legend
     draw_colormap_legend(screen, font, position=(50, 50))
 
     all_patients_arrived = True  # Assume all patients have arrived initially
+
+    # Check if more than 50 patients are at the transport center and discharge them
+    transport_center_patients = [p for p in patients if p.assignedHospital == "" and not p.discharged and p.arrived_at_hospital == True]
+    if len(transport_center_patients) > 50:
+        # Clear all patients at the transport center and reset their status
+        for patient in transport_center_patients:
+            patient.discharged = True
 
     # Organize each patient in the queue
     for hospital_name in hospital_positions:

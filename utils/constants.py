@@ -101,18 +101,18 @@ HYPERPARAMETERS = {
 }
 
 #Animation
-SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 800
+SCREEN_WIDTH, SCREEN_HEIGHT = 1300, 800
 WHITE, BLUE, RED, GREEN = (255, 255, 255), (0, 100, 255), (255, 0, 0), (0,255,0)
 
 # Define hospital positions for visualization
 hospital_positions = {
     "CHU-SJ": (100, 100),
-    "CHUQ": (1000, 100),
+    "CHUQ": (1050, 100),
     "CHUS": (100, 550),
-    "CUSM": (1000, 550),
+    "CUSM": (1050, 550),
     "HGJ": (350, 300),
     "HMR": (550, 550),
-    "": (750,300)
+    "": (800,300)
 }
 
 # Define the simulator's start date

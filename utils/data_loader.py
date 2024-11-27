@@ -97,6 +97,7 @@ class DataLoader:
         discharge_rates_intensive = df['Discharge rate intensive'].tolist()
         discharge_rates_intermediate = df['Discharge rate intermediate'].tolist()
 
+        #extended the available beds list to accommodate other bed types
         for i in range(len(self.hospital_names)):
             self.beds_available[i].extend([50,50,50])
         # Scale down discharge rates for intensive and intermediate

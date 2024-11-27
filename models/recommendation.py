@@ -16,7 +16,6 @@ class HospitalRecommendation:
     
     states = [
         'input',
-        'condition_check',
         'discharge_patients',
         'service_determination',
         'bed_type_check',
@@ -49,18 +48,9 @@ class HospitalRecommendation:
         self.machine.add_transition(
             trigger='process_input',
             source='input',
-            dest='condition_check',
-            after='apply_restrictions'
-        )
-
-        # Define transitions
-        self.machine.add_transition(
-            trigger='check_conditions',
-            source='condition_check',
             dest='service_determination',
             after=['home_hospital_check', 'determine_services']
         )
-
         self.machine.add_transition(
             trigger='determine_service',
             source='service_determination',
@@ -84,61 +74,6 @@ class HospitalRecommendation:
             source='hospital_recommendation',
             dest='input'
         )
-    
-    def apply_restrictions(self) -> None:
-        """Filter hospitals based on service availability and occupancy rate."""
-        condition2_services = ["Neurology", "Neurosurgery", "Cardiology", "Cardiac Surgery"]
-        
-        # Helper checks
-        is_prematurity_ga_lt_26 = "Prematurity (GA<26 weeks)" in self.patient.specialNeeds
-        is_prematurity_ga_gt_26 = "Prematurity (GA>26 weeks)" in self.patient.specialNeeds
-        has_condition2_services = any(service in self.patient.specialNeeds for service in condition2_services)
-
-        # Condition 1: Indigenous patients
-        if self.patient.is_indigenous:
-            self.available_hospitals = [
-                hospital for hospital in self.hospitals if hospital.name == "CUSM"
-            ]
-            self.patient.condition = 1
-
-        # Condition 2: Major anomaly AND cardiac OR neuro
-        elif has_condition2_services:
-            valid_hospitals = ["CUSM", "CHU SJ", "CHUQ"]
-            self.available_hospitals = [
-                hospital for hospital in self.hospitals if hospital.name in valid_hospitals
-            ]
-            self.patient.condition = 2
-
-        # Condition 3: Major anomaly BUT not condition 2 or prematurity
-        elif not has_condition2_services and not is_prematurity_ga_lt_26 and not is_prematurity_ga_gt_26:
-            valid_hospitals = ["CUSM", "CHU SJ", "CHUQ", "CHUS"]
-            self.available_hospitals = [
-                hospital for hospital in self.hospitals if hospital.name in valid_hospitals
-            ]
-            self.patient.condition = 3
-
-        # Condition 4: Prematurity (GA<26 weeks)
-        elif is_prematurity_ga_lt_26:
-            valid_hospitals = ["CUSM", "CHU SJ", "HGJ", "CHUQ", "CHUS"]
-            self.available_hospitals = [
-                hospital for hospital in self.hospitals if hospital.name in valid_hospitals
-            ]
-            self.patient.condition = 4
-
-        # Condition 5: Prematurity (GA>26 weeks)
-        elif is_prematurity_ga_gt_26:
-            valid_hospitals = ["CUSM", "CHU SJ", "HGJ", "CHUQ", "CHUS", "HMR"]
-            self.available_hospitals = [
-                hospital for hospital in self.hospitals if hospital.name in valid_hospitals
-            ]
-            self.patient.condition = 5
-
-        # Default case: Assign all hospitals
-        else:
-            self.available_hospitals = self.hospitals
-
-        print(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
-
 
 # for the report ( patients data )
     def find_nearest_hospital(self) -> None:
@@ -290,7 +225,6 @@ class HospitalRecommendation:
         
         # Execute state machine transitions
         self.process_input()
-        self.check_conditions()
         self.determine_service()
         self.check_bed_type()
         self.check_geographic_distance()
@@ -311,7 +245,6 @@ class HospitalRecommendation:
         
         # Perform the recommendation steps up to geographic distance check
         self.process_input()
-        self.check_conditions()
         self.determine_service()
         self.check_bed_type()
         self.check_geographic_distance()

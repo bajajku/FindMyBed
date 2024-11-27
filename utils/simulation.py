@@ -331,8 +331,7 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
 
 # Patient Processing Logic
 def create_patient(hour, births_by_fsa):
-    #patient_type = random.choice(PATIENT_TYPE)
-    patient_type ="Neonatal"
+    patient_type = random.choice(PATIENT_TYPE)
     postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
 
     bed_type = data_loader.assign_bed_type_poisson()
@@ -358,7 +357,6 @@ def create_patient(hour, births_by_fsa):
         del24HrPlus = False
         nicu_needed = True
         special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
-        #special_needs = [random.choice(NEONATAL_SPECIAL_NEEDS)]
 
     return SimulatedPatient(
         patientType=patient_type,
@@ -392,6 +390,7 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
         patients_data.append({
             "Postal Code": patient.postalCode,
             "Type": patient.bedType,
+            "NICU": "Prematurity (GA<26 weeks)" in patient.specialNeeds or "Prematurity (GA>26 weeks)" in patient.specialNeeds,
             "Date": current_date.strftime("%Y-%m-%d"),
             "Month": current_date.month,
             "Nearest Hospital": patient.nearestHospital,
@@ -399,6 +398,6 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
             "Assigned Hospital": patient.assignedHospital,
             "Assigned Distance": assigned_distance,
             "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital,
-            "Condition" : patient.condition,
-            "Services" : patient.specialNeeds
+            "Indigenous" : patient.is_indigenous,
+            "(GA<26 weeks)": "Prematurity (GA<26 weeks)" in patient.specialNeeds
         })

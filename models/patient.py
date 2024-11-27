@@ -13,8 +13,6 @@ class Patient:
     del24HrPlus: Optional[bool] = None
     bedType: str = ""
     homeHospital: Optional[str] = None
-    is_indigenous: bool = False
-
 
     # def get_arrival_time_index(self) -> int:
     #     return ARRIVAL_TIMES.index(self.arrival_time)
@@ -39,8 +37,6 @@ class SimulatedPatient:
     homeHospital: Optional[str] = None
     distanceToHospital : int = 0
     is_indigenous: bool = False
-    # Adding a new attribute to manage hospital restrictions for generating patient tables.
-    condition: int = 0 
 
     def get_arrival_time_index(self) -> int:
         return ARRIVAL_TIMES.index(self.arrival_time)

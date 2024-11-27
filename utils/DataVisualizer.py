@@ -39,61 +39,30 @@ class DataVisualizer:
         """
         To create a table regarding the patients
         """
-
         # Rename columns for readability
         patients_df = patients_df.rename(columns={
             "Nearest Hospital": "Vicinity to Hospital",
             "Nearest Distance": "Distance to Closest Hospital"
         })
-        # Add hospitall Restriction Condition Columns 
-        # Create columns for each condition and fill based on the 'Condition' value
-        # Define the mapping for each condition
-        condition_mapping = {
-            1: "CUSM",
-            2: "CUSM, CHU SJ, CHUQ",
-            3: "CUSM, CHU SJ, CHUS, CHUQ",
-            4: "CUSM, CHU SJ, HGJ, CHUQ, CHUS",
-            5: "CUSM, CHU SJ, HGJ, CHUQ, CHUS, HMR"
-        }
 
-        # Create columns for each condition and fill based on the 'Condition' value
-        for i in range(1, 6):
-            condition_col = f"Condition{i}"
-            patients_df[condition_col] = patients_df['Condition'].apply(
-                lambda x: condition_mapping[i] if x == i else '')
         # Filter for intensive and intermediate patients
         intensive_patients_df = patients_df[patients_df['Type'] == 'Intensive']
 
         intermediate_patients_df = patients_df[patients_df['Type'] == 'Intermediate']
-
-
         # Create the intensive patients table
         intensive_patients_table = intensive_patients_df[[
             "Type",
             "Postal Code",
-            "Assigned Hospital",
             "Vicinity to Hospital",
-            "Distance to Closest Hospital",
-            "Assigned Hospital",
-            "Condition1",
-            "Condition2",
-            "Condition3",
-            "Condition4",
-            "Condition5"
+            "Distance to Closest Hospital"
         ]]
 
         # Create the intermediate patients table
         intermediate_patients_table = intermediate_patients_df[[
             "Type",
             "Postal Code",
-            "Assigned Hospital",
             "Vicinity to Hospital",
-            "Distance to Closest Hospital",
-            "Condition1",
-            "Condition2",
-            "Condition3",
-            "Condition4",
-            "Condition5"
+            "Distance to Closest Hospital"
         ]]
 
         """

@@ -172,13 +172,14 @@ class HospitalRecommendation:
         for hospital in self.hospitals:
             if hospital in preferred_hospitals:
                 continue
-                
+            
             # Check occupancy rates based on patient type and needs
             if hospital.can_admit_patient(self.patient):
                 preferred_hospitals.append(hospital)
 
-        # 3. Sort hospitals by distance
-        preferred_hospitals.sort(
+        # 3. Sort hospitals by distance, excluding home hospital
+        preferred_hospitals[1:] = sorted(
+            preferred_hospitals[1:],
             key=lambda h: calculate_distance(h.geolocation, self.patient.gpsPos)
         )
 
@@ -234,6 +235,7 @@ class HospitalRecommendation:
 
         # Get the top hospital recommendations
         recommendations = self.get_top_hospitals()
+        self.restart()
 
         print(f"Top hospital recommendations: {[h.name for h in recommendations]}")
         return recommendations

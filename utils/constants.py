@@ -87,7 +87,7 @@ MIN_DISTANCE_KM: float = 5.0
 MAX_DISTANCE_KM: float = 30.0
 
 # Occupancy Thresholds
-INTENSIVE_OCCUPANCY_THRESHOLD: float = 1.0
+INTENSIVE_OCCUPANCY_THRESHOLD: float = 0.95
 INTERMEDIATE_OCCUPANCY_THRESHOLD: float = 0.85
 MATERNAL_OCCUPANCY_THRESHOLD: float = 0.85
 # Define the simulator's start date

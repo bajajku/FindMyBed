@@ -43,6 +43,9 @@ class Hospital:
         self.antepartum_capacity = antepartum_capacity or 50
         self.postpartum_capacity = postpartum_capacity or 50
 
+    def get_hospital_services(self) -> List[str]:
+        
+        return list(self.maternal_services.union(self.neonatal_services))
 
     # REQUIRED
     def get_occupancy_rate_overall(self) -> float:
@@ -82,7 +85,7 @@ class Hospital:
         """
         Check if a NICU bed is required for the patient
         """
-        nicu_required = bool(set(patient.specialNeeds) & self.neonatal_services) or patient.patientType == "Neonatal"
+        nicu_required = bool(set(patient.specialNeedType) & self.neonatal_services) or patient.patientType == "Neonatal"
         return nicu_required
 
     # REQUIRED

@@ -13,7 +13,7 @@ class PatientInput(BaseModel):
     patientType: str
     gpsPos: Tuple[float, float]
     transportNeedCnt: int
-    specialNeedType: str
+    specialNeedType: List[str]
     specialNeeds: List[str]
     # arrival_time: int
     del24HrPlus: Optional[bool] = None

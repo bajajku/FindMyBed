@@ -115,7 +115,8 @@ class HospitalRecommendation:
 
         self.available_hospitals = [
             hospital for hospital in self.hospitals
-            if hospital.can_admit_patient(self.patient)
+            if hospital.can_admit_patient(self.patient) and 
+               all(need in hospital.get_hospital_services() for need in self.patient.specialNeedType)
         ]
 
         print(f"Filtered hospitals based on services and occupancy: {[h.name for h in self.available_hospitals]}")

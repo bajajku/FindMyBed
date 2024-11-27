@@ -160,6 +160,7 @@ class HospitalRecommendation:
         if not self.patient:
             return []
 
+        # TODO: Fix this logic, issue is hospital assign homHospital even if it doesn't have required services
         preferred_hospitals = []
         
         # 1. Initial Home Hospital Check

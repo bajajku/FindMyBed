@@ -1,8 +1,10 @@
 # animation.py
+import math
+
 import pygame
 
 from config import EXCEL_PATH
-from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT, GREEN
+from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT, GREEN, AQUAMARINE
 from utils.constants import hospital_positions  # assuming this can be defined in your constants file
 from utils.data_loader import DataLoader
 from matplotlib import cm
@@ -44,7 +46,13 @@ def initialize_screen():
 def draw_hospitals(screen, hospitals):
     for hospital in hospitals:
         x, y = hospital_positions[hospital.name]
-        pygame.draw.rect(screen, BLUE, (x, y, 150, 50))
+        pygame.draw.rect(screen, AQUAMARINE, (x, y, 150, 50))
+
+        # Draw the border around the hospital
+        border_thickness = 3  # Thickness of the border
+        height = 50 + ((math.ceil(hospital.total_capacity / 10)) * 25 )
+        pygame.draw.rect(screen, AQUAMARINE, (x, y, 255, height), border_thickness)
+
         font = pygame.font.Font(None, 24)
 
         #Hospital Name
@@ -59,7 +67,12 @@ def draw_hospitals(screen, hospitals):
 
     # Drawing Transport Centre
     x, y = hospital_positions[""]
-    pygame.draw.rect(screen, BLUE, (x, y, 150, 50))
+    pygame.draw.rect(screen, AQUAMARINE, (x, y, 150, 50))
+
+    # Draw the border around the hospital
+    border_thickness = 3  # Thickness of the border
+    pygame.draw.rect(screen, AQUAMARINE, (x, y, 255, 175), border_thickness)
+
     font = pygame.font.Font(None, 24)
     text = font.render("Transport Centre", True, WHITE)
     screen.blit(text, (x + 5, y + 5))
@@ -103,7 +116,7 @@ def draw_patient(screen, patient, hospital_pos):
     if patient.arrived_at_hospital and not patient.discharged:
         offset_x = (patient.queue_position % 10) * 25
         offset_y = (patient.queue_position // 10) * 25
-        x, y = hospital_pos[0] + offset_x + 5, hospital_pos[1] + offset_y + 60
+        x, y = hospital_pos[0] + offset_x + 15, hospital_pos[1] + offset_y + 60
 
         tinted_icon = tint_icon_additive(patient_icon, color)
         screen.blit(tinted_icon, (x - patient_icon.get_width() // 2, y - patient_icon.get_height() // 2))

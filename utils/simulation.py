@@ -85,8 +85,6 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
     for bed_type, count in [("Intensive", occupied_beds_intensive),
                             ("Intermediate", occupied_beds_intermediate)]:
         for _ in range(count):
-            transfer_probability = hospital.transfer_percentage
-            is_transferred = np.random.poisson(transfer_probability / 100) > 0
             patient = SimulatedPatient(
                     patientType=random.choice(PATIENT_TYPE),
                     gpsPos=hospital.geolocation,
@@ -103,7 +101,6 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
                     queue_position=0,  # Initialize queue position
                     discharged=False,
                     assignedHospital=hospital.name,
-                    transferred = bool(is_transferred),
                     distanceToHospital= random.randint(1, 100)
                 )
             hospital.patients[patient.bedType].append(patient)
@@ -337,7 +334,8 @@ def create_patient(hour, births_by_fsa):
     patient_type = random.choice(PATIENT_TYPE)
     postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
 
-    bed_type = random.choice(BED_TYPE)
+    bed_type = data_loader.assign_bed_type_poisson()
+    is_indigenous = random.random() < 0.02
 
     if patient_type == "Maternal":
         # Determine if delivery is within 24 hours
@@ -374,7 +372,8 @@ def create_patient(hour, births_by_fsa):
         discharged=False,
         nicu_needed=nicu_needed,
         arrived_at_hospital=False,
-        queue_position=0
+        queue_position=0,
+        is_indigenous = is_indigenous
     )
 
 def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
@@ -390,7 +389,6 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
 
         patients_data.append({
             "Postal Code": patient.postalCode,
-            "Transferred": patient.transferred,
             "Type": patient.bedType,
             "NICU": "Prematurity (GA<26 weeks)" in patient.specialNeeds or "Prematurity (GA>26 weeks)" in patient.specialNeeds,
             "Date": current_date.strftime("%Y-%m-%d"),
@@ -399,5 +397,7 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
             "Nearest Distance": nearest_distance,
             "Assigned Hospital": patient.assignedHospital,
             "Assigned Distance": assigned_distance,
-            "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital
+            "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital,
+            "Indigenous" : patient.is_indigenous,
+            "(GA<26 weeks)": "Prematurity (GA<26 weeks)" in patient.specialNeeds
         })

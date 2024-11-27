@@ -103,8 +103,9 @@ class HospitalRecommendation:
         """Adds Patient's Home Hospital in hospital's list if Applicable."""
         if not self.patient or not self.patient.homeHospital:
             return
-        if self.patient.homeHospital not in self.available_hospitals:
-            self.available_hospitals.append(self.patient.homeHospital)
+        home_hospital = next((h for h in self.hospitals if h.name == self.patient.homeHospital), None)
+        if home_hospital and home_hospital not in self.available_hospitals:
+            self.available_hospitals.append(home_hospital)
         print(f"Patient's preferred hospital added to Available Hospital List: {self.patient.homeHospital}")
 
     def determine_services(self) -> None:
@@ -165,7 +166,7 @@ class HospitalRecommendation:
             home_hospital = self.patient.homeHospital
             home_hospital_obj = next((h for h in self.hospitals if h.name == home_hospital), None)
             if home_hospital_obj and home_hospital_obj.can_admit_patient(self.patient):
-                preferred_hospitals.append(home_hospital)
+                preferred_hospitals.append(home_hospital_obj)
 
         # 2. Evaluate Each Hospital based on services and occupancy
         for hospital in self.hospitals:
@@ -196,10 +197,6 @@ class HospitalRecommendation:
         recommended_hospitals = self.get_top_hospitals()
         
         if not recommended_hospitals:
-            transfer_probability = 22.57685376112847
-            is_transferred = np.random.poisson(transfer_probability / 100) > 0
-            self.patient.transferred = bool(is_transferred)
-
             self.queue.append(self.patient)
             logging.warning("No suitable hospitals found. Patient added to queue.")
             return
@@ -210,10 +207,6 @@ class HospitalRecommendation:
         success = self.selected_hospital.admit_patient(self.patient)
         
         if success:
-            transfer_probability = self.selected_hospital.transfer_percentage
-            is_transferred = np.random.poisson(transfer_probability/100)>0
-            self.patient.transferred = bool(is_transferred)
-
             self.selected_hospital.assigned_patients += 1
             print(f"Patient assigned to {self.selected_hospital.name}")
         else:
@@ -236,6 +229,31 @@ class HospitalRecommendation:
         self.check_bed_type()
         self.check_geographic_distance()
         self.restart()
+
+    def get_hospital_recommendations(self, patient: Patient) -> List[Hospital]:
+        """
+        Retrieve top hospital recommendations for a given patient without admitting them.
+        
+        Args:
+            patient: The patient object to process
+        
+        Returns:
+            List[Hospital]: Top recommended hospitals for the patient
+        """
+        self.patient = patient
+        print("\nGenerating hospital recommendations for the patient...\n")
+        
+        # Perform the recommendation steps up to geographic distance check
+        self.process_input()
+        self.determine_service()
+        self.check_bed_type()
+        self.check_geographic_distance()
+
+        # Get the top hospital recommendations
+        recommendations = self.get_top_hospitals()
+
+        print(f"Top hospital recommendations: {[h.name for h in recommendations]}")
+        return recommendations
 
     def get_queue_size(self) -> int:
         """Return the current size of the patient queue."""

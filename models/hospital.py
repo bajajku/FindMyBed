@@ -15,7 +15,6 @@ class Hospital:
                  total_capacity: int, total_capacity_intensive: int,
                  total_capacity_intermediate: int,
                  birth_center_capacity: int = None,
-                 transfer_percentage = None,
                  antepartum_capacity: int = None,
                  postpartum_capacity: int = None):
         self.name = name
@@ -33,7 +32,6 @@ class Hospital:
             "Postpartum": []
         }
         self.total_capacity = total_capacity
-        self.transfer_percentage = transfer_percentage
         self.assigned_patients = 0
         self.total_capacity_intensive = total_capacity_intensive
         self.total_capacity_intermediate = total_capacity_intermediate
@@ -97,9 +95,9 @@ class Hospital:
         if patient.patientType == "Neonatal":
             # For NICU cases
             if patient.bedType == "Intensive":
-                return self.get_occupancy_rate("Intensive") < CONDITION
+                return self.get_occupancy_rate("Intensive") < INTENSIVE_OCCUPANCY_THRESHOLD 
             elif patient.bedType == "Intermediate":
-                return self.get_occupancy_rate("Intermediate") < CONDITION
+                return self.get_occupancy_rate("Intermediate") < INTERMEDIATE_OCCUPANCY_THRESHOLD
             
         elif patient.patientType == "Maternal":
             has_neonatal_needs = self.nicu_required(patient)
@@ -112,10 +110,10 @@ class Hospital:
                 # Need to consider both obstetrics and NICU rates
                 if patient.bedType == "Intensive":
                     nicu_rate = self.get_occupancy_rate("Intensive")
-                    return max(birthcenter_rate, antepartum_rate, nicu_rate) < CONDITION
+                    return max(birthcenter_rate, antepartum_rate, nicu_rate) < INTENSIVE_OCCUPANCY_THRESHOLD 
                 elif patient.bedType == "Intermediate":
                     nicu_rate = self.get_occupancy_rate("Intermediate")
-                    return max(birthcenter_rate, antepartum_rate, nicu_rate) < CONDITION
+                    return max(birthcenter_rate, antepartum_rate, nicu_rate) < INTERMEDIATE_OCCUPANCY_THRESHOLD
             else:
                 # Only need obstetrics rate
                 return birthcenter_rate < CONDITION

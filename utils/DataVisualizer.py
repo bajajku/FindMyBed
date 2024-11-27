@@ -45,18 +45,13 @@ class DataVisualizer:
             "Nearest Distance": "Distance to Closest Hospital"
         })
 
-        # Create a new column to indicate transferred status for readability
-        patients_df["Type and Transfer Status"] = patients_df.apply(
-            lambda row: f"{row['Type']} Transferred" if row['Transferred'] else f"{row['Type']} Not Transferred", axis=1
-        )
-
         # Filter for intensive and intermediate patients
         intensive_patients_df = patients_df[patients_df['Type'] == 'Intensive']
 
         intermediate_patients_df = patients_df[patients_df['Type'] == 'Intermediate']
         # Create the intensive patients table
         intensive_patients_table = intensive_patients_df[[
-            "Type and Transfer Status",
+            "Type",
             "Postal Code",
             "Vicinity to Hospital",
             "Distance to Closest Hospital"
@@ -64,7 +59,7 @@ class DataVisualizer:
 
         # Create the intermediate patients table
         intermediate_patients_table = intermediate_patients_df[[
-            "Type and Transfer Status",
+            "Type",
             "Postal Code",
             "Vicinity to Hospital",
             "Distance to Closest Hospital"

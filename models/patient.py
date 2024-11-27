@@ -9,17 +9,13 @@ class Patient:
     transportNeedCnt: int
     specialNeedType: str
     specialNeeds: List[str]
-    arrival_time: int
+    # arrival_time: int
     del24HrPlus: Optional[bool] = None
-    nicu_needed: Optional[bool] = None
     bedType: str = ""
-    assignedHospital: str = ""
     homeHospital: Optional[str] = None
-    distanceToHospital: int = 0
-    is_indigenous: bool = False
 
-    def get_arrival_time_index(self) -> int:
-        return ARRIVAL_TIMES.index(self.arrival_time)
+    # def get_arrival_time_index(self) -> int:
+    #     return ARRIVAL_TIMES.index(self.arrival_time)
     
 @dataclass
 class SimulatedPatient:

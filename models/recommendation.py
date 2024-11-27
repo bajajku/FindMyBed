@@ -257,31 +257,6 @@ class HospitalRecommendation:
         self.check_geographic_distance()
         self.restart()
 
-    def get_hospital_recommendations(self, patient: Patient) -> List[Hospital]:
-        """
-        Retrieve top hospital recommendations for a given patient without admitting them.
-        
-        Args:
-            patient: The patient object to process
-        
-        Returns:
-            List[Hospital]: Top recommended hospitals for the patient
-        """
-        self.patient = patient
-        print("\nGenerating hospital recommendations for the patient...\n")
-        
-        # Perform the recommendation steps up to geographic distance check
-        self.process_input()
-        self.determine_service()
-        self.check_bed_type()
-        self.check_geographic_distance()
-
-        # Get the top hospital recommendations
-        recommendations = self.get_top_hospitals()
-
-        print(f"Top hospital recommendations: {[h.name for h in recommendations]}")
-        return recommendations
-
     def get_queue_size(self) -> int:
         """Return the current size of the patient queue."""
         return len(self.queue)

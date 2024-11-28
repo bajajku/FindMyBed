@@ -188,7 +188,15 @@ class HospitalRecommendation:
         if not self.patient:
             return
 
+        '''
+        I think both works the same way for now, as SimulatedPatient homeHospital is None,
+        so it will always go to the else statement.
+        but, once it has that attribute, we can apply the homeHospital check.
+
+        If you find the second one more suitable, you can remove the first one.
+        '''
         recommended_hospitals = self.get_top_hospitals()
+        # recommended_hospitals = self.available_hospitals
         
         if not recommended_hospitals:
             self.queue.append(self.patient)

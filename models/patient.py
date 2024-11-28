@@ -7,9 +7,8 @@ class Patient:
     patientType: str
     gpsPos: Tuple[float, float]
     transportNeedCnt: int
-    specialNeedType: List
+    specialNeedType: List[str]
     specialNeeds: List[str]
-    # arrival_time: int
     del24HrPlus: Optional[bool] = None
     bedType: str = ""
     homeHospital: Optional[str] = None

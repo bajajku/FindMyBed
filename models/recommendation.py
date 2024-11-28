@@ -159,34 +159,25 @@ class HospitalRecommendation:
         """
         if not self.patient:
             return []
-
-        # TODO: Fix this logic, issue is hospital assign homHospital even if it doesn't have required services
-        preferred_hospitals = []
+        if not self.available_hospitals:
+            return []
         
-        # 1. Initial Home Hospital Check
+        available_hospitals_copy = self.available_hospitals[:]
+        
         if self.patient.homeHospital:
-            home_hospital = self.patient.homeHospital
-            home_hospital_obj = next((h for h in self.hospitals if h.name == home_hospital), None)
-            if home_hospital_obj and home_hospital_obj.can_admit_patient(self.patient):
-                preferred_hospitals.append(home_hospital_obj)
-
-        # 2. Evaluate Each Hospital based on services and occupancy
-        for hospital in self.hospitals:
-            if hospital in preferred_hospitals:
-                continue
-            
-            # Check occupancy rates based on patient type and needs
-            if hospital.can_admit_patient(self.patient):
-                preferred_hospitals.append(hospital)
-
-        # 3. Sort hospitals by distance, excluding home hospital
-        preferred_hospitals[1:] = sorted(
-            preferred_hospitals[1:],
-            key=lambda h: calculate_distance(h.geolocation, self.patient.gpsPos)
-        )
+            home_hospital = next((h for h in available_hospitals_copy if h.name == self.patient.homeHospital), None)
+            if home_hospital:
+                preferred_hospitals = [home_hospital]
+                available_hospitals_copy.remove(home_hospital)
+                preferred_hospitals += available_hospitals_copy[:2]
+                print(f"Patient's preferred hospital removed from Available Hospital List: {self.patient.homeHospital}")
+            else:
+                preferred_hospitals = available_hospitals_copy[:3]
+            return preferred_hospitals
+        preferred_hospitals = available_hospitals_copy[:3]
 
         # Return top 3 choices
-        return preferred_hospitals[:3]
+        return preferred_hospitals
 
     # Function to recommend hospital, only for simulation
     # has no effect on the actual system

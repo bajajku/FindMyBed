@@ -12,13 +12,11 @@ import random
 class DataLoader:
 
     def __init__(self):
-        self.arrival_rates = None
         self.hospital_names = None
         self.coordinates = None
         self.maternal_services = None
         self.neonatal_services = None
         self.beds_available = None
-        self.discharge_rates = None
         self.discharge_rates_intensive = None 
         self.discharge_rates_intermediate = None
         self.total_capacity = None
@@ -26,7 +24,6 @@ class DataLoader:
         self.total_capacity_intermediate = None
         # new attributes for the new data
         self.birth_rates_by_fsa = None
-        self.transfer_percentage = None
     @staticmethod
     def parse_into_list_of_lists(df_col: pd.Series) -> List[List[float]]:
         """
@@ -91,7 +88,6 @@ class DataLoader:
         self.total_capacity_intermediate = df['total_capacity_intermediate'].tolist()
         self.admissions_per_hour = df['admissions_transported_per_hour'].tolist()
         self.average_admissions = sum(self.admissions_per_hour)
-        self.discharge_rates = self.parse_into_list_of_lists(df['Discharge rate'])
         discharge_rates_intensive = df['Discharge rate intensive'].tolist()
         discharge_rates_intermediate = df['Discharge rate intermediate'].tolist()
 
@@ -107,9 +103,6 @@ class DataLoader:
         self.discharge_rates_intermediate = [
             (rate * scaling_factor_intermediate) for rate in discharge_rates_intermediate
         ]
-
-        arrival_rates = self.parse_into_list_of_lists(df['Arrival rate'])
-        self.arrival_rates = [sum(x) for x in arrival_rates]
 
         self.intensive_rate = df['Bed Type Rate Intensive'].sum()
         self.intermediate_rate = df['Bed Type Rate Intermediate'].sum()

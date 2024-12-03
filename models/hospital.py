@@ -1,7 +1,6 @@
-import random
+
 from typing import List, Tuple, Optional, Dict, Any
 from models.patient import Patient
-import numpy as np
 from utils.constants import *
 
 
@@ -135,10 +134,7 @@ class Hospital:
 
         # REQUIRED
     def can_admit_patient(self, patient: Patient) -> bool:
-
-        if self.get_occupancy_rate_per_patientType_per_bedType(patient=patient):
-            return True
-        return False
+        return self.get_occupancy_rate_per_patientType_per_bedType(patient=patient)
 
     def occupied_bed_summary(self):
         total_occupied = (self.total_capacity_intensive - self.available_beds[0]) + (self.total_capacity_intermediate - self.available_beds[1]) + (self.birth_center_capacity - self.available_beds[2]) + (self.antepartum_capacity - self.available_beds[3]) + (self.postpartum_capacity - self.available_beds[4])

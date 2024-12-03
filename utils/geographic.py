@@ -17,20 +17,6 @@ import pandas as pd
 def calculate_distance(coord1: Tuple[float, float], coord2: Tuple[float, float]) -> float:
     return geopy_distance(coord1, coord2).kilometers
 
-def generate_nearby_coords(base_coords: Tuple[float, float], 
-                         min_distance_km: float = 5,
-                         max_distance_km: float = 30) -> Tuple[float, float]:
-    random_distance = random.uniform(min_distance_km, max_distance_km)
-    random_bearing = random.uniform(0, 360)
-    destination = geopy_distance(kilometers=random_distance).destination(base_coords, random_bearing)
-    return (destination.latitude, destination.longitude)
-
-def generate_patient_coords(hospitals: List[Dict]) -> Tuple[float, float]:
-    hospital_weights = [hospital["percentage"] for hospital in hospitals]
-    selected_hospital = random.choices(hospitals, weights=hospital_weights, k=1)[0]
-    return generate_nearby_coords(selected_hospital["coords"])
-
-
 def select_fsa_by_rate(births_by_fsa: pd.DataFrame) -> str:
     """Select an FSA based on a Poisson distribution with a lambda defined by the birth ratio."""
     # Select a random FSA based on Poisson-distributed patient counts
@@ -74,22 +60,6 @@ def fsa_to_coordinates(births_by_fsa: pd.DataFrame) -> Tuple[str, Tuple[float, f
             if postal_code_info:  # Already validated during precomputation
                 return selected_fsa, (postal_code_info.latitude, postal_code_info.longitude)
 
-'''
-def get_fsa_center(fsa_code: str) -> Tuple[float, float]:
-    # Initialize geocode for Canadian postal codes
-    geolocator = pgeocode.Nominatim("ca")
-
-    while True:
-        # Query the postal code
-        location = geolocator.query_postal_code(fsa_code)
-
-        # Check if location data is found and valid
-        if location is not None and pd.notna(location.latitude) and pd.notna(location.longitude):
-            return float(location.latitude), float(location.longitude)
-
-        # If invalid, print message and retry
-        print(f"No valid data found for FSA: {fsa_code}. Retrying...")
-'''
 def get_fsa_center(fsa_code: str) -> Tuple[float, float]:
     while True:
         # error happens only for the case when the fsa is J5N, put the manual output, will be edited

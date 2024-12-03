@@ -11,6 +11,7 @@ from models.patient import Patient, SimulatedPatient
 from models.recommendation import HospitalRecommendation
 from utils.constants import *
 from utils.data_loader import DataLoader
+from utils.geographic import  fsa_to_coordinates, calculate_distance
 from utils.geographic import generate_patient_coords, fsa_to_coordinates, select_fsa_by_rate, calculate_distance, \
     latlon_to_pixel
 from utils.animation import initialize_screen, draw_hospitals, draw_patient, animate_patient_movement, \
@@ -346,7 +347,6 @@ def create_patient(hour, births_by_fsa):
     patient_type = random.choice(PATIENT_TYPE)
     postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
     bed_type = data_loader.assign_bed_type_poisson()
-    is_indigenous = random.random() < 0.02
 
     if patient_type == "Maternal":
         # Determine if delivery is within 24 hours
@@ -383,8 +383,7 @@ def create_patient(hour, births_by_fsa):
         discharged=False,
         nicu_needed=nicu_needed,
         arrived_at_hospital=False,
-        queue_position=0,
-        is_indigenous = is_indigenous
+        queue_position=0
     )
 
 def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
@@ -401,7 +400,6 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
         patients_data.append({
             "Postal Code": patient.postalCode,
             "Type": patient.bedType,
-            "NICU": "Prematurity (GA<26 weeks)" in patient.specialNeeds or "Prematurity (GA>26 weeks)" in patient.specialNeeds,
             "Date": current_date.strftime("%Y-%m-%d"),
             "Month": current_date.month,
             "Nearest Hospital": patient.nearestHospital,
@@ -409,6 +407,4 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
             "Assigned Hospital": patient.assignedHospital,
             "Assigned Distance": assigned_distance,
             "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital,
-            "Indigenous" : patient.is_indigenous,
-            "(GA<26 weeks)": "Prematurity (GA<26 weeks)" in patient.specialNeeds
         })

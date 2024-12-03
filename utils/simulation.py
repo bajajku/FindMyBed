@@ -11,7 +11,8 @@ from models.patient import Patient, SimulatedPatient
 from models.recommendation import HospitalRecommendation
 from utils.constants import *
 from utils.data_loader import DataLoader
-from utils.geographic import generate_patient_coords, fsa_to_coordinates, select_fsa_by_rate, calculate_distance
+from utils.geographic import generate_patient_coords, fsa_to_coordinates, select_fsa_by_rate, calculate_distance, \
+    latlon_to_pixel
 from utils.animation import initialize_screen, draw_hospitals, draw_patient, animate_patient_movement, \
     draw_colormap_legend
 import pandas as pd
@@ -108,11 +109,13 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
 
 
 
-screen, clock = initialize_screen()
+screen, clock, map_surface, map_width, map_height = initialize_screen()
 pause_play_button = PausePlayButton(1100, 10)
 data_loader = DataLoader()
 data_loader.load_data(excel_file=EXCEL_PATH)
 HOSPITALS = data_loader.create_hospitals()
+map_bounds = [44.0, 63.0, -79.0, -57.0]
+
 def simulate_hospital_system(num_days, excel , excel_newdata):
     global total_patients # Declare total_patients as global within the function
 
@@ -201,7 +204,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
                     if patient.assignedHospital != "":
                         arrivedDischarged[patient.assignedHospital][0] += 1
 
-                update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day, current_date, font)
+                update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day, current_date, font, map_surface)
                 pause_play_button.draw(screen)
                 # Refresh display
                 pygame.display.flip()
@@ -213,7 +216,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
             day += 1
         else:
             while running:
-                all_patients_arrived = update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day-1, current_date, font)
+                all_patients_arrived = update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day-1, current_date, font, map_surface)
 
                 # Refresh display
                 pygame.display.flip()
@@ -265,7 +268,7 @@ def record_daily_statistics(day, current_date, hospitals, arrivedDischarged, res
         })
 
 
-def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day , current_date, font):
+def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day , current_date, font, map_surface):
     """
     Updates the state of the simulation, animates patient movement, and redraws the screen.
 
@@ -282,12 +285,21 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
     # Clear the screen
     screen.fill(WHITE)
 
+    # Blit the pre-rendered map surface
+    screen.blit(map_surface, (0, 0))
+
     # Draw the day counter
     day_counter_text = font.render(f"Day: {day + 1}, Date: {current_date.date()}", True, (0, 0, 0))  # Black text
     screen.blit(day_counter_text, (10, 10))  # Position at (10, 10) in the top-left corner
 
     # Draw hospitals
     draw_hospitals(screen, HOSPITALS)
+
+    #Draw hospital positions
+    for hospital in HOSPITALS:
+        gpscoord = hospital.geolocation
+        pxlcoor = latlon_to_pixel(gpscoord[0], gpscoord[1], map_width, map_height, map_bounds)
+        pygame.draw.circle(screen, (0, 0, 255), (pxlcoor[0], pxlcoor[1]), 6)  # Red ellipse
 
     #Draw colormap legend
     draw_colormap_legend(screen, font, position=(50, 50))
@@ -333,7 +345,6 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
 def create_patient(hour, births_by_fsa):
     patient_type = random.choice(PATIENT_TYPE)
     postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
-
     bed_type = data_loader.assign_bed_type_poisson()
     is_indigenous = random.random() < 0.02
 
@@ -368,7 +379,7 @@ def create_patient(hour, births_by_fsa):
         specialNeedType=special_needs,
         specialNeeds=special_needs,
         arrival_time=hour,
-        aniGpsPos=[600, 50],
+        aniGpsPos= latlon_to_pixel(gps_pos[0], gps_pos[1], map_width, map_height, map_bounds),
         discharged=False,
         nicu_needed=nicu_needed,
         arrived_at_hospital=False,

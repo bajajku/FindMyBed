@@ -110,3 +110,9 @@ def get_hospital_coord(hospital_name: str)-> Tuple[float, float]:
             return hospital.geolocation
 
     return 0,0
+
+def latlon_to_pixel(lat, lon, map_width, map_height, bounds):
+    min_lat, max_lat, min_lon, max_lon = bounds
+    x = ((lon - min_lon) / (max_lon - min_lon) * map_width) + 340
+    y = (max_lat - lat) / (max_lat - min_lat) * map_height + 22
+    return [int(x), int(y)]

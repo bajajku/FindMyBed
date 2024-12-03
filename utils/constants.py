@@ -107,13 +107,13 @@ AQUAMARINE = (102, 205, 170)
 
 # Define hospital positions for visualization
 hospital_positions = {
-    "CHU-SJ": (100, 100),
+    "CHU-SJ": (10, 72),
     "CHUQ": (1050, 100),
-    "CHUS": (100, 550),
+    "CHUS": (10, 670),
     "CUSM": (1050, 550),
-    "HGJ": (365, 300),
-    "HMR": (550, 550),
-    "": (785,300)
+    "HGJ": (10, 340),
+    "HMR": (10, 530),
+    "": (1050,335)
 }
 
 # Define the simulator's start date

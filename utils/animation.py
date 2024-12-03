@@ -37,11 +37,34 @@ def initialize_screen():
     pygame.display.set_caption("Hospital Patient Arrival Simulation")
     clock = pygame.time.Clock()
 
+    # Load the Quebec map
+    map_image = pygame.image.load("icons/quebec-map.gif").convert()
+    image_width, image_height = map_image.get_width(), map_image.get_height()
+
+    # Calculate the scaling factor to fit the image inside 0the screen
+    width_scale = SCREEN_WIDTH / image_width
+    height_scale = SCREEN_HEIGHT / image_height
+    scale_factor = min(width_scale, height_scale)  # Choose the smaller factor to fit within the screen
+
+    # Scale the image
+    new_width = int(image_width * scale_factor)
+    new_height = int(image_height * scale_factor)
+    map_image = pygame.transform.scale(map_image, (new_width, new_height))
+
+    # Create a static surface for the map
+    map_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    map_surface.fill((255, 255, 255))  # Optional: Fill with a background color (e.g., white)
+
+    # Center the scaled map image on the screen
+    map_surface.blit(map_image,
+                     ((SCREEN_WIDTH - new_width) // 2,  # Center horizontally
+                      (SCREEN_HEIGHT - new_height) // 2))  # Center vertically
+
     # Convert the patient icon after initializing the display
     global patient_icon
     patient_icon = patient_icon.convert_alpha()
 
-    return screen, clock
+    return screen, clock , map_surface, map_image.get_width(), map_image.get_height()
 
 def draw_hospitals(screen, hospitals):
     for hospital in hospitals:

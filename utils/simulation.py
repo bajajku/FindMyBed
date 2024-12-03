@@ -99,7 +99,6 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
                     arrival_time=random.choice(ARRIVAL_TIMES),
                     aniGpsPos=[600, 50],
                     arrived_at_hospital=True,  # Track if the patient has reached the hospital
-                    nicu_needed=False,
                     queue_position=0,  # Initialize queue position
                     discharged=False,
                     assignedHospital=hospital.name,
@@ -351,22 +350,9 @@ def create_patient(hour, births_by_fsa):
     if patient_type == "Maternal":
         # Determine if delivery is within 24 hours
         del24HrPlus = random.choice([True, False])
-        
-        # Probability that baby will need NICU care (adjust these probabilities as needed)
-        nicu_needed = random.random() < 0.15  # 15% chance of NICU need
-        
-        if nicu_needed:
-            # Add both maternal and neonatal needs
-            maternal_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 2))
-            neonatal_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
-            special_needs = maternal_needs + neonatal_needs
-        else:
-            # Only maternal needs
-            num_special_needs = random.randint(1, 2)
-            special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, num_special_needs)
+        special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 2))
     else:
         del24HrPlus = False
-        nicu_needed = True
         special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
 
     return SimulatedPatient(
@@ -381,7 +367,6 @@ def create_patient(hour, births_by_fsa):
         arrival_time=hour,
         aniGpsPos= latlon_to_pixel(gps_pos[0], gps_pos[1], map_width, map_height, map_bounds),
         discharged=False,
-        nicu_needed=nicu_needed,
         arrived_at_hospital=False,
         queue_position=0
     )

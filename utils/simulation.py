@@ -11,8 +11,7 @@ from models.patient import Patient, SimulatedPatient
 from models.recommendation import HospitalRecommendation
 from utils.constants import *
 from utils.data_loader import DataLoader
-from utils.geographic import  fsa_to_coordinates, calculate_distance
-from utils.geographic import generate_patient_coords, fsa_to_coordinates, select_fsa_by_rate, calculate_distance, \
+from utils.geographic import fsa_to_coordinates, calculate_distance, \
     latlon_to_pixel
 from utils.animation import initialize_screen, draw_hospitals, draw_patient, animate_patient_movement, \
     draw_colormap_legend

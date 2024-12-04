@@ -15,7 +15,7 @@ def admit_patient(hospital: Hospital, patient: Patient) -> bool:
     """Handles the admission of a patient to the hospital."""
     if patient.patientType == "Maternal":
         # Handle maternal patient admission
-        if not hospital.nicu_required(patient) and hospital.get_occupancy_rate_per_patientType_per_bedType(patient):
+        if hospital.get_occupancy_rate_per_patientType_per_bedType(patient):
             if not patient.del24HrPlus:
                 patient.bedType = "BirthCenter"  # Assign bed type
             else:
@@ -25,8 +25,8 @@ def admit_patient(hospital: Hospital, patient: Patient) -> bool:
             patient.assignedHospital = hospital.name
             return True
     else:
-        # Handle NICU patient admission
-        if hospital.get_occupancy_rate_per_patientType_per_bedType(patient) and patient.nicu_needed:
+        # Handle neonatal patient admission
+        if hospital.get_occupancy_rate_per_patientType_per_bedType(patient):
             add_patient(hospital, patient)
             patient.assignedHospital = hospital.name
             return True

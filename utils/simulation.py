@@ -11,7 +11,7 @@ from models.patient import Patient, SimulatedPatient
 from models.recommendation import HospitalRecommendation
 from utils.constants import *
 from utils.data_loader import DataLoader
-from utils.geographic import generate_patient_coords, fsa_to_coordinates, select_fsa_by_rate, calculate_distance, \
+from utils.geographic import fsa_to_coordinates, calculate_distance, \
     latlon_to_pixel
 from utils.animation import initialize_screen, draw_hospitals, draw_patient, animate_patient_movement, \
     draw_colormap_legend
@@ -98,7 +98,6 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
                     arrival_time=random.choice(ARRIVAL_TIMES),
                     aniGpsPos=[600, 50],
                     arrived_at_hospital=True,  # Track if the patient has reached the hospital
-                    nicu_needed=False,
                     queue_position=0,  # Initialize queue position
                     discharged=False,
                     assignedHospital=hospital.name,
@@ -347,27 +346,13 @@ def create_patient(hour, births_by_fsa):
     patient_type = random.choice(PATIENT_TYPE)
     postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
     bed_type = data_loader.assign_bed_type_poisson()
-    is_indigenous = random.random() < 0.02
 
     if patient_type == "Maternal":
         # Determine if delivery is within 24 hours
         del24HrPlus = random.choice([True, False])
-        
-        # Probability that baby will need NICU care (adjust these probabilities as needed)
-        nicu_needed = random.random() < 0.15  # 15% chance of NICU need
-        
-        if nicu_needed:
-            # Add both maternal and neonatal needs
-            maternal_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 2))
-            neonatal_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
-            special_needs = maternal_needs + neonatal_needs
-        else:
-            # Only maternal needs
-            num_special_needs = random.randint(1, 2)
-            special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, num_special_needs)
+        special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 2))
     else:
         del24HrPlus = False
-        nicu_needed = True
         special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
 
     return SimulatedPatient(
@@ -382,10 +367,8 @@ def create_patient(hour, births_by_fsa):
         arrival_time=hour,
         aniGpsPos= latlon_to_pixel(gps_pos[0], gps_pos[1], map_width, map_height, map_bounds),
         discharged=False,
-        nicu_needed=nicu_needed,
         arrived_at_hospital=False,
-        queue_position=0,
-        is_indigenous = is_indigenous
+        queue_position=0
     )
 
 def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
@@ -402,7 +385,6 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
         patients_data.append({
             "Postal Code": patient.postalCode,
             "Type": patient.bedType,
-            "NICU": "Prematurity (GA<26 weeks)" in patient.specialNeeds or "Prematurity (GA>26 weeks)" in patient.specialNeeds,
             "Date": current_date.strftime("%Y-%m-%d"),
             "Month": current_date.month,
             "Nearest Hospital": patient.nearestHospital,
@@ -410,6 +392,4 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
             "Assigned Hospital": patient.assignedHospital,
             "Assigned Distance": assigned_distance,
             "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital,
-            "Indigenous" : patient.is_indigenous,
-            "(GA<26 weeks)": "Prematurity (GA<26 weeks)" in patient.specialNeeds
         })

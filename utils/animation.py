@@ -112,7 +112,30 @@ def draw_hospitals(screen, hospitals):
         capacity = hospital.occupied_bed_summary()
 
         capacity_text = font.render(capacity, True, WHITE)
+        text_rect = text.get_rect()  # Get the size of the rendered text
         screen.blit(capacity_text, (x + 5, y + 30))  # Adjust y+30 to position it below the main text
+
+        # Draw the icon next to the hospital name
+        icon_x = x + 5 + text_rect.width + 5  # Text x + text width + padding
+        icon_y = y + 5  # Align with the hospital name vertically
+
+        if hospital.name == "CHU-SJ":
+            patient_icon = patient_icon_m1
+        elif hospital.name == "CHUQ":
+            patient_icon = patient_icon_q
+        elif hospital.name == "CHUS":
+            patient_icon = patient_icon_s
+        elif hospital.name == "CUSM":
+            patient_icon = patient_icon_m2
+        elif hospital.name == "HGJ":
+            patient_icon = patient_icon_m3
+        elif hospital.name == "HMR":
+            patient_icon = patient_icon_m4
+        else:
+            patient_icon = patient_icon1
+
+        tinted_icon = tint_icon_additive(patient_icon, WHITE)
+        screen.blit(tinted_icon, (icon_x, icon_y))
 
     # Drawing Transport Centre
     x, y = hospital_positions[""]

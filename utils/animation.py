@@ -32,8 +32,23 @@ hospital_dict = {hospital.name: hospital for hospital in HOSPITALS}
 patient_icon1 = pygame.image.load("icons/patient.png")
 patient_icon1 = pygame.transform.scale(patient_icon1, (20, 20))
 
-patient_icon2 = pygame.image.load("icons/patient2.png")
-patient_icon2 = pygame.transform.scale(patient_icon2, (20, 20))
+patient_icon_m1 = pygame.image.load("icons/patient_m1.png")
+patient_icon_m1 = pygame.transform.scale(patient_icon_m1, (20, 20))
+
+patient_icon_m2 = pygame.image.load("icons/patient_m2.png")
+patient_icon_m2 = pygame.transform.scale(patient_icon_m2, (20, 20))
+
+patient_icon_m3 = pygame.image.load("icons/patient_m3.png")
+patient_icon_m3 = pygame.transform.scale(patient_icon_m3, (20, 20))
+
+patient_icon_m4 = pygame.image.load("icons/patient_m4.png")
+patient_icon_m4 = pygame.transform.scale(patient_icon_m4, (20, 20))
+
+patient_icon_s = pygame.image.load("icons/patient_s.png")
+patient_icon_s = pygame.transform.scale(patient_icon_s, (20, 20))
+
+patient_icon_q = pygame.image.load("icons/patient_q.png")
+patient_icon_q = pygame.transform.scale(patient_icon_q, (20, 20))
 
 def initialize_screen():
     pygame.init()
@@ -65,9 +80,15 @@ def initialize_screen():
                       (SCREEN_HEIGHT - new_height) // 2))  # Center vertically
 
     # Convert the patient icon after initializing the display
-    global patient_icon1, patient_icon2
+    global patient_icon1, patient_icon_m1, patient_icon_m2, patient_icon_m3, patient_icon_m4, patient_icon_q, patient_icon_s
     patient_icon1 = patient_icon1.convert_alpha()
-    patient_icon2 = patient_icon2.convert_alpha()
+    patient_icon_m1 = patient_icon_m1.convert_alpha()
+    patient_icon_m2 = patient_icon_m2.convert_alpha()
+    patient_icon_m3 = patient_icon_m3.convert_alpha()
+    patient_icon_m4 = patient_icon_m4.convert_alpha()
+    patient_icon_q = patient_icon_q.convert_alpha()
+    patient_icon_s = patient_icon_s.convert_alpha()
+
 
     return screen, clock , map_surface, map_image.get_width(), map_image.get_height()
 
@@ -91,11 +112,36 @@ def draw_hospitals(screen, hospitals):
         capacity, percentage = hospital.occupied_bed_summary()
 
         capacity_text = font.render(capacity, True, WHITE)
+        text_rect = text.get_rect()  # Get the size of the rendered text
         screen.blit(capacity_text, (x + 5, y + 30))  # Adjust y+30 to position it below the main text
+
+
+        # Draw the icon next to the hospital name
+        icon_x = x + 5 + text_rect.width + 5  # Text x + text width + padding
+        icon_y = y + 5  # Align with the hospital name vertically
+
+        if hospital.name == "CHU-SJ":
+            patient_icon = patient_icon_m1
+        elif hospital.name == "CHUQ":
+            patient_icon = patient_icon_q
+        elif hospital.name == "CHUS":
+            patient_icon = patient_icon_s
+        elif hospital.name == "CUSM":
+            patient_icon = patient_icon_m2
+        elif hospital.name == "HGJ":
+            patient_icon = patient_icon_m3
+        elif hospital.name == "HMR":
+            patient_icon = patient_icon_m4
+        else:
+            patient_icon = patient_icon1
+
+        tinted_icon = tint_icon_additive(patient_icon, WHITE)
+        screen.blit(tinted_icon, (icon_x, icon_y))
 
         # Draw the percentage
         percentage_text = font.render(percentage, True, WHITE)
         screen.blit(percentage_text, (x + 130, y + 30))
+
 
     # Drawing Transport Centre
     x, y = hospital_positions[""]
@@ -131,8 +177,18 @@ def tint_icon_additive(icon, color):
     return tinted_icon
 
 def draw_patient(screen, patient, hospital_pos):
-    if patient.nearestHospital == patient.assignedHospital:
-        patient_icon = patient_icon2
+    if patient.nearestHospital == "CHU-SJ":
+        patient_icon = patient_icon_m1
+    elif patient.nearestHospital == "CHUQ":
+        patient_icon = patient_icon_q
+    elif patient.nearestHospital == "CHUS":
+        patient_icon = patient_icon_s
+    elif patient.nearestHospital == "CUSM":
+        patient_icon = patient_icon_m2
+    elif patient.nearestHospital == "HGJ":
+        patient_icon = patient_icon_m3
+    elif patient.nearestHospital == "HMR":
+        patient_icon = patient_icon_m4
     else:
         patient_icon = patient_icon1
 

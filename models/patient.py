@@ -36,6 +36,7 @@ class SimulatedPatient:
     homeHospital: Optional[str] = None
     distanceToHospital : int = 0
     is_indigenous: bool = False
+    nearestHospital :str = ""
 
     def get_arrival_time_index(self) -> int:
         return ARRIVAL_TIMES.index(self.arrival_time)

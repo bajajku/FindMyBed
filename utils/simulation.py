@@ -101,7 +101,8 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
                     queue_position=0,  # Initialize queue position
                     discharged=False,
                     assignedHospital=hospital.name,
-                    distanceToHospital= random.randint(1, 100)
+                    distanceToHospital= random.randint(1, 100),
+                    nearestHospital = hospital.name
                 )
             hospital.patients[patient.bedType].append(patient)
     return hospital.patients

@@ -4,6 +4,7 @@ import math
 import pygame
 
 from config import EXCEL_PATH
+from models.recommendation import HospitalRecommendation
 from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT, GREEN, AQUAMARINE
 from utils.constants import hospital_positions  # assuming this can be defined in your constants file
 from utils.data_loader import DataLoader
@@ -28,8 +29,11 @@ HOSPITALS = data_loader.create_hospitals()
 hospital_dict = {hospital.name: hospital for hospital in HOSPITALS}
 
 #load patient icon
-patient_icon = pygame.image.load("icons/patient.png")
-patient_icon = pygame.transform.scale(patient_icon, (20, 20))
+patient_icon1 = pygame.image.load("icons/patient.png")
+patient_icon1 = pygame.transform.scale(patient_icon1, (20, 20))
+
+patient_icon2 = pygame.image.load("icons/patient2.png")
+patient_icon2 = pygame.transform.scale(patient_icon2, (20, 20))
 
 def initialize_screen():
     pygame.init()
@@ -61,8 +65,9 @@ def initialize_screen():
                       (SCREEN_HEIGHT - new_height) // 2))  # Center vertically
 
     # Convert the patient icon after initializing the display
-    global patient_icon
-    patient_icon = patient_icon.convert_alpha()
+    global patient_icon1, patient_icon2
+    patient_icon1 = patient_icon1.convert_alpha()
+    patient_icon2 = patient_icon2.convert_alpha()
 
     return screen, clock , map_surface, map_image.get_width(), map_image.get_height()
 
@@ -122,6 +127,10 @@ def tint_icon_additive(icon, color):
     return tinted_icon
 
 def draw_patient(screen, patient, hospital_pos):
+    if patient.nearestHospital == patient.assignedHospital:
+        patient_icon = patient_icon2
+    else:
+        patient_icon = patient_icon1
 
     if patient.assignedHospital != "":
         hospital = hospital_dict.get(patient.assignedHospital)

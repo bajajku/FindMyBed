@@ -86,6 +86,7 @@ class HospitalRecommendation:
             )
             nearest_hospital = hospitals[0]
             self.patient.nearestHospital = nearest_hospital.name
+
     def discharge_all_patients(self, arrived_discharged: dict) -> None:
         """
         Discharge patients from all hospitals at a given arrival time.
@@ -250,7 +251,7 @@ class HospitalRecommendation:
         """
         self.patient = patient
         print("\nProcessing new patient...\n")
-        
+        self.find_nearest_hospital()
         # Execute state machine transitions
         self.process_input()
         self.determine_service()

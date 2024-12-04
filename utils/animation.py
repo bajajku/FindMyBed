@@ -95,7 +95,7 @@ def initialize_screen():
 def draw_hospitals(screen, hospitals):
     for hospital in hospitals:
         x, y = hospital_positions[hospital.name]
-        pygame.draw.rect(screen, AQUAMARINE, (x, y, 150, 50))
+        pygame.draw.rect(screen, AQUAMARINE, (x, y, 255, 50))
 
         # Draw the border around the hospital
         border_thickness = 3  # Thickness of the border
@@ -109,11 +109,12 @@ def draw_hospitals(screen, hospitals):
         screen.blit(text, (x + 5, y + 5))
 
         #Capacity
-        capacity = hospital.occupied_bed_summary()
+        capacity, percentage = hospital.occupied_bed_summary()
 
         capacity_text = font.render(capacity, True, WHITE)
         text_rect = text.get_rect()  # Get the size of the rendered text
         screen.blit(capacity_text, (x + 5, y + 30))  # Adjust y+30 to position it below the main text
+
 
         # Draw the icon next to the hospital name
         icon_x = x + 5 + text_rect.width + 5  # Text x + text width + padding
@@ -136,6 +137,11 @@ def draw_hospitals(screen, hospitals):
 
         tinted_icon = tint_icon_additive(patient_icon, WHITE)
         screen.blit(tinted_icon, (icon_x, icon_y))
+
+        # Draw the percentage
+        percentage_text = font.render(percentage, True, WHITE)
+        screen.blit(percentage_text, (x + 130, y + 30))
+
 
     # Drawing Transport Centre
     x, y = hospital_positions[""]

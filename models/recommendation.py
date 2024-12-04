@@ -75,7 +75,7 @@ class HospitalRecommendation:
             dest='input'
         )
 
-# for the report ( patients data )
+    # For the report ( patients data )
     def find_nearest_hospital(self) -> None:
             hospitals = [hospital for hospital in self.hospitals]
             hospitals.sort(

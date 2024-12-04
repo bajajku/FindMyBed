@@ -82,23 +82,12 @@ HOSPITALS_CONFIG = [
     }
 ]
 
-# Distance Parameters
-MIN_DISTANCE_KM: float = 5.0
-MAX_DISTANCE_KM: float = 30.0
-
 # Occupancy Thresholds
 INTENSIVE_OCCUPANCY_THRESHOLD: float = 0.95
 INTERMEDIATE_OCCUPANCY_THRESHOLD: float = 0.85
 MATERNAL_OCCUPANCY_THRESHOLD: float = 0.85
 # Define the simulator's start date
 START_DATE = datetime.strptime("2023-01-01", "%Y-%m-%d")
-
-ASSUMPTIONS = "Simulation assumes historical trends for patient arrivals and discharges."
-HYPERPARAMETERS = {
-    "Simulation Duration": "One year",
-    "Arrival Rate": "Based on historical hourly averages per hospital",
-    "Discharge Rate": "Based on historical patterns"
-}
 
 #Animation
 SCREEN_WIDTH, SCREEN_HEIGHT = 1320, 800

@@ -1,7 +1,6 @@
-import random
+
 from typing import List, Tuple, Optional, Dict, Any
 from models.patient import Patient
-import numpy as np
 from utils.constants import *
 
 
@@ -79,14 +78,6 @@ class Hospital:
         elif bedType == "Postpartum":
             return (self.postpartum_capacity - self.available_beds[4]) / self.postpartum_capacity
         return 0.0
-    
-    # REQUIRED
-    def nicu_required(self, patient: Patient) -> bool:
-        """
-        Check if a NICU bed is required for the patient
-        """
-        nicu_required = bool(set(patient.specialNeedType) & self.neonatal_services) or patient.patientType == "Neonatal"
-        return nicu_required
 
     # REQUIRED
     def get_occupancy_rate_per_patientType_per_bedType(self, patient: Patient) -> bool:
@@ -96,37 +87,28 @@ class Hospital:
         """
         CONDITION = 0.9
         if patient.patientType == "Neonatal":
-            # For NICU cases
             if patient.bedType == "Intensive":
                 return self.get_occupancy_rate("Intensive") < INTENSIVE_OCCUPANCY_THRESHOLD 
             elif patient.bedType == "Intermediate":
                 return self.get_occupancy_rate("Intermediate") < INTERMEDIATE_OCCUPANCY_THRESHOLD
-            
         elif patient.patientType == "Maternal":
-            has_neonatal_needs = self.nicu_required(patient)
-            
             # Get obstetrics rate (with fallback)
             birthcenter_rate = self.get_occupancy_rate("BirthCenter")
             antepartum_rate = self.get_occupancy_rate("Antepartum")
-            
-            if has_neonatal_needs:
-                # Need to consider both obstetrics and NICU rates
-                if patient.bedType == "Intensive":
-                    nicu_rate = self.get_occupancy_rate("Intensive")
-                    return max(birthcenter_rate, antepartum_rate, nicu_rate) < INTENSIVE_OCCUPANCY_THRESHOLD 
-                elif patient.bedType == "Intermediate":
-                    nicu_rate = self.get_occupancy_rate("Intermediate")
-                    return max(birthcenter_rate, antepartum_rate, nicu_rate) < INTERMEDIATE_OCCUPANCY_THRESHOLD
+            # Need to consider both obstetrics and NICU rates
+            if patient.bedType == "Intensive":
+                nicu_rate = self.get_occupancy_rate("Intensive")
+                return max(birthcenter_rate, antepartum_rate, nicu_rate) < INTENSIVE_OCCUPANCY_THRESHOLD 
+            elif patient.bedType == "Intermediate":
+                nicu_rate = self.get_occupancy_rate("Intermediate")
+                return max(birthcenter_rate, antepartum_rate, nicu_rate) < INTERMEDIATE_OCCUPANCY_THRESHOLD
             else:
                 # Only need obstetrics rate
                 return birthcenter_rate < CONDITION
-            
         return False
-
 
     def get_capacity(self, bedType: str) -> int:
         return self.available_beds[0] if bedType == "Intensive" else self.available_beds[1]
-    
     
     def get_discharge_rate(self, bedType: str) -> float:
         if bedType == "Intensive":
@@ -135,10 +117,7 @@ class Hospital:
 
         # REQUIRED
     def can_admit_patient(self, patient: Patient) -> bool:
-
-        if self.get_occupancy_rate_per_patientType_per_bedType(patient=patient):
-            return True
-        return False
+        return self.get_occupancy_rate_per_patientType_per_bedType(patient=patient)
 
     def occupied_bed_summary(self):
         total_occupied = (self.total_capacity_intensive - self.available_beds[0]) + (self.total_capacity_intermediate - self.available_beds[1]) + (self.birth_center_capacity - self.available_beds[2]) + (self.antepartum_capacity - self.available_beds[3]) + (self.postpartum_capacity - self.available_beds[4])

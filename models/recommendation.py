@@ -75,17 +75,19 @@ class HospitalRecommendation:
             dest='input'
         )
 
-    # For the report ( patients data )
     def find_nearest_hospital(self) -> None:
-            hospitals = [hospital for hospital in self.hospitals]
-            hospitals.sort(
-                key=lambda hospital: calculate_distance(
-                    hospital.geolocation,
-                    self.patient.gpsPos
-                )
+        """
+        Find the nearest hospital to the patient and update the patient's nearest hospital attribute.
+        """
+        hospitals = [hospital for hospital in self.hospitals]
+        hospitals.sort(
+            key=lambda hospital: calculate_distance(
+                hospital.geolocation,
+                self.patient.gpsPos
             )
-            nearest_hospital = hospitals[0]
-            self.patient.nearestHospital = nearest_hospital.name
+        )
+        nearest_hospital = hospitals[0]
+        self.patient.nearestHospital = nearest_hospital.name
 
     def discharge_all_patients(self, arrived_discharged: dict) -> None:
         """
@@ -99,9 +101,10 @@ class HospitalRecommendation:
         for hospital in self.hospitals:
             hospital.discharge_patients(arrived_discharged)
 
-
     def home_hospital_check(self) -> None:
-        """Adds Patient's Home Hospital in hospital's list if Applicable."""
+        """
+        Adds Patient's Home Hospital in hospital's list if Applicable.
+        """
         if not self.patient or not self.patient.homeHospital:
             return
         home_hospital = next((h for h in self.hospitals if h.name == self.patient.homeHospital), None)
@@ -110,7 +113,9 @@ class HospitalRecommendation:
         print(f"Patient's preferred hospital added to Available Hospital List: {self.patient.homeHospital}")
 
     def determine_services(self) -> None:
-        """Filter hospitals based on service availability and occupancy rate."""
+        """
+        Filter hospitals based on service availability and occupancy rate.
+        """
         if not self.patient:
             return
 
@@ -123,7 +128,9 @@ class HospitalRecommendation:
         print(f"Filtered hospitals based on services and occupancy: {[h.name for h in self.available_hospitals]}")
 
     def filter_bed_type(self) -> None:
-        """Filter hospitals based on bed type availability."""
+        """
+        Filter hospitals based on bed type availability.
+        """
         if not self.available_hospitals or not self.patient:
             return
 
@@ -135,7 +142,9 @@ class HospitalRecommendation:
         ]
 
     def filter_by_distance(self) -> None:
-        """Sort hospitals by distance to patient location."""
+        """
+        Sort hospitals by distance to patient location.
+        """
         if not self.available_hospitals or not self.patient:
             return
 
@@ -151,10 +160,10 @@ class HospitalRecommendation:
         print(f"Sorted hospitals by distance: "
                     f"{[hospital.name for hospital in self.available_hospitals]}")
 
-    # Actual recommendation system function, will be used in the actual system
     def get_top_hospitals(self) -> List[Hospital]:
         """
         Get top 3 hospitals based on specified criteria and sorting logic.
+        
         Returns:
             List[Hospital]: Up to 3 most suitable hospitals, sorted by priority
         """
@@ -180,8 +189,6 @@ class HospitalRecommendation:
         # Return top 3 choices
         return preferred_hospitals
 
-    # Function to recommend hospital, only for simulation
-    # has no effect on the actual system
     def recommend_hospital(self) -> None:
         """
         Recommend and assign the most suitable hospital or queue the patient.
@@ -189,15 +196,7 @@ class HospitalRecommendation:
         if not self.patient:
             return
 
-        '''
-        I think both works the same way for now, as SimulatedPatient homeHospital is None,
-        so it will always go to the else statement.
-        but, once it has that attribute, we can apply the homeHospital check.
-
-        If you find the second one more suitable, you can remove the first one.
-        '''
         recommended_hospitals = self.get_top_hospitals()
-        # recommended_hospitals = self.available_hospitals
         
         if not recommended_hospitals:
             self.queue.append(self.patient)
@@ -206,7 +205,6 @@ class HospitalRecommendation:
             
         # For simulation compatibility, try to assign to first recommended hospital
         self.selected_hospital = recommended_hospitals[0]
-        #success = admit_patient(self.selected_hospital, self.patient)
         success = self.selected_hospital.admit_patient(self.patient)
         
         if success:
@@ -260,11 +258,21 @@ class HospitalRecommendation:
         self.restart()
 
     def get_queue_size(self) -> int:
-        """Return the current size of the patient queue."""
+        """
+        Return the current size of the patient queue.
+        
+        Returns:
+            int: The number of patients in the queue
+        """
         return len(self.queue)
 
     def get_queue_statistics(self) -> dict:
-        """Return statistics about the current queue."""
+        """
+        Return statistics about the current queue.
+        
+        Returns:
+            dict: A dictionary containing the total number of patients and counts for each bed type
+        """
         if not self.queue:
             return {
                 "total": 0,
@@ -281,3 +289,4 @@ class HospitalRecommendation:
             "maternal": sum(1 for p in self.queue if p.patientType == "Maternal"),
             "neonatal": sum(1 for p in self.queue if p.patientType == "Neonatal")
         }
+        

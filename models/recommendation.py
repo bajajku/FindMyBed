@@ -214,6 +214,12 @@ class HospitalRecommendation:
             self.queue.append(self.patient)
             logging.warning("Admission failed. Patient added to queue.")
 
+
+    '''
+    This function is used to get the top hospital recommendations,
+    for a given patient without admitting them.
+    Serves as a helper function for the API endpoint.
+    '''
     def get_hospital_recommendations(self, patient: Patient) -> List[Hospital]:
         """
         Retrieve top hospital recommendations for a given patient without admitting them.
@@ -240,6 +246,12 @@ class HospitalRecommendation:
         print(f"Top hospital recommendations: {[h.name for h in recommendations]}")
         return recommendations
     
+    '''
+    This function is used to run the complete hospital recommendation process for a patient.
+    It Admits the patient to the hospital if a suitable one is found, otherwise queues the patient.
+    Queue management is not implemented in the current version.
+    Serves as a helper function for the Simulation system.
+    '''
     def run(self, patient: Patient) -> None:
         """
         Run the complete hospital recommendation process for a patient.

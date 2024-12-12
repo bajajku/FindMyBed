@@ -6,6 +6,24 @@ from utils.constants import *
 
 
 class Hospital:
+    """
+    Represents a hospital with various bed types, services, and patient admission logic.
+
+    Attributes:
+        name (str): The name of the hospital.
+        geolocation (Tuple[float, float]): Latitude and longitude of the hospital.
+        maternal_services (set): List of maternal care services provided.
+        neonatal_services (set): List of neonatal care services provided.
+        available_beds (List[int]):  List of available bed counts for various types.
+        discharge_rates_intensive (float): Discharge rate for intensive care beds.
+        discharge_rates_intermediate (float): Discharge rate for intermediate care beds.
+        total_capacity (int): Total capacity of the hospital.
+        total_capacity_intensive (int): Total capacity for intensive care beds.
+        total_capacity_intermediate (int): Total capacity for intermediate care beds.
+        birth_center_capacity (int): Capacity for birth center beds.
+        antepartum_capacity (int): Capacity for antepartum beds.
+        postpartum_capacity (int): Capacity for postpartum beds.
+    """
     def __init__(self, name: str, geolocation: Tuple[float, float], 
                  maternal_services: List[str], neonatal_services: List[str],
                  available_beds: List[int],
@@ -43,13 +61,20 @@ class Hospital:
         self.postpartum_capacity = postpartum_capacity or 50
 
     def get_hospital_services(self) -> List[str]:
-        
+        """
+        Retrieves all services offered by the hospital.
+
+        Returns:
+            List[str]: Combined list of maternal and neonatal services.
+        """      
         return list(self.maternal_services.union(self.neonatal_services))
 
     # REQUIRED
     def get_occupancy_rate_overall(self) -> float:
         """
         Calculates overall occupancy rate of the hospital
+        Returns:
+            float: Overall occupancy rate.
         """
         total_occupied = (
             (self.total_capacity_intensive - self.available_beds[0]) +
@@ -65,7 +90,13 @@ class Hospital:
     # REQUIRED
     def get_occupancy_rate(self, bedType: str) -> float:
         """
-        Calculate occupancy rate for a specific bed type
+        Calculates the occupancy rate for a specific bed type.
+
+        Args:
+            bedType (str): The type of bed (e.g., "Intensive", "Intermediate").
+
+        Returns:
+            float: Occupancy rate for the specified bed type.
         """
         if bedType == "Intensive":
             return (self.total_capacity_intensive - self.available_beds[0]) / self.total_capacity_intensive
@@ -82,8 +113,13 @@ class Hospital:
     # REQUIRED
     def get_occupancy_rate_per_patientType_per_bedType(self, patient: Patient) -> bool:
         """
-        Calculate specialized occupancy rates based on patient type and bed requirements.
-        Returns appropriate occupancy rate or None if requirements can't be met.
+        Checks if occupancy rate thresholds allow admission for a specific patient type.
+
+        Args:
+            patient (Patient): The Patient instance.
+
+        Returns:
+            bool: Boolean indicating if admission is feasible.
         """
         CONDITION = 0.9
         if patient.patientType == "Neonatal":
@@ -108,18 +144,51 @@ class Hospital:
         return False
 
     def get_capacity(self, bedType: str) -> int:
+        """
+        Gets the number of available beds for a given bed type.
+
+        Args:
+            bedType (str): Type of bed (e.g., "Intensive").
+
+        Returns:
+            int: Integer count of available beds.
+        """
         return self.available_beds[0] if bedType == "Intensive" else self.available_beds[1]
     
     def get_discharge_rate(self, bedType: str) -> float:
+        """
+        Retrieves the discharge rate for a given bed type.
+
+        Args:
+            bedType (str): Type of bed (e.g., "Intensive").
+
+        Returns:
+            float: Float representing the discharge rate.
+        """
         if bedType == "Intensive":
             return self.discharge_rates_intensive
         return self.discharge_rates_intermediate
 
         # REQUIRED
     def can_admit_patient(self, patient: Patient) -> bool:
+        """
+        Determines if the hospital can admit a patient based on their type and bed requirements.
+
+        Args:
+            patient (Patient): The Patient instance.
+
+        Returns:
+            bool: Boolean indicating if the patient can be admitted.
+        """
         return self.get_occupancy_rate_per_patientType_per_bedType(patient=patient)
 
     def occupied_bed_summary(self):
+        """
+        Provides a summary of occupied beds and the occupancy percentage.
+
+        Returns:
+            Tuple[str, str]: Tuple containing a string summary of total occupied beds and percentage.
+        """
         total_occupied = (self.total_capacity_intensive - self.available_beds[0]) + (self.total_capacity_intermediate - self.available_beds[1]) + (self.birth_center_capacity - self.available_beds[2]) + (self.antepartum_capacity - self.available_beds[3]) + (self.postpartum_capacity - self.available_beds[4])
         total_capacity = self.total_capacity_intensive + self.total_capacity_intermediate
         # Calculate overall occupancy percentage
@@ -128,6 +197,15 @@ class Hospital:
         return f"{total_occupied}/{total_capacity} Occupied ", f"{percentage:.2f} %"
 
     def admit_patient(self, patient: Patient) -> bool:
+        """
+        Admits a patient to an appropriate bed if available.
+
+        Args:
+            patient (Patient): The Patient instance.
+
+        Returns:
+            bool: Boolean indicating if the patient was successfully admitted.
+        """
         bed_index = 0 if patient.bedType == "Intensive" else 1
         if self.available_beds[bed_index] > 0:
             self.available_beds[bed_index] -= 1

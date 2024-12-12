@@ -10,6 +10,19 @@ from config import EXCEL_PATH
 app = FastAPI()
 
 class PatientInput(BaseModel):
+    """
+    Pydantic model for patient input data required for hospital recommendations.
+
+    Attributes:
+        patientType (str): Type of patient (e.g., 'emergency', 'non-emergency')
+        gpsPos (Tuple[float, float]): Patient's GPS coordinates (latitude, longitude)
+        transportNeedCnt (int): Number of transport units needed
+        specialNeedType (List[str]): Types of special needs required
+        specialNeeds (List[str]): Specific special needs requirements
+        del24HrPlus (Optional[bool]): Whether delivery is needed in 24+ hours
+        bedType (str): Type of bed required (default: "")
+        homeHospital (Optional[str]): Patient's preferred/home hospital
+    """
     patientType: str
     gpsPos: Tuple[float, float]
     transportNeedCnt: int
@@ -26,7 +39,29 @@ data_loader.load_data(excel_file=EXCEL_PATH)
 HOSPITALS = data_loader.create_hospitals()
 
 @app.post("/recommendation/")
-def recommendation(patient_input: PatientInput):
+async def recommendation(patient_input: PatientInput):
+    """
+    Generate hospital recommendations based on patient input.
+
+    Args:
+        patient_input (PatientInput): Patient information and requirements
+
+    Returns:
+        dict: Hospital recommendations with matching criteria
+
+    Example:
+        POST /recommendation/
+        {
+            "patientType": "Maternal",
+            "gpsPos": [51.5074, -0.1278],
+            "transportNeedCnt": 1,
+            "specialNeedType": ["Neurology"],
+            "specialNeeds": ["Northern module"],
+            "del24HrPlus": False,
+            "bedType": "Intensive",
+            "homeHospital": "CUSM"
+        }
+    """
     # Get the patient's input and return a recommendation
     patient = Patient(
         patientType=patient_input.patientType,

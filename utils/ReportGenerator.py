@@ -4,7 +4,15 @@ from utils.constants import *
 
 
 class ReportGenerator:
+    """
+    A class to generate hospital occupancy and patient distribution reports in PDF format.
 
+    Attributes:
+        results_df (pd.DataFrame): DataFrame containing simulation results with hospital and occupancy rate information.
+        patients_df (pd.DataFrame): DataFrame containing simulation results with patient distribution and related details.
+        report_path (str): Path to save the generated PDF report.
+        visualizer (object): An instance of a visualizer class to create plots.
+    """
     def __init__(self, results_df, patients_df, report_path, visualizer):
         self.assumptions = """
     Assumptions:
@@ -42,6 +50,12 @@ class ReportGenerator:
 
 
     def generate_report_header(self,pdf):
+        """
+        Generate the header section of the report containing assumptions and hyperparameters.
+
+        Args:
+            pdf (PdfPages): PDF object to save the header section.
+        """
         fig = plt.figure(figsize=(12, 8))
         plt.axis('off')
 
@@ -64,7 +78,10 @@ class ReportGenerator:
 
     def create_table_of_contents(self, pdf):
         """
-        Creates a table of contents page
+        Create the table of contents page for the report.
+
+        Args:
+            pdf (PdfPages): PDF object to save the table of contents.
         """
         fig = plt.figure(figsize=(12, 8))
         plt.axis('off')
@@ -111,7 +128,11 @@ class ReportGenerator:
 
     def add_section_header(self, title: str, pdf):
         """
-        Adds a section header page
+        Add a section header page to the report.
+
+        Args:
+            title (str): Title of the section.
+            pdf (PdfPages): PDF object to save the section header.
         """
         fig = plt.figure(figsize=(12, 8))
         plt.axis('off')
@@ -137,29 +158,28 @@ class ReportGenerator:
 
             # Monthly occupancy plots
             self.add_section_header("1. Monthly Occupancy Rates", pdf)
-            self.visualizer.plot_monthly_occupancy_probability(self.results_df, 'Intensive Occupancy Rate', 'Monthly Probability Distribution Intensive',pdf)
-            self.visualizer.plot_monthly_occupancy_probability(self.results_df,'Intermediate Occupancy Rate', 'Monthly Probability Distribution Intermediate', pdf)
+            self.visualizer.plot_monthly_occupancy_distribution(self.results_df, 'Intensive Occupancy Rate', 'Monthly Probability Distribution Intensive',pdf)
+            self.visualizer.plot_monthly_occupancy_distribution(self.results_df,'Intermediate Occupancy Rate', 'Monthly Probability Distribution Intermediate', pdf)
 
             # Yearly occupancy plots
             self.add_section_header("2. Yearly Occupancy Rates", pdf)
-            self.visualizer.plot_yearly_occupancy_probability(self.results_df,'Intensive Occupancy Rate', 'Yearly Probability Distribution Intensive', pdf)
-            self.visualizer.plot_yearly_occupancy_probability(self.results_df,'Intermediate Occupancy Rate', 'Yearly Probability Distribution Intermediate', pdf)
+            self.visualizer.plot_yearly_occupancy_distribution(self.results_df,'Intensive Occupancy Rate', 'Yearly Probability Distribution Intensive', pdf)
+            self.visualizer.plot_yearly_occupancy_distribution(self.results_df,'Intermediate Occupancy Rate', 'Yearly Probability Distribution Intermediate', pdf)
 
             # Total Patient distributions
             self.add_section_header("3. Total Patient Distributions", pdf)
             self.visualizer.plot_yearly_patient_distribution(self.patients_df, type="Total", pdf=pdf)
-            self.visualizer.plot_acceptance_probability(self.patients_df, type="Total", pdf=pdf)
-            self.visualizer.accepted_patients_by_distance(self.patients_df, type="Total", pdf=pdf)
-            # self.visualizer.probability_distribution_patients(self.patients_df,pdf)
+            self.visualizer.plot_acceptance_percentage(self.patients_df, type="Total", pdf=pdf)
+            self.visualizer.plot_accepted_patients_by_distance(self.patients_df, type="Total", pdf=pdf)
 
             # Intensive Patient distributions
             self.add_section_header("4. Intensive Patient Distributions", pdf)
             self.visualizer.plot_yearly_patient_distribution(self.patients_df, type="Intensive", pdf=pdf)
-            self.visualizer.plot_acceptance_probability(self.patients_df, type="Intensive", pdf=pdf)
-            self.visualizer.accepted_patients_by_distance(self.patients_df, type="Intensive", pdf=pdf)
+            self.visualizer.plot_acceptance_percentage(self.patients_df, type="Intensive", pdf=pdf)
+            self.visualizer.plot_accepted_patients_by_distance(self.patients_df, type="Intensive", pdf=pdf)
 
             # Intermediate Patient distributions
             self.add_section_header("5. Intermediate Patient Distributions", pdf)
             self.visualizer.plot_yearly_patient_distribution(self.patients_df, type="Intermediate", pdf=pdf)
-            self.visualizer.plot_acceptance_probability(self.patients_df, type="Intermediate", pdf=pdf)
-            self.visualizer.accepted_patients_by_distance(self.patients_df, type="Intermediate", pdf=pdf)
+            self.visualizer.plot_acceptance_percentage(self.patients_df, type="Intermediate", pdf=pdf)
+            self.visualizer.plot_accepted_patients_by_distance(self.patients_df, type="Intermediate", pdf=pdf)

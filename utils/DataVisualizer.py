@@ -8,12 +8,30 @@ from scipy.stats import norm
 from utils.geographic import get_fsa_center, calculate_distance, get_hospital_coord
 
 class DataVisualizer:
+    """
+    A class for visualizing data related to hospital occupancy and patient distribution.
 
+    Attributes:
+        report_path (str): The file path for saving the generated PDF reports.
+    """
     def __init__(self, report_path):
+        """
+        Initialize the DataVisualizer with a report path.
+
+        Args:
+            report_path (str): Path to save the generated PDF reports.
+        """
         self.report_path = report_path
 
     def generate_statistics_table(self, hospitals_data, pdf: PdfPages, title):
+        """
+        Generate and save a statistics table as a page in a PDF.
 
+        Args:
+            hospitals_data (list of lists): Data to populate the table.
+            pdf (PdfPages): PDF object for saving the table.
+            title (str): Title of the table.
+        """
         # Create a new figure for the table
         plt.figure(figsize=(12, 6))
         plt.axis('off')  # Hide axes
@@ -35,9 +53,19 @@ class DataVisualizer:
         plt.close()
 
     def create_patients_table(self, patients_df):
-
         """
-        To create a table regarding the patients
+        Create and aggregate data tables for creating an Excel file related to patient distributions.
+
+        Args:
+            patients_df (pd.DataFrame): DataFrame containing patient information.
+
+        Returns:
+            tuple: A tuple containing:
+                - DataFrame for intensive patients.
+                - DataFrame for intermediate patients.
+                - DataFrame summarizing hospital data.
+                - Aggregated DataFrame for intensive patients.
+                - Aggregated DataFrame for intermediate patients.
         """
         # Rename columns for readability
         patients_df = patients_df.rename(columns={
@@ -163,9 +191,6 @@ class DataVisualizer:
             closest_hospital = group['Vicinity to Hospital'].mode()[0]
             # Calculate the center coordinates of the postal code
             postal_center = get_fsa_center(postal_code)
-            # Calculate the distance from the center to the closest hospital
-            # closest_hospital_coords = get_hospital_coord(closest_hospital)
-            # center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
             # Compute average and standard deviation of distances to the closest hospital for this postal code
             avg_distance = group['Distance to Closest Hospital'].mean()
             if len(group['Distance to Closest Hospital']) > 1:
@@ -188,12 +213,20 @@ class DataVisualizer:
             })
         # Convert aggregated list to DataFrame
         aggregated_intermediate_patients_table = pd.DataFrame(postal_agg_intermediate)
-
         return intensive_patients_table, intermediate_patients_table, hospitals_table, aggregated_intensive_patients_table, aggregated_intermediate_patients_table
 
 
 
-    def plot_monthly_occupancy_probability(self, results_df: pd.DataFrame, rate_type, title, pdf: PdfPages):
+    def plot_monthly_occupancy_distribution(self, results_df: pd.DataFrame, bed_type, title, pdf: PdfPages):
+        """
+        Plot and save monthly occupancy normal distributions.
+
+        Args:
+            results_df (pd.DataFrame): DataFrame containing hospital occupancy data.
+            bed_type (str): Column name indicating the type of bed (e.g., 'Intensive' or 'Intermediate').
+            title (str): Title of the plot.
+            pdf (PdfPages): PDF object for saving the plots.
+        """
         # Ensure 'Date' column is in datetime format to extract the month
         results_df['Date'] = pd.to_datetime(results_df['Date'])
         results_df['Year'] = results_df['Date'].dt.year
@@ -212,7 +245,7 @@ class DataVisualizer:
             table_data = []
             for hospital in hospitals:
                 # Calculate the average occupancy rate for each year for this hospital and month
-                hospital_monthly_data = month_data[month_data['Hospital'] == hospital].groupby('Day')[rate_type].mean().dropna()
+                hospital_monthly_data = month_data[month_data['Hospital'] == hospital].groupby('Day')[bed_type].mean().dropna()
                 
                 # Check if there is enough data to fit a distribution (at least 2 data points)
                 if len(hospital_monthly_data) > 1:
@@ -231,7 +264,7 @@ class DataVisualizer:
 
             # Title and labels
             plt.title(f'{title} for Month {month:02d}')
-            plt.xlabel(rate_type.replace("_", " ").title())
+            plt.xlabel(bed_type.replace("_", " ").title())
             plt.ylabel('Probability Density')
             plt.xticks(np.linspace(0, 1, 21))
             plt.legend()
@@ -244,7 +277,16 @@ class DataVisualizer:
                 table_title = f'{title} - Statistics Table for Month {month:02d}'
                 self.generate_statistics_table(table_data, pdf, table_title)
 
-    def plot_yearly_occupancy_probability(self,results_df: pd.DataFrame, rate_type, title, pdf: PdfPages):
+    def plot_yearly_occupancy_distribution(self,results_df: pd.DataFrame, bed_type, title, pdf: PdfPages):
+        """
+        Plot and save yearly occupancy normal distributions.
+
+        Args:
+            results_df (pd.DataFrame): DataFrame containing hospital occupancy data.
+            bed_type (str): Column name indicating the type of bed (e.g., 'Intensive' or 'Intermediate').
+            title (str): Title of the plot.
+            pdf (PdfPages): PDF object for saving the plots.
+        """
         # Ensure 'Date' column is in datetime format to extract the year
         results_df['Date'] = pd.to_datetime(results_df['Date'])
         results_df['Year'] = results_df['Date'].dt.year
@@ -262,7 +304,7 @@ class DataVisualizer:
         for hospital in hospitals:
             # Filter data for the hospital and calculate daily average occupancy rate across all years
             hospital_data = results_df[results_df['Hospital'] == hospital]
-            yearly_data = hospital_data.groupby(['Month', 'Day'])[rate_type].mean().dropna()
+            yearly_data = hospital_data.groupby(['Month', 'Day'])[bed_type].mean().dropna()
             
             # Check if there's enough data to fit a distribution (at least 2 data points)
             if len(yearly_data) > 1:
@@ -281,7 +323,7 @@ class DataVisualizer:
                 # Add hospital's name, average, and standard deviation to the table data
                 table_data.append([hospital, f'{mu:.2f}', f'{std:.2f}'])   
         plt.title(title)
-        plt.xlabel(rate_type.replace("_", " ").title())
+        plt.xlabel(bed_type.replace("_", " ").title())
         plt.ylabel('Probability Density')
         plt.xticks(np.linspace(0, 1, 21))
         plt.legend()
@@ -295,6 +337,14 @@ class DataVisualizer:
 
     #patient distribution for intermediate and intensive
     def plot_yearly_patient_distribution(self,patients_df: pd.DataFrame, pdf: PdfPages, type:str):
+        """
+        Plot and save yearly patient distribution for specified patient bed type.
+
+        Args:
+            patients_df (pd.DataFrame): DataFrame containing patient data.
+            pdf (PdfPages): PDF object for saving the plots.
+            type (str): Patient type to filter ('Intensive', 'Intermediate', or 'Total').
+        """
         # Ensure 'Date' column is in datetime format to extract the year
         patients_df['Date'] = pd.to_datetime(patients_df['Date'])
         patients_df['Year'] = patients_df['Date'].dt.year
@@ -366,9 +416,15 @@ class DataVisualizer:
         pdf.savefig()
         plt.close()
 
+    def plot_acceptance_percentage(self,patients_df: pd.DataFrame, pdf: PdfPages ,type:str):
+        """
+        Plot a bar chart showing the acceptance percentage for patients by hospital.
 
-    # The probability chart which shows if a patient is in a vicinity of a hospital, what are chances of acceptance by the hospital.
-    def plot_acceptance_probability(self,patients_df: pd.DataFrame, pdf: PdfPages ,type:str):
+        Args:
+            patients_df (pd.DataFrame): DataFrame containing patient data.
+            pdf (PdfPages): PDF object for saving the plots.
+            type (str): Patient type to filter ('Intensive', 'Intermediate', or 'Total').
+        """
         # Ensure 'Date' column is in datetime format to extract the year
         patients_df['Date'] = pd.to_datetime(patients_df['Date'])
         patients_df['Year'] = patients_df['Date'].dt.year
@@ -415,7 +471,15 @@ class DataVisualizer:
         plt.close()
 
     # Another chart per hospital that shows the percentage of accepted patients by distance.
-    def accepted_patients_by_distance(self, patients_df: pd.DataFrame,pdf: PdfPages, type:str):
+    def plot_accepted_patients_by_distance(self, patients_df: pd.DataFrame,pdf: PdfPages, type:str):
+        """
+        Plot a bar chart showing the percentage of accepted patients by distance for each hospital.
+
+        Args:
+            patients_df (pd.DataFrame): DataFrame containing patient data.
+            pdf (PdfPages): PDF object for saving the plots.
+            type (str): Patient type to filter ('Intensive', 'Intermediate', or 'Total').
+        """
         # Convert the Date column to datetime format
         patients_df['Date'] = pd.to_datetime(patients_df['Date'])
         # manually restrict it for now 
@@ -468,113 +532,8 @@ class DataVisualizer:
             plt.xticks(rotation=45)
             
             # Set x-ticks to show fewer labels if there are many bins
-            #if len(distance_percentages.index) > 10:
             plt.xticks(distance_percentages.index[::2])  # Show every other bin
             
             # Save the plot to the PDF
             pdf.savefig()
             plt.close()
-
-    def probability_distribution_patients(self, patients_df: pd.DataFrame, pdf: PdfPages):
-        # Plot 1: Probability distribution for patients closest to each hospital (regardless of admission)
-        patients_df['Date'] = pd.to_datetime(patients_df['Date'])
-        
-        # Extract year from Date column
-        patients_df['Year'] = patients_df['Date'].dt.year
-
-        # Calculate total patient count per hospital for each year
-        yearly_counts = patients_df.groupby(['Year', 'Nearest Hospital']).size().reset_index(name='Yearly Patient Count')
-        # Define x-values for the patient count range based on observed data
-        x_values = np.linspace(0, yearly_counts['Yearly Patient Count'].max() + 10 , 100)
-        
-        plt.figure(figsize=(12, 6))
-        
-        # Get unique hospitals for plotting
-        hospitals = yearly_counts['Nearest Hospital'].unique()
-
-        # Store data for the table
-        table_data = []
-
-        for hospital in hospitals:
-            # Filter yearly count data for the current hospital
-            hospital_data = yearly_counts[yearly_counts['Nearest Hospital'] == hospital]['Yearly Patient Count']
-            
-            # Check if there's sufficient data to fit a distribution (at least 2 data points)
-            if len(hospital_data) > 1:
-                # Fit a normal distribution to the yearly patient counts
-                mu, std = norm.fit(hospital_data)
-                
-                # Calculate PDF values
-                pdf_values = norm.pdf(x_values, mu, std)
-                
-                # Normalize PDF values so that the area under the curve sums to 1
-                pdf_values /= np.sum(pdf_values)
-                
-                # Plot the normalized PDF
-                plt.plot(x_values, pdf_values, label=f'{hospital} (μ={mu:.2f}, σ={std:.2f})')
-                    # Add hospital's name, average, and standard deviation to the table data
-                table_data.append([hospital, f'{mu:.2f}', f'{std:.2f}'])
-        plt.title("Probability Distribution of Closest Distances for Each Hospital (Regardless of Admission)")
-        plt.xlabel("Number of Patients per Year")
-        plt.ylabel("Probability Density")
-        plt.legend()
-        pdf.savefig()
-        plt.close()
-        # Add the table as a separate page if there is data
-        if table_data:
-            table_title = f'Probability Distribution of Closest Distances for Each Hospital (Regardless of Admission)'
-            self.generate_statistics_table(table_data, pdf, table_title)
-
-        # Plot 2: Probability distribution for the number of patients closest to each hospital but admitted elsewhere
-        patients_df['Date'] = pd.to_datetime(patients_df['Date'])
-        
-        # Extract year from Date column
-        patients_df['Year'] = patients_df['Date'].dt.year
-        
-        # Filter for patients not assigned to the nearest hospital
-        filtered_data = patients_df[patients_df['is it assigned to the nearest hospital'] == False]
-        
-        # Calculate total patient count per hospital for each year
-        yearly_counts = filtered_data.groupby(['Year', 'Nearest Hospital']).size().reset_index(name='Yearly Patient Count')
-        # Define x-values for the patient count range based on observed data
-        x_values = np.linspace(0, yearly_counts['Yearly Patient Count'].max() + 10, 100)
-        
-        plt.figure(figsize=(12, 6))
-        
-        # Get unique hospitals for plotting
-        hospitals = yearly_counts['Nearest Hospital'].unique()
-
-        # Store data for the table
-        table_data = []
-
-        for hospital in hospitals:
-            # Filter yearly count data for the current hospital
-            hospital_data = yearly_counts[yearly_counts['Nearest Hospital'] == hospital]['Yearly Patient Count']
-            
-            # Check if there's sufficient data to fit a distribution (at least 2 data points)
-            if len(hospital_data) > 1:
-                # Fit a normal distribution to the yearly patient counts
-                mu, std = norm.fit(hospital_data)
-                
-                # Calculate PDF values
-                pdf_values = norm.pdf(x_values, mu, std)
-                
-                # Normalize PDF values so that the area under the curve sums to 1
-                pdf_values /= np.sum(pdf_values)
-                
-                # Plot the normalized PDF
-                plt.plot(x_values, pdf_values, label=f'{hospital} (μ={mu:.2f}, σ={std:.2f})')
-
-                # Add hospital's name, average, and standard deviation to the table data
-                table_data.append([hospital, f'{mu:.2f}', f'{std:.2f}'])  
-        plt.title("Probability Distribution of Patients Closest to Each Hospital but Admitted Elsewhere")
-        plt.xlabel("Number of Patients per Year")
-        plt.ylabel("Probability Density")
-        plt.legend()
-        pdf.savefig()
-        plt.close()
-
-        # Add the table as a separate page if there is data
-        if table_data:
-            table_title = f'Probability Distribution of Closest Distances for Each Hospital (Regardless of Admission)'
-            self.generate_statistics_table(table_data, pdf, table_title)

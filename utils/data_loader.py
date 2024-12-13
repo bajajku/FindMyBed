@@ -1,17 +1,31 @@
-from itertools import count
-
 import numpy as np
 import pandas as pd
 from typing import List, Tuple
 import ast
-
-from config import EXCEL_PATH
 from models.hospital import Hospital
 import random
 
 class DataLoader:
+    """
+    A class to load, parse, and process data for hospitals and patients.
 
+    Attributes:
+        hospital_names (List[str]): List of hospital names.
+        coordinates (List[Tuple[float, float]]): List of hospital geolocations as tuples of latitude and longitude.
+        maternal_services (List[List[str]]): List of maternal services available at each hospital.
+        neonatal_services (List[List[str]]): List of neonatal services available at each hospital.
+        beds_available (List[List[int]]): List of available beds by bed type for each hospital.
+        discharge_rates_intensive (List[float]): Discharge rates for intensive care beds.
+        discharge_rates_intermediate (List[float]): Discharge rates for intermediate care beds.
+        total_capacity (List[int]): Total bed capacity of each hospital.
+        total_capacity_intensive (List[int]): Intensive care bed capacity of each hospital.
+        total_capacity_intermediate (List[int]): Intermediate care bed capacity of each hospital.
+        birth_rates_by_fsa (pd.DataFrame): Birth rate data categorized by Forward Sortation Area (FSA).
+    """
     def __init__(self):
+        """
+        Initialize the DataLoader with empty attributes for hospital and patient data.
+        """
         self.hospital_names = None
         self.coordinates = None
         self.maternal_services = None
@@ -22,7 +36,6 @@ class DataLoader:
         self.total_capacity = None
         self.total_capacity_intensive = None
         self.total_capacity_intermediate = None
-        # new attributes for the new data
         self.birth_rates_by_fsa = None
     @staticmethod
     def parse_into_list_of_lists(df_col: pd.Series) -> List[List[float]]:
@@ -48,12 +61,27 @@ class DataLoader:
 
     @staticmethod
     def parse_services(services_str: str) -> List[str]:
-        """Splits a comma-separated string into a list of services."""
+        """
+        Splits a comma-separated string into a list of services.
+        Args:
+            services_str (str): Comma-separated string of services.
+
+        Returns:
+            List[str]: List of services.       
+        """
         return [service.strip() for service in services_str.split(',')]
 
     @staticmethod
     def parse_coordinates(coord_str: str) -> Tuple[float, float]:
-        """Parses a comma-separated string into a tuple of floats representing coordinates."""
+        """
+        Parses a string representing geographic coordinates into a tuple of floats.
+
+        Args:
+            coord_str (str): Comma-separated string of coordinates.
+
+        Returns:
+            Tuple[float, float]: Latitude and longitude as floats.
+        """
         return tuple(map(float, coord_str.split(',')))
 
     def load_data(self, excel_file: str) -> List[Hospital]:
@@ -62,9 +90,6 @@ class DataLoader:
 
         Args:
             excel_file (str): Path to the Excel file containing hospital data.
-
-        Returns:
-            Loads data into the class
         """
         # Load data
         df = pd.read_excel(excel_file)
@@ -106,8 +131,14 @@ class DataLoader:
 
         self.intensive_rate = df['Bed Type Rate Intensive'].sum()
         self.intermediate_rate = df['Bed Type Rate Intermediate'].sum()
+
     def create_hospitals(self):
-        # Create Hospital objects
+        """
+        Creates a list of Hospital instances using the loaded data.
+
+        Returns:
+            List[Hospital]: A list of initialized Hospital instances.
+        """
         hospitals = [
             Hospital(
                 name=self.hospital_names[i],
@@ -125,14 +156,23 @@ class DataLoader:
         return hospitals
 
     def get_average_admissions(self):
+        """
+        Gets the average number of admissions per hour.
+
+        Returns:
+            float: Average admissions per hour.
+        """
         return self.average_admissions
 
     # To reflect the ratio of intensive and intermediate bed types
     def assign_bed_type_poisson(self):
-        # Generate a random number between 0 and 1
-        rand_num = random.random()
+        """
+        Assigns a bed type.
 
-        # Assign bed type based on the cumulative probability
+        Returns:
+            str: Assigned bed type ("Intensive" or "Intermediate").
+        """
+        rand_num = random.random()
         if rand_num <= self.intensive_rate:
             return 'Intensive'
         else:

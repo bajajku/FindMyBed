@@ -7,8 +7,6 @@ def print_hospital_data(results):
     Args:
         results (list): The results from the simulation
 
-    Returns:
-        None
     '''
     # Define the headers for the table
     headers = ["Day", "Hospital", "Arrived Patients", "Discharged Patients", "Intensive Occupancy Rate", "Intermediate Occupancy Rate"]

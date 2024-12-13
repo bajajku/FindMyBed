@@ -4,7 +4,6 @@ from time import sleep
 import numpy as np
 import pygame
 
-from config import EXCEL_PATH
 from models.PausePlayButton import PausePlayButton
 from models.hospital import Hospital
 from models.patient import Patient, SimulatedPatient
@@ -18,6 +17,15 @@ from utils.animation import initialize_screen, draw_hospitals, draw_patient, ani
 import pandas as pd
 from datetime import timedelta
 from utils.admission import admit_patient
+
+import yaml
+
+# Load the configuration from the YAML file.
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+
+# Access the configuration values.
+excel_path = config['EXCEL_PATH']
 
 # concerned with simulation
 def discharge_all_patients(hospitals: list[Hospital], arrived_discharged: dict) -> None:
@@ -129,7 +137,7 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
 screen, clock, map_surface, map_width, map_height = initialize_screen()
 pause_play_button = PausePlayButton(1100, 10)
 data_loader = DataLoader()
-data_loader.load_data(excel_file=EXCEL_PATH)
+data_loader.load_data(excel_file=excel_path)
 HOSPITALS = data_loader.create_hospitals()
 map_bounds = [44.0, 63.0, -79.0, -57.0]
 

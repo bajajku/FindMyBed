@@ -82,10 +82,6 @@ HOSPITALS_CONFIG = [
     }
 ]
 
-# Occupancy Thresholds
-INTENSIVE_OCCUPANCY_THRESHOLD: float = 0.95
-INTERMEDIATE_OCCUPANCY_THRESHOLD: float = 0.85
-MATERNAL_OCCUPANCY_THRESHOLD: float = 0.85
 # Define the simulator's start date
 START_DATE = datetime.strptime("2023-01-01", "%Y-%m-%d")
 

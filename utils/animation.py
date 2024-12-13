@@ -1,13 +1,21 @@
 # animation.py
 import math
 import pygame
-from config import EXCEL_PATH
 from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT, GREEN, AQUAMARINE
 from utils.constants import hospital_positions  # assuming this can be defined in your constants file
 from utils.data_loader import DataLoader
 from matplotlib import cm
 import numpy as np
 import matplotlib.pyplot as plt
+
+import yaml
+
+# Load the configuration from the YAML file.
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+
+# Access the configuration values.
+excel_path = config['EXCEL_PATH']
 
 # Initialize the colormap
 cmap = cm.get_cmap('viridis')
@@ -21,7 +29,7 @@ for i in range(gradient_steps):
     gradient_table.append((int(r * 255), int(g * 255), int(b * 255)))
 
 data_loader = DataLoader()
-data_loader.load_data(excel_file=EXCEL_PATH)
+data_loader.load_data(excel_file=excel_path)
 HOSPITALS = data_loader.create_hospitals()
 hospital_dict = {hospital.name: hospital for hospital in HOSPITALS}
 

@@ -1,10 +1,7 @@
 # animation.py
 import math
-
 import pygame
-
 from config import EXCEL_PATH
-from models.recommendation import HospitalRecommendation
 from utils.constants import WHITE, BLUE, RED, SCREEN_WIDTH, SCREEN_HEIGHT, GREEN, AQUAMARINE
 from utils.constants import hospital_positions  # assuming this can be defined in your constants file
 from utils.data_loader import DataLoader
@@ -51,6 +48,12 @@ patient_icon_q = pygame.image.load("icons/patient_q.png")
 patient_icon_q = pygame.transform.scale(patient_icon_q, (20, 20))
 
 def initialize_screen():
+    """
+    Initialize the pygame screen and load the Quebec map for the simulation.
+
+    Returns:
+        tuple: A tuple containing the pygame screen, clock, map surface, map width, and map height.
+    """
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Hospital Patient Arrival Simulation")
@@ -93,6 +96,13 @@ def initialize_screen():
     return screen, clock , map_surface, map_image.get_width(), map_image.get_height()
 
 def draw_hospitals(screen, hospitals):
+    """
+    Draw hospitals on the pygame screen with their names, capacities, and borders.
+
+    Args:
+        screen: The pygame screen object.
+        hospitals: A list of hospital objects.
+    """
     for hospital in hospitals:
         x, y = hospital_positions[hospital.name]
         pygame.draw.rect(screen, AQUAMARINE, (x, y, 255, 50))
@@ -177,6 +187,14 @@ def tint_icon_additive(icon, color):
     return tinted_icon
 
 def draw_patient(screen, patient, hospital_pos):
+    """
+    Draw a patient on the pygame screen with a color indicating their status.
+
+    Args:
+        screen: The pygame screen object.
+        patient: The patient object.
+        hospital_pos: The coordinates of the assigned hospital.
+    """
     if patient.nearestHospital == "CHU-SJ":
         patient_icon = patient_icon_m1
     elif patient.nearestHospital == "CHUQ":

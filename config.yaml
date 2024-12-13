@@ -1,0 +1,26 @@
+#Number of days to run simulation
+NUMBER_OF_DAYS: 365
+
+# Paths to input and output files.
+EXCEL_PATH: "data/averagePerDay_v5.xlsx"
+EXCEL_PATH_NEWDATA: "data/For Nick-Nov19-FindMyBed-transportData 2021 to 2023-Bed Type-hospital options.xlsx"
+
+# Paths to the output files.
+REPORT: "output/report.pdf"
+TABLE: "output/patients_tables.xlsx"
+
+INTENSIVE_OCCUPANCY_THRESHOLDS:
+  CHU-SJ: 0.95
+  CHUQ: 0.95
+  CHUS: 0.95
+  CUSM: 0.95
+  HGJ: 0.95
+  HMR: 0.95
+
+INTERMEDIATE_OCCUPANCY_THRESHOLDS:
+  CHU-SJ: 0.95
+  CHUQ: 0.95
+  CHUS: 0.95
+  CUSM: 0.95
+  HGJ: 0.95
+  HMR: 0.95

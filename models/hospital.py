@@ -3,6 +3,16 @@ from typing import List, Tuple, Optional, Dict, Any
 from models.patient import Patient
 from utils.constants import *
 
+import yaml
+
+# Load YAML file
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+
+# Access the dictionary
+intensive_threshold = config['INTENSIVE_OCCUPANCY_THRESHOLDS']
+intermediate_threshold = config['INTERMEDIATE_OCCUPANCY_THRESHOLDS']
+
 
 
 class Hospital:
@@ -124,9 +134,9 @@ class Hospital:
         CONDITION = 0.9
         if patient.patientType == "Neonatal":
             if patient.bedType == "Intensive":
-                return self.get_occupancy_rate("Intensive") < INTENSIVE_OCCUPANCY_THRESHOLD 
+                return self.get_occupancy_rate("Intensive") < intensive_threshold[self.name] 
             elif patient.bedType == "Intermediate":
-                return self.get_occupancy_rate("Intermediate") < INTERMEDIATE_OCCUPANCY_THRESHOLD
+                return self.get_occupancy_rate("Intermediate") < intermediate_threshold[self.name]
         elif patient.patientType == "Maternal":
             # Get obstetrics rate (with fallback)
             birthcenter_rate = self.get_occupancy_rate("BirthCenter")
@@ -134,10 +144,10 @@ class Hospital:
             # Need to consider both obstetrics and NICU rates
             if patient.bedType == "Intensive":
                 nicu_rate = self.get_occupancy_rate("Intensive")
-                return max(birthcenter_rate, antepartum_rate, nicu_rate) < INTENSIVE_OCCUPANCY_THRESHOLD 
+                return max(birthcenter_rate, antepartum_rate, nicu_rate) < intensive_threshold[self.name]  
             elif patient.bedType == "Intermediate":
                 nicu_rate = self.get_occupancy_rate("Intermediate")
-                return max(birthcenter_rate, antepartum_rate, nicu_rate) < INTERMEDIATE_OCCUPANCY_THRESHOLD
+                return max(birthcenter_rate, antepartum_rate, nicu_rate) < intermediate_threshold[self.name]
             else:
                 # Only need obstetrics rate
                 return birthcenter_rate < CONDITION

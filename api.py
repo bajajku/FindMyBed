@@ -5,7 +5,13 @@ from models.recommendation import HospitalRecommendation
 from models.hospital import Hospital
 from models.patient import Patient
 from utils.data_loader import DataLoader
-from config import EXCEL_PATH
+import yaml
+# Load the configuration from the YAML file.
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+
+# Access the configuration values.
+excel_path = config['EXCEL_PATH']
 
 app = FastAPI()
 
@@ -35,7 +41,7 @@ class PatientInput(BaseModel):
 
 # Initialize the recommendation model
 data_loader = DataLoader()
-data_loader.load_data(excel_file=EXCEL_PATH)
+data_loader.load_data(excel_file=excel_path)
 HOSPITALS = data_loader.create_hospitals()
 
 @app.post("/recommendation/")

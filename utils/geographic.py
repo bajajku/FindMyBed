@@ -4,8 +4,16 @@ from geopy.distance import distance as geopy_distance
 import pandas as pd
 from postalcodes_ca import postal_codes, fsa_codes
 
-from config import EXCEL_PATH
 from utils.data_loader import DataLoader
+
+import yaml
+
+# Load the configuration from the YAML file.
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+
+# Access the configuration values.
+excel_path = config['EXCEL_PATH']
 
 def calculate_distance(coord1: Tuple[float, float], coord2: Tuple[float, float]) -> float:
     """
@@ -106,7 +114,7 @@ def get_hospital_coord(hospital_name: str)-> Tuple[float, float]:
         Tuple[float, float]: The latitude and longitude of the hospital.
     """
     data_loader = DataLoader()
-    data_loader.load_data(excel_file=EXCEL_PATH)
+    data_loader.load_data(excel_file=excel_path)
     HOSPITALS = data_loader.create_hospitals()
 
     for hospital in HOSPITALS:

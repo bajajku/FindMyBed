@@ -2,9 +2,6 @@
 from typing import List, Tuple, Dict, Any
 from models.patient import Patient
 from utils.constants import *
-from utils.geographic import calculate_distance
-
-
 import yaml
 
 # Load YAML file
@@ -210,37 +207,24 @@ class Hospital:
         # Return summary
         return f"{total_occupied}/{total_capacity} Occupied ", f"{percentage:.2f} %"
 
+    # TODO: This method should be improved to handle different bed types
     def admit_patient(self, patient: Patient) -> bool:
         """
-        Handles the admission of a patient to the hospital.
+        Admits a patient to an appropriate bed if available.
 
         Args:
-            patient (Patient): The patient seeking admission.
+            patient (Patient): The Patient instance.
 
         Returns:
-            bool: True if the patient was successfully admitted, False otherwise.
+            bool: Boolean indicating if the patient was successfully admitted.
         """
-        # Check if the hospital can admit the patient
-        if not self.can_admit_patient(patient):
-            return False
+        bed_index = 0 if patient.bedType == "Intensive" else 1
+        if self.available_beds[bed_index] > 0:
+            self.available_beds[bed_index] -= 1
+            self.patients[patient.bedType].append(patient)
+            patient.assignedHospital = self.name
 
-        # Determine the appropriate bed type based on the patient's attributes
-        if patient.patientType == "Maternal":
-            if not patient.del24HrPlus:
-                patient.bedType = "BirthCenter"  # Assign bed type
-            else:
-                patient.bedType = "Antepartum"  # Assign different bed type
-        elif patient.patientType == "Neonatal":
-            # Bed type should already be assigned in this case
-            pass
-        else:
-            return False  # Unsupported patient type
-
-        # Add patient to the hospital's records
-        bed_index = self.BEDTYPE_INDEX[patient.bedType]
-        self.patients[patient.bedType].append(patient)
-        self.available_beds[bed_index] -= 1
-        patient.assignedHospital = self.name
-        patient.distanceToHospital = calculate_distance(self.geolocation, patient.gpsPos)
-
-        return True
+            from utils.geographic import calculate_distance
+            patient.distanceToHospital = calculate_distance(self.geolocation, patient.gpsPos)
+            return True
+        return False

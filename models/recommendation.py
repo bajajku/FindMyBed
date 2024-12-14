@@ -205,7 +205,7 @@ class HospitalRecommendation:
             
         # For simulation compatibility, try to assign to first recommended hospital
         self.selected_hospital = recommended_hospitals[0]
-        success = self.selected_hospital.admit_patient(self.patient)
+        success = admit_patient(self.selected_hospital, self.patient)
         
         if success:
             self.selected_hospital.assigned_patients += 1

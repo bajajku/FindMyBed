@@ -94,8 +94,13 @@ class HospitalRecommendation:
         has_condition2_services = any(service in self.patient.specialNeeds for service in condition2_services)
         has_condition3_services = any(service in self.patient.specialNeeds for service in condition3_services)
 
+
+        # TODO: Fix this. This is a temporary fix to avoid the error.
+        '''For now I have added hasattr check for postalCode, as patient doesn't have postalCode attribute.
+        so this is just a temporary check to avoid the error. This will be updated once the patient class is updated.
+        '''
         # Condition 1: Indigenous patients
-        if self.patient.postalCode =="J0M":
+        if hasattr(self.patient, "postalCode") and self.patient.postalCode == "J0M":
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name == "CUSM"
             ]

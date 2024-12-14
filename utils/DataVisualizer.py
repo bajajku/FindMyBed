@@ -66,6 +66,7 @@ class DataVisualizer:
                 - DataFrame summarizing hospital data.
                 - Aggregated DataFrame for intensive patients.
                 - Aggregated DataFrame for intermediate patients.
+                - Metrics DataFrame summarizing patient assignment metrics.
         """
         # Rename columns for readability
         patients_df = patients_df.rename(columns={
@@ -238,9 +239,39 @@ class DataVisualizer:
                 "Average Patient Distance": avg_distance,
                 "Patient Distance Std Dev": std_distance
             })
+            
         # Convert aggregated list to DataFrame
         aggregated_intermediate_patients_table = pd.DataFrame(postal_agg_intermediate)
-        return intensive_patients_table, intermediate_patients_table, hospitals_table, aggregated_intensive_patients_table, aggregated_intermediate_patients_table
+        # Initialize counters for metrics
+        better_occupancy_count = 0  # Count of patients who had a better option for occupancy rate
+        better_distance_count = 0   # Count of patients who had a better option for distance
+        better_both_count = 0       # Count of patients who had a better option for both
+        # Loop through each row in the DataFrame to calculate the metrics
+        for _, row in patients_df.iterrows():
+            # Check if the patient was NOT assigned to the hospital with the best occupancy rate
+            if not row["is it assigned to the best occupancy rate hospital"]:
+                better_occupancy_count += 1
+            # Check if the patient was NOT assigned to the nearest hospital
+            if not row["is it assigned to the nearest hospital"]:
+                better_distance_count += 1
+            # Check if the patient had a better option for both occupancy rate and distance
+            if (not row["is it assigned to the best occupancy rate hospital"] and
+                    not row["is it assigned to the nearest hospital"]):
+                better_both_count += 1
+        # Create a DataFrame to store the metrics
+        metrics_table = pd.DataFrame({
+            "Metric": [
+                "Better Option for Occupancy Rate",  # Metric description
+                "Better Option for Distance",
+                "Better Option for Both"
+            ],
+            "Number of Patients": [
+                better_occupancy_count,  # Corresponding count for each metric
+                better_distance_count,
+                better_both_count
+            ]
+        })
+        return intensive_patients_table, intermediate_patients_table, hospitals_table, aggregated_intensive_patients_table, aggregated_intermediate_patients_table, metrics_table
 
 
 

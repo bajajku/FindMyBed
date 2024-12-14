@@ -381,7 +381,6 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
     recommendation_system.run(patient)
     if patient.assignedHospital:
         arrivedDischarged[f"{patient.assignedHospital}"][0] += 1
-        recommendation_system.find_nearest_hospital()
         for hospital in hospitals:
             if hospital.name == patient.nearestHospital:
                 nearest_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
@@ -399,5 +398,10 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
             "Assigned Distance": assigned_distance,
             "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital,
             "Condition" : patient.condition,
-            "Services" : patient.specialNeeds
+            "Services" : patient.specialNeeds,
+            "is it assigned to the best occupancy rate hospital": patient.bestOccupancyHospital == patient.assignedHospital,
+            "is it assigned to the best option (both occupancy and distance)": (
+                patient.nearestHospital == patient.assignedHospital and
+                patient.bestOccupancyHospital == patient.assignedHospital
+            )
         })

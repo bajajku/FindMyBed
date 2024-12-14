@@ -142,19 +142,30 @@ class HospitalRecommendation:
         print(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
 
 
-    def find_nearest_hospital(self) -> None:
+    def find_nearest_and_best_occupancy_hospitals(self) -> None:
         """
         Find the nearest hospital to the patient and update the patient's nearest hospital attribute.
         """
-        hospitals = [hospital for hospital in self.hospitals]
-        hospitals.sort(
+        if not self.available_hospitals or not self.patient:
+            print("No available hospitals to determine the nearest or best occupancy hospital.")
+            return
+        # Sort available hospitals by distance
+        self.available_hospitals.sort(
             key=lambda hospital: calculate_distance(
                 hospital.geolocation,
                 self.patient.gpsPos
             )
         )
-        nearest_hospital = hospitals[0]
+        # Set the nearest hospital
+        nearest_hospital = self.available_hospitals[0]
         self.patient.nearestHospital = nearest_hospital.name
+
+        # Find the hospital with the best (lowest) occupancy rate
+        best_occupancy_hospital = min(
+            self.available_hospitals,
+            key=lambda hospital: hospital.get_occupancy_rate(self.patient.bedType)
+        )
+        self.patient.bestOccupancyHospital = best_occupancy_hospital.name
 
     def discharge_all_patients(self, arrived_discharged: dict) -> None:
         """
@@ -327,10 +338,10 @@ class HospitalRecommendation:
         """
         self.patient = patient
         print("\nProcessing new patient...\n")
-        self.find_nearest_hospital()
         # Execute state machine transitions
         self.process_input()
         self.check_conditions()
+        self.find_nearest_and_best_occupancy_hospitals()
         self.determine_service()
         self.check_bed_type()
         self.check_geographic_distance()

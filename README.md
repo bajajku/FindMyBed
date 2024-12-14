@@ -6,9 +6,8 @@
     - [**For Linux/macOS:**](#for-linuxmacos)
     - [**For Windows:**](#for-windows)
   - [**Step 4: Install Required Libraries**](#step-4-install-required-libraries)
-  - [**Step 5: Build and Run the Simulator**](#step-5-build-and-run-the-simulator)
-    - [**To Build and Run the Application:**](#to-build-and-run-the-application)
-
+  - [**Step 5: Build and Run Commands**](#step-5-build-and-run-commands)
+  - 
 # **Setup Guide: Build and Run-Time Environment**
 
 This document provides detailed instructions for setting up the build and run-time environment for the project.
@@ -74,24 +73,17 @@ pip install -r requirements.txt
 
 ---
 
-## **Step 5: Build and Run the Simulator**
+## **Step 5: Build and Run Commands*
 
-### **To Build and Run the Application:**
-
-1. Ensure the virtual environment is active:
-   - **For Linux/macOS:**
-     ```bash
-     source env/bin/activate
-     ```
-   - **For Windows:**
-     ```bash
-     env\Scripts\activate
-     ```
-
-2. Run the application:
+### **For Simulator:**
    ```bash
    python main.py
    ```
+### **For API:**
+   ```bash
+   uvicorn api:app --reload
+   ```
+
 
 ---
 

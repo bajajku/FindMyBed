@@ -7,7 +7,6 @@
     - [**For Windows:**](#for-windows)
   - [**Step 4: Install Required Libraries**](#step-4-install-required-libraries)
   - [**Step 5: Build and Run Commands**](#step-5-build-and-run-commands)
-  - 
 # **Setup Guide: Build and Run-Time Environment**
 
 This document provides detailed instructions for setting up the build and run-time environment for the project.

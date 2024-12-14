@@ -7,7 +7,6 @@ from models.hospital import Hospital
 from utils.constants import *
 from utils.geographic import calculate_distance
 import logging
-from utils.admission import admit_patient
 
 class HospitalRecommendation:
     """
@@ -205,7 +204,7 @@ class HospitalRecommendation:
             
         # For simulation compatibility, try to assign to first recommended hospital
         self.selected_hospital = recommended_hospitals[0]
-        success = admit_patient(self.selected_hospital, self.patient)
+        success = self.selected_hospital.admit_patient(self.patient)
         
         if success:
             self.selected_hospital.assigned_patients += 1

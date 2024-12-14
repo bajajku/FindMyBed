@@ -70,6 +70,8 @@ class Hospital:
         self.antepartum_capacity = antepartum_capacity or 50
         self.postpartum_capacity = postpartum_capacity or 50
 
+        self.BEDTYPE_INDEX = {"Intensive" : 0, "Intermediate" : 1, "BirthCenter" : 2, "Antepartum" : 3, "Postpartum" : 4}
+
     def get_hospital_services(self) -> List[str]:
         """
         Retrieves all services offered by the hospital.
@@ -208,20 +210,34 @@ class Hospital:
 
     def admit_patient(self, patient: Patient) -> bool:
         """
-        Admits a patient to an appropriate bed if available.
+        Handles the admission of a patient to the hospital.
 
         Args:
-            patient (Patient): The Patient instance.
+            patient (Patient): The patient seeking admission.
 
         Returns:
-            bool: Boolean indicating if the patient was successfully admitted.
+            bool: True if the patient was successfully admitted, False otherwise.
         """
-        bed_index = 0 if patient.bedType == "Intensive" else 1
-        if self.available_beds[bed_index] > 0:
-            self.available_beds[bed_index] -= 1
-            self.patients[patient.bedType].append(patient)
-            patient.assignedHospital = self.name
-            from utils.geographic import calculate_distance
-            patient.distanceToHospital = calculate_distance(self.geolocation, patient.gpsPos)
-            return True
-        return False
+        # Check if the hospital can admit the patient
+        if not self.can_admit_patient(patient):
+            return False
+
+        # Determine the appropriate bed type based on the patient's attributes
+        if patient.patientType == "Maternal":
+            if not patient.del24HrPlus:
+                patient.bedType = "BirthCenter"  # Assign bed type
+            else:
+                patient.bedType = "Antepartum"  # Assign different bed type
+        elif patient.patientType == "Neonatal":
+            # Bed type should already be assigned in this case
+            pass
+        else:
+            return False  # Unsupported patient type
+
+        # Add patient to the hospital's records
+        bed_index = self.BEDTYPE_INDEX[patient.bedType]
+        self.patients[patient.bedType].append(patient)
+        self.available_beds[bed_index] -= 1
+        patient.assignedHospital = self.name
+
+        return True

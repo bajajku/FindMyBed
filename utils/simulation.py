@@ -1,12 +1,11 @@
 import random
 import math
-from time import sleep
 import numpy as np
 import pygame
 
 from models.PausePlayButton import PausePlayButton
 from models.hospital import Hospital
-from models.patient import Patient, SimulatedPatient
+from models.patient import SimulatedPatient
 from models.recommendation import HospitalRecommendation
 from utils.constants import *
 from utils.data_loader import DataLoader
@@ -16,32 +15,25 @@ from utils.animation import initialize_screen, draw_hospitals, draw_patient, ani
     draw_colormap_legend
 import pandas as pd
 from datetime import timedelta
-from utils.admission import admit_patient
+from concurrent.futures import ThreadPoolExecutor
 
-import yaml
-
-# Load the configuration from the YAML file.
-with open("config.yaml", "r") as file:
-    config = yaml.safe_load(file)
-
-# Access the configuration values.
-excel_path = config['EXCEL_PATH']
+DATA_LOADER = None
 
 # concerned with simulation
 def discharge_all_patients(hospitals: list[Hospital], arrived_discharged: dict) -> None:
     """
-    Discharge patients from all hospitals. 
+    Discharge patients from all hospitals at a given arrival time.
     
     Args:
-        hospitals (list[Hospital]): List of Hospital objects
-        arrived_discharged: Dictionary tracking patient movements
+        arrival_time: Time of day for patient discharge
+        arrived_discharged: Dictionary tracking patient movement
     """
+    # time_index = ARRIVAL_TIMES.index(arrival_time)
     print("Discharging patients from all hospitals...")
     
     for hospital in hospitals:
         discharge_patients(hospital, arrived_discharged)
 
-from concurrent.futures import ThreadPoolExecutor
 
 def discharge_all_patients_parallel(hospitals, arrived_discharged):
     with ThreadPoolExecutor() as executor:
@@ -50,15 +42,7 @@ def discharge_all_patients_parallel(hospitals, arrived_discharged):
 
 
 def discharge_patients(hospital, arrivedDischarged):
-    """ 
-    Discharges patients from a specific hospital, updating available bed counts and tracking the total number of discharges.
-    Args:
-        hospital (Hospital): The hospital object where discharges will be processed.
-        arrived_discharged (dict): Dictionary tracking patient movement, including discharges.
-
-    Returns:
-        int: Total number of patients discharged from the hospital.
-    """
+    """ Discharge patients based on the discharge rate at the patient's arrival time """
     # Ensure the discharge rates are rounded to integers
     num_discharged_intensive = int(round(np.random.poisson(hospital.get_discharge_rate("Intensive"))))
     num_discharged_intermediate = int(round(np.random.poisson(hospital.get_discharge_rate("Intermediate"))))
@@ -91,16 +75,6 @@ def discharge_patients(hospital, arrivedDischarged):
     return discharged_count
 
 def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]]:
-    """
-    Prepopulate a hospital with simulated patients based on its occupancy.
-
-    Args:
-        hospital (Hospital) : The hospital object to be populated with patients. 
-    
-    Returns:
-        dict[str, list[SimulatedPatient]]: Updated dictionary of patietns assigned to the hospital. 
-    
-    """
     occupied_beds_intensive = round(hospital.total_capacity_intensive - hospital.available_beds[0])
     occupied_beds_intermediate = round(hospital.total_capacity_intermediate - hospital.available_beds[1])
 
@@ -132,28 +106,22 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
             hospital.patients[patient.bedType].append(patient)
     return hospital.patients
 
-
+def load_data_loader(excel_path):
+    if DATA_LOADER is None:
+        DATA_LOADER = DataLoader()
+        DATA_LOADER.load_data(excel_file=excel_path)
+    return DATA_LOADER
 
 screen, clock, map_surface, map_width, map_height = initialize_screen()
 pause_play_button = PausePlayButton(1100, 10)
-data_loader = DataLoader()
-data_loader.load_data(excel_file=excel_path)
-HOSPITALS = data_loader.create_hospitals()
 map_bounds = [44.0, 63.0, -79.0, -57.0]
 
 def simulate_hospital_system(num_days, excel , excel_newdata):
-    """
-    Simulate the hospital system for a specified number of days.
-
-    Args:
-        num_days (int): Number of days to simulate.
-        excel (str): Path to the Excel file containing hospital data
-        excel_newdata (str): Path to the new Excel data used for birth rates by Forward Sortation Area (FSA).
-
-    Returns:
-        list[dict]: Results of the simulation containing daily statistics.
-    """
     global total_patients # Declare total_patients as global within the function
+
+    data_loader = DataLoader()
+    data_loader.load_data(excel_file=excel)
+    HOSPITALS = data_loader.create_hospitals()
 
     births_by_fsa = data_loader.calculate_birth_rates_by_fsa(excel_file=excel_newdata)
     recommendation_system = HospitalRecommendation(HOSPITALS)
@@ -223,7 +191,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
                 # Create and simulate each patient
                 for i in range(num_patients):
                     #create patient
-                    patient = create_patient(hour, births_by_fsa)
+                    patient = create_patient(hour, births_by_fsa, data_loader)
                     patients.append(patient)  # Add patient to the list
                     # Run the patient through the recommendation system
                     print(f"\nProcessing Patient {i + 1}")
@@ -289,18 +257,8 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
     patients_df.to_excel("output/patients.xlsx", index=False)
     return results
 
-# Record daily statistics for simulation
-def record_daily_statistics(day, current_date, hospitals, arrivedDischarged, results):
-    """
-    Record daily statistics for the simulation.
 
-    Args:
-        day (int): Current day of the simulation.
-        current_date (timedelta): Current date.
-        hospitals (list[Hospital]): List of hospital objects.
-        arrived_discharged (dict): Dictionary tracking patient movements.
-        results (list[dict]): List to store results.
-    """
+def record_daily_statistics(day, current_date, hospitals, arrivedDischarged, results):
     for hospital in hospitals:
         results.append({
             "Day": day + 1,
@@ -388,17 +346,7 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
     return all_patients_arrived
 
 # Patient Processing Logic
-def create_patient(hour, births_by_fsa):
-    """
-    Create a simulated patient with randomized attributes.
-
-    Args:
-        hour (int): The hour in the simulation when the patient is created (used as the arrival time).
-        births_by_fsa (dict): A dictionary mapping forward sortation area (FSA) codes to birth data.
-
-    Returns:
-        SimulatedPatient: Newly created patient which has all the relevant attributes.
-    """
+def create_patient(hour, births_by_fsa, data_loader):
     patient_type = random.choice(PATIENT_TYPE)
     postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
     bed_type = data_loader.assign_bed_type_poisson()
@@ -428,17 +376,6 @@ def create_patient(hour, births_by_fsa):
     )
 
 def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
-    """
-        Process a single patient through the recommendation system and update relevant data.
-
-        Args:
-            patient (SimulatedPatient): The patient to process.
-            recommendation_system (HospitalRecommendation): The system that determines the patient's assigned hospital based on their needs and other criteria.
-            hospitals (list[Hospital]): List of hospital objects.
-            patients_data (list[dict]): List to store patient data.
-            current_date (timedelta): Current date.
-            arrived_discharged (dict): Dictionary tracking patient movements.
-    """
     recommendation_system.run(patient)
     if patient.assignedHospital:
         arrivedDischarged[f"{patient.assignedHospital}"][0] += 1

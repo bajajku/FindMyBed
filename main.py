@@ -3,7 +3,6 @@ from utils.helpers import print_hospital_data
 import pandas as pd
 from utils.DataVisualizer import *
 from utils.ReportGenerator import *
-
 import yaml
 
 # Load the configuration from the YAML file.

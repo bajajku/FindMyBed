@@ -15,6 +15,7 @@ class HospitalRecommendation:
     
     states = [
         'input',
+        'condition_check',
         'discharge_patients',
         'service_determination',
         'bed_type_check',
@@ -47,9 +48,18 @@ class HospitalRecommendation:
         self.machine.add_transition(
             trigger='process_input',
             source='input',
+            dest='condition_check',
+            after='apply_restrictions'
+        )
+
+        # Define transitions
+        self.machine.add_transition(
+            trigger='check_conditions',
+            source='condition_check',
             dest='service_determination',
             after=['home_hospital_check', 'determine_services']
         )
+
         self.machine.add_transition(
             trigger='determine_service',
             source='service_determination',
@@ -73,6 +83,59 @@ class HospitalRecommendation:
             source='hospital_recommendation',
             dest='input'
         )
+    def apply_restrictions(self) -> None:
+        """Filter hospitals based on service availability and occupancy rate."""
+        condition2_services = ["Neurology", "Neurosurgery", "Cardiology", "Cardiac Surgery"]
+        condition3_services = [ "Genetic","Gastroenterology","Plastic Surgery","Respirology","Nephrology","ECMO","ENT (ear-nose-throat)","Urology","Ophthalmology",
+"Other"]
+
+        # Helper checks
+        is_prematurity_ga_lt_26 = "Prematurity (GA<26 weeks)" in self.patient.specialNeeds
+        has_condition2_services = any(service in self.patient.specialNeeds for service in condition2_services)
+        has_condition3_services = any(service in self.patient.specialNeeds for service in condition3_services)
+
+        # Condition 1: Indigenous patients
+        if self.patient.postalCode =="J0M":
+            self.available_hospitals = [
+                hospital for hospital in self.hospitals if hospital.name == "CUSM"
+            ]
+            self.patient.condition = 1
+
+        # Condition 2: Major anomaly AND cardiac OR neuro
+        elif has_condition2_services:
+            valid_hospitals = ["CUSM", "CHU-SJ", "CHUQ"]
+            self.available_hospitals = [
+                hospital for hospital in self.hospitals if hospital.name in valid_hospitals
+            ]
+            self.patient.condition = 2
+
+        # Condition 3: Major anomaly BUT not condition 2 or prematurity
+#        elif not has_condition2_services and not is_prematurity_ga_lt_26:
+        elif has_condition3_services:
+            valid_hospitals = ["CUSM", "CHU-SJ", "CHUQ", "CHUS"]
+            self.available_hospitals = [
+                hospital for hospital in self.hospitals if hospital.name in valid_hospitals
+            ]
+            self.patient.condition = 3
+
+        # Condition 4: Prematurity (GA<26 weeks)
+        elif is_prematurity_ga_lt_26:
+            valid_hospitals = ["CUSM", "CHU-SJ", "HGJ", "CHUQ", "CHUS"]
+            self.available_hospitals = [
+                hospital for hospital in self.hospitals if hospital.name in valid_hospitals
+            ]
+            self.patient.condition = 4
+
+        # Condition 5
+        else:
+            valid_hospitals = ["CUSM", "CHU-SJ", "HGJ", "CHUQ", "CHUS", "HMR"]
+            self.available_hospitals = [
+                hospital for hospital in self.hospitals if hospital.name in valid_hospitals
+            ]
+            self.patient.condition = 5
+
+        print(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
+
 
     def find_nearest_hospital(self) -> None:
         """
@@ -119,7 +182,7 @@ class HospitalRecommendation:
             return
 
         self.available_hospitals = [
-            hospital for hospital in self.hospitals
+            hospital for hospital in self.available_hospitals 
             if hospital.can_admit_patient(self.patient) and 
                all(need in hospital.get_hospital_services() for need in self.patient.specialNeedType)
         ]
@@ -194,9 +257,7 @@ class HospitalRecommendation:
         """
         if not self.patient:
             return
-
         recommended_hospitals = self.get_top_hospitals()
-        
         if not recommended_hospitals:
             self.queue.append(self.patient)
             logging.warning("No suitable hospitals found. Patient added to queue.")
@@ -234,10 +295,11 @@ class HospitalRecommendation:
         
         # Perform the recommendation steps up to geographic distance check
         self.process_input()
+        self.check_conditions()
         self.determine_service()
         self.check_bed_type()
         self.check_geographic_distance()
-
+        
         # Get the top hospital recommendations
         recommendations = self.get_top_hospitals()
         self.restart()
@@ -263,6 +325,7 @@ class HospitalRecommendation:
         self.find_nearest_hospital()
         # Execute state machine transitions
         self.process_input()
+        self.check_conditions()
         self.determine_service()
         self.check_bed_type()
         self.check_geographic_distance()

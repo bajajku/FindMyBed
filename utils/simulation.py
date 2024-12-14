@@ -348,16 +348,18 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
 # Patient Processing Logic
 def create_patient(hour, births_by_fsa, data_loader):
     patient_type = random.choice(PATIENT_TYPE)
+    # Current transport data has only neonatal patient type so I set the type as "Neonatal" for now 
+    #patient_type ="Neonatal"
     postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
     bed_type = data_loader.assign_bed_type_poisson()
 
     if patient_type == "Maternal":
         # Determine if delivery is within 24 hours
         del24HrPlus = random.choice([True, False])
-        special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 2))
+        special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 1))
     else:
         del24HrPlus = False
-        special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 2))
+        special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 1))
 
     return SimulatedPatient(
         patientType=patient_type,
@@ -396,4 +398,6 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
             "Assigned Hospital": patient.assignedHospital,
             "Assigned Distance": assigned_distance,
             "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital,
+            "Condition" : patient.condition,
+            "Services" : patient.specialNeeds
         })

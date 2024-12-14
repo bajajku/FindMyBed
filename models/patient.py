@@ -67,8 +67,9 @@ class SimulatedPatient:
     assignedHospital: str = ""
     homeHospital: Optional[str] = None
     distanceToHospital : int = 0
-    is_indigenous: bool = False
     nearestHospital :str = ""
+    # Adding a new attribute to manage hospital restrictions for generating patient tables.
+    condition: int = 0 
 
     def get_arrival_time_index(self) -> int:
         return ARRIVAL_TIMES.index(self.arrival_time)

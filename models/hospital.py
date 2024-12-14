@@ -1,7 +1,9 @@
 
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Tuple, Dict, Any
 from models.patient import Patient
 from utils.constants import *
+from utils.geographic import calculate_distance
+
 
 import yaml
 
@@ -239,5 +241,6 @@ class Hospital:
         self.patients[patient.bedType].append(patient)
         self.available_beds[bed_index] -= 1
         patient.assignedHospital = self.name
+        patient.distanceToHospital = calculate_distance(self.geolocation, patient.gpsPos)
 
         return True

@@ -9,6 +9,7 @@
     - [**For Simulator:**](#for-simulator)
     - [**For API:**](#for-api)
 - [**Libraries Used**](#libraries-used)
+  - [| **uvicorn**        | 0.32.1    | To serve FastAPI applications. |](#-uvicorn---------0321-----to-serve-fastapi-applications-)
 
 
 # **Setup Guide: Build and Run-Time Environment**
@@ -109,5 +110,5 @@ Below is a list of libraries used in this project, along with their versions and
 | **tabulate**       | 0.9.0     | To display hospital capacity and patient assignment summaries in a tabular format.              |
 | **transitions**    | 0.9.2     | To manage state transitions in hospital admission.
 | **openpyxl**       | 3.1.5     | To read and write Excel files for exporting and analyzing hospital bed and patient statistics.   |
-
+| **uvicorn**        | 0.32.1    | To serve FastAPI applications. |
 ---

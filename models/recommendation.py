@@ -138,7 +138,7 @@ class HospitalRecommendation:
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
             ]
             self.patient.condition = 5
-
+        self.find_nearest_and_best_occupancy_hospitals()
         print(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
 
 
@@ -146,8 +146,8 @@ class HospitalRecommendation:
         """
         Find the nearest hospital to the patient and update the patient's nearest hospital attribute.
         """
-        if not self.available_hospitals or not self.patient:
-            print("No available hospitals to determine the nearest or best occupancy hospital.")
+        if not self.available_hospitals:
+            logging.warning("No available hospitals to determine the nearest or best occupancy hospital.")
             return
         # Sort available hospitals by distance
         self.available_hospitals.sort(
@@ -341,7 +341,7 @@ class HospitalRecommendation:
         # Execute state machine transitions
         self.process_input()
         self.check_conditions()
-        self.find_nearest_and_best_occupancy_hospitals()
+        #self.find_nearest_and_best_occupancy_hospitals()
         self.determine_service()
         self.check_bed_type()
         self.check_geographic_distance()

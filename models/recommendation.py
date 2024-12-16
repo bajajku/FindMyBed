@@ -92,9 +92,8 @@ class HospitalRecommendation:
         )
     def apply_restrictions(self) -> None:
         """Filter hospitals based on service availability and occupancy rate."""
-        condition2_services = ["Neurology", "Neurosurgery", "Cardiology", "Cardiac Surgery"]
-        condition3_services = [ "Genetic","Gastroenterology","Plastic Surgery","Respirology","Nephrology","ECMO","ENT (ear-nose-throat)","Urology","Ophthalmology",
-"Other"]
+        condition2_services = ["Neurology", "Cardiology"]
+        condition3_services = [ "General Surgery", "Genetic","Gastroenterology","Plastic Surgery","Respirology"]
 
         # Helper checks
         is_prematurity_ga_lt_26 = "Prematurity (GA<26 weeks)" in self.patient.specialNeeds
@@ -348,7 +347,6 @@ class HospitalRecommendation:
         # Execute state machine transitions
         self.process_input()
         self.check_conditions()
-        #self.find_nearest_and_best_occupancy_hospitals()
         self.determine_service()
         self.check_bed_type()
         self.check_geographic_distance()

@@ -14,14 +14,27 @@ activate P
 P --> HR: return patient type, bed type, special needs
 deactivate P
 
+== Restriction Application Phase ==
+HR -> HR: apply_restrictions()
+activate HR
+note right
+    Apply restrictions based on:
+    1. Indigenous patients (postalCode == J0M)
+    2. Condition 2: Major anomaly + Cardiac/Neuro
+    3. Condition 3: Major anomaly, not Condition 2 or Prematurity
+    4. Condition 4: Prematurity (GA < 26 weeks)
+    5. Default: Valid hospitals
+    Filter hospitals accordingly.
+end note
+deactivate HR
+
 == Service Determination Phase ==
 HR -> HR: determine_services()
 activate HR
 note right
-    1. Check patient type (Maternal/Neonatal)
-    2. Verify special needs requirements
-    3. Filter hospitals by service availability
-    4. Check occupancy thresholds
+    1. Verify service availability for patient's needs
+    2. Filter hospitals by services
+    3. Check hospital occupancy thresholds
 end note
 deactivate HR
 

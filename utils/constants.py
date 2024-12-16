@@ -15,8 +15,7 @@ MATERNAL_SPECIAL_NEEDS: List[str] = [
     "General surgery",
     "Endocrinology",
     "Hematology",
-    "Neuromuscular problems",
-    "Other (explain)"
+    "Neuromuscular problems"
 ]
 
 NEONATAL_SPECIAL_NEEDS: List[str] = [
@@ -38,8 +37,7 @@ NEONATAL_SPECIAL_NEEDS: List[str] = [
     "ENT (ear-nose-throat)",
     "Urology",
     "Infectious diseases",
-    "Ophthalmology",
-    "Other (explain)"
+    "Ophthalmology"
 ]
 
 # Bed Types

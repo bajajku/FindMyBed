@@ -361,7 +361,7 @@ def create_patient(hour, births_by_fsa, data_loader):
         del24HrPlus = False
         special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 1))
 
-    return SimulatedPatient(
+    patient = SimulatedPatient(
         patientType=patient_type,
         gpsPos=gps_pos,
         postalCode=postal_code,
@@ -376,12 +376,28 @@ def create_patient(hour, births_by_fsa, data_loader):
         arrived_at_hospital=False,
         queue_position=0
     )
+    # Log patient attributes in a readable format
+    with open("output/patients_log.txt", "a") as file:
+        file.write(f"Patient Created:\n")
+        file.write(f"  Postal Code: {postal_code}\n")
+        file.write(f"  Bed Type: {bed_type}\n")
+        file.write(f"  Special Needs: {', '.join(special_needs)}\n")
+        file.write(f"  Arrival Time: {hour}:00\n")
+        file.write(f"  GPS Position: {gps_pos}\n")
+        file.write(f"  Patient Type: {patient_type}\n")
+        file.write(f"  Delivery within 24 Hours: {del24HrPlus}\n")
+        file.write(f"  Transport Need Count: {patient.transportNeedCnt}\n")
+        file.write(f"  Animation GPS Position: {patient.aniGpsPos}\n")
+        file.write(f"  Discharged: {patient.discharged}\n")
+        file.write(f"  Arrived at Hospital: {patient.arrived_at_hospital}\n")
+        file.write(f"  Queue Position: {patient.queue_position}\n")
+        file.write("\n")
+    return patient
 
 def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
     recommendation_system.run(patient)
     if patient.assignedHospital:
         arrivedDischarged[f"{patient.assignedHospital}"][0] += 1
-        recommendation_system.find_nearest_hospital()
         for hospital in hospitals:
             if hospital.name == patient.nearestHospital:
                 nearest_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
@@ -399,5 +415,10 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
             "Assigned Distance": assigned_distance,
             "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital,
             "Condition" : patient.condition,
-            "Services" : patient.specialNeeds
+            "Services" : patient.specialNeeds,
+            "is it assigned to the best occupancy rate hospital": patient.bestOccupancyHospital == patient.assignedHospital,
+            "is it assigned to the best option (both occupancy and distance)": (
+                patient.nearestHospital == patient.assignedHospital and
+                patient.bestOccupancyHospital == patient.assignedHospital
+            )
         })

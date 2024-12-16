@@ -67,7 +67,9 @@ class SimulatedPatient:
     assignedHospital: str = ""
     homeHospital: Optional[str] = None
     distanceToHospital : int = 0
+    # To check what's the best option in terms of distance and occupancy rate 
     nearestHospital :str = ""
+    bestOccupancyHospital: str = ""
     # Adding a new attribute to manage hospital restrictions for generating patient tables.
     condition: int = 0 
 

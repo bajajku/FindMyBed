@@ -8,6 +8,13 @@ from utils.constants import *
 from utils.geographic import calculate_distance
 import logging
 
+logging.basicConfig(
+    filename='hospital_recommendation.log',
+    filemode='a',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
 class HospitalRecommendation:
     """
     A state machine for hospital recommendations based on patient needs and hospital availability.
@@ -70,7 +77,7 @@ class HospitalRecommendation:
             trigger='check_bed_type',
             source='bed_type_check',
             dest='geographic_check',
-            after='filter_by_distance'
+            after='filter_by_distance_and_occupancy_rate'
         )
         self.machine.add_transition(
             trigger='check_geographic_distance',
@@ -85,9 +92,8 @@ class HospitalRecommendation:
         )
     def apply_restrictions(self) -> None:
         """Filter hospitals based on service availability and occupancy rate."""
-        condition2_services = ["Neurology", "Neurosurgery", "Cardiology", "Cardiac Surgery"]
-        condition3_services = [ "Genetic","Gastroenterology","Plastic Surgery","Respirology","Nephrology","ECMO","ENT (ear-nose-throat)","Urology","Ophthalmology",
-"Other"]
+        condition2_services = ["Neurology", "Cardiology"]
+        condition3_services = [ "General Surgery", "Genetic","Gastroenterology","Plastic Surgery","Respirology"]
 
         # Helper checks
         is_prematurity_ga_lt_26 = "Prematurity (GA<26 weeks)" in self.patient.specialNeeds
@@ -138,23 +144,33 @@ class HospitalRecommendation:
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
             ]
             self.patient.condition = 5
-
         print(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
 
 
-    def find_nearest_hospital(self) -> None:
+    def find_nearest_and_best_occupancy_hospitals(self) -> None:
         """
         Find the nearest hospital to the patient and update the patient's nearest hospital attribute.
         """
-        hospitals = [hospital for hospital in self.hospitals]
-        hospitals.sort(
+        if not self.available_hospitals:
+            logging.warning("No available hospitals to determine the nearest or best occupancy hospital.")
+            return
+        # Sort available hospitals by distance
+        self.available_hospitals.sort(
             key=lambda hospital: calculate_distance(
                 hospital.geolocation,
                 self.patient.gpsPos
             )
         )
-        nearest_hospital = hospitals[0]
+        # Set the nearest hospital
+        nearest_hospital = self.available_hospitals[0]
         self.patient.nearestHospital = nearest_hospital.name
+
+        # Find the hospital with the best (lowest) occupancy rate
+        best_occupancy_hospital = min(
+            self.available_hospitals,
+            key=lambda hospital: hospital.get_occupancy_rate(self.patient.bedType)
+        )
+        self.patient.bestOccupancyHospital = best_occupancy_hospital.name
 
     def discharge_all_patients(self, arrived_discharged: dict) -> None:
         """
@@ -188,10 +204,9 @@ class HospitalRecommendation:
 
         self.available_hospitals = [
             hospital for hospital in self.available_hospitals 
-            if hospital.can_admit_patient(self.patient) and 
-               all(need in hospital.get_hospital_services() for need in self.patient.specialNeedType)
+            if all(need in hospital.get_hospital_services() for need in self.patient.specialNeedType)
         ]
-
+        self.find_nearest_and_best_occupancy_hospitals()
         print(f"Filtered hospitals based on services and occupancy: {[h.name for h in self.available_hospitals]}")
 
     def filter_bed_type(self) -> None:
@@ -208,7 +223,7 @@ class HospitalRecommendation:
             if hospital.get_capacity(self.patient.bedType) > 1
         ]
 
-    def filter_by_distance(self) -> None:
+    def filter_by_distance_and_occupancy_rate(self) -> None:
         """
         Sort hospitals by distance to patient location.
         """
@@ -216,7 +231,11 @@ class HospitalRecommendation:
             return
 
         print(f"Sorting hospitals by distance from patient at {self.patient.gpsPos}")
-        
+
+        #Sorting patients by occupancy rates, removing hospitals with higher occupancy than threshold value
+        self.available_hospitals = [hospital for hospital in self.available_hospitals
+                                    if hospital.can_admit_patient(self.patient) ]
+        #Then sorting hospitals by distance
         self.available_hospitals.sort(
             key=lambda hospital: calculate_distance(
                 hospital.geolocation,
@@ -279,7 +298,6 @@ class HospitalRecommendation:
             self.queue.append(self.patient)
             logging.warning("Admission failed. Patient added to queue.")
 
-
     '''
     This function is used to get the top hospital recommendations,
     for a given patient without admitting them.
@@ -311,7 +329,6 @@ class HospitalRecommendation:
 
         print(f"Top hospital recommendations: {[h.name for h in recommendations]}")
         return recommendations
-    
     '''
     This function is used to run the complete hospital recommendation process for a patient.
     It Admits the patient to the hospital if a suitable one is found, otherwise queues the patient.
@@ -327,7 +344,6 @@ class HospitalRecommendation:
         """
         self.patient = patient
         print("\nProcessing new patient...\n")
-        self.find_nearest_hospital()
         # Execute state machine transitions
         self.process_input()
         self.check_conditions()

@@ -37,8 +37,7 @@ def main():
     print(f"Report generated: {report_path}")
 
     # Create tables
-    intensive_patients_table, intermediate_patients_table, created_hospital_table, aggregated_intensive_patients_table, aggregated_intermediate_patients_table = visualizer.create_patients_table(patients_df)
-
+    intensive_patients_table, intermediate_patients_table, created_hospital_table, aggregated_intensive_patients_table, aggregated_intermediate_patients_table, metrics_table = visualizer.create_patients_table(patients_df)
     # Save tables to an Excel file with specified sheet names
     with pd.ExcelWriter(table_path) as writer:
         created_hospital_table.to_excel(writer, sheet_name="Hospitals", index=False)
@@ -46,6 +45,8 @@ def main():
         intermediate_patients_table.to_excel(writer, sheet_name="Intermediate Patients", index=False)
         aggregated_intensive_patients_table.to_excel(writer, sheet_name="Agg Intensive Patients", index=False)
         aggregated_intermediate_patients_table.to_excel(writer, sheet_name="Agg Intermediate Patients",
+                                                        index=False)
+        metrics_table.to_excel(writer, sheet_name="Assignment Evaluation",
                                                         index=False)
         print(f"Table generated: {table_path}")
 

@@ -204,9 +204,6 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
                         print(f"  - Intermediate Care: {math.floor(hospital.available_beds[1])}/{hospital.total_capacity_intermediate}")
                         print(f"  - Total Available: {math.floor(hospital.available_beds[0] + hospital.available_beds[1])}")
 
-                    if patient.assignedHospital != "":
-                        arrivedDischarged[patient.assignedHospital][0] += 1
-
                 update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day, current_date, font, map_surface)
                 pause_play_button.draw(screen)
                 # Refresh display
@@ -267,7 +264,9 @@ def record_daily_statistics(day, current_date, hospitals, arrivedDischarged, res
             "Arrived Patients": arrivedDischarged[hospital.name][0],
             "Discharged Patients": arrivedDischarged[hospital.name][1],
             "Intensive Occupancy Rate": arrivedDischarged[hospital.name][2] / 24,
-            "Intermediate Occupancy Rate": arrivedDischarged[hospital.name][3] / 24
+            "Intermediate Occupancy Rate": arrivedDischarged[hospital.name][3] / 24,
+            "Total Occupied" : (hospital.total_capacity_intensive - hospital.available_beds[0]) + (hospital.total_capacity_intermediate - hospital.available_beds[1]),
+            "Total Capacity" : hospital.total_capacity
         })
 
 

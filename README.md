@@ -15,6 +15,7 @@
   - [**Step 6: Build and Run Commands**](#step-6-build-and-run-commands)
     - [**For Simulator:**](#for-simulator)
     - [**For API:**](#for-api)
+    - [**For API unit tests:**](#for-api-unit-tests)
 - [**Libraries Used**](#libraries-used)
 
 

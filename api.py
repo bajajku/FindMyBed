@@ -1,47 +1,43 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Tuple, Literal
 from models.recommendation import HospitalRecommendation
 from models.patient import Patient
 from utils.data_loader import DataLoader
 import yaml
+import os
+
 # Load the configuration from the YAML file.
-with open("config.yaml", "r") as file:
-    config = yaml.safe_load(file)
-
-# Access the configuration values.
-excel_path = config['EXCEL_PATH']
-
 app = FastAPI()
 
-class PatientInput(BaseModel):
-    """
-    Pydantic model for patient input data required for hospital recommendations.
+try:
+    with open("config.yaml", "r") as file:
+        config = yaml.safe_load(file)
+        excel_path = config.get('EXCEL_PATH')
+        if not excel_path:
+            raise ValueError("EXCEL_PATH not found in configuration.")
+except Exception as e:
+    raise RuntimeError(f"Failed to load configuration: {e}")
 
-    Attributes:
-        patientType (str): Type of patient (e.g., 'emergency', 'non-emergency')
-        gpsPos (Tuple[float, float]): Patient's GPS coordinates (latitude, longitude)
-        transportNeedCnt (int): Number of transport units needed
-        specialNeedType (List[str]): Types of special needs required
-        specialNeeds (List[str]): Specific special needs requirements
-        del24HrPlus (Optional[bool]): Whether delivery is needed in 24+ hours
-        bedType (str): Type of bed required (default: "")
-        homeHospital (Optional[str]): Patient's preferred/home hospital
-    """
-    patientType: str
+# Initialize the data loader and hospitals list.
+data_loader = DataLoader()
+try:
+    data_loader.load_data(excel_file=excel_path)
+    HOSPITALS = data_loader.create_hospitals()
+except Exception as e:
+    raise RuntimeError(f"Failed to initialize hospitals: {e}")
+
+# Input model
+class PatientInput(BaseModel):
+    patientType: Literal["Maternal", "Neonatal"]  # Only these values are allowed
     gpsPos: Tuple[float, float]
     transportNeedCnt: int
     specialNeedType: List[str]
     specialNeeds: List[str]
-    # arrival_time: int
     del24HrPlus: Optional[bool] = None
     bedType: str = ""
     homeHospital: Optional[str] = None
 
-# Initialize the recommendation model
-data_loader = DataLoader()
-data_loader.load_data(excel_file=excel_path)
-HOSPITALS = data_loader.create_hospitals()
 
 @app.post("/recommendation/")
 async def recommendation(patient_input: PatientInput):
@@ -49,41 +45,32 @@ async def recommendation(patient_input: PatientInput):
     Generate hospital recommendations based on patient input.
 
     Args:
-        patient_input (PatientInput): Patient information and requirements
+        patient_input (PatientInput): Patient information and requirements.
 
     Returns:
-        dict: Hospital recommendations with matching criteria
-
-    Example:
-        POST /recommendation/
-        {
-            "patientType": "Maternal",
-            "gpsPos": [51.5074, -0.1278],
-            "transportNeedCnt": 1,
-            "specialNeedType": ["Neurology"],
-            "specialNeeds": ["Northern module"],
-            "del24HrPlus": False,
-            "bedType": "Intensive",
-            "homeHospital": "CUSM"
-        }
+        dict: Recommended hospitals.
     """
-    # Get the patient's input and return a recommendation
-    patient = Patient(
-        patientType=patient_input.patientType,
-        gpsPos=patient_input.gpsPos,
-        transportNeedCnt=patient_input.transportNeedCnt,
-        specialNeedType=patient_input.specialNeedType,
-        specialNeeds=patient_input.specialNeeds,
-        del24HrPlus=patient_input.del24HrPlus,
-        bedType=patient_input.bedType,
-        homeHospital=patient_input.homeHospital
-    )
-    recommendation = HospitalRecommendation(HOSPITALS)
-    recommended_hospital = recommendation.get_hospital_recommendations(patient=patient)
-    
-    response = [{
-        "hospital_name": hospital.name
-    } for hospital in recommended_hospital
-    ]
+    try:
+        # Initialize Patient object
+        patient = Patient(
+            patientType=patient_input.patientType,
+            gpsPos=patient_input.gpsPos,
+            transportNeedCnt=patient_input.transportNeedCnt,
+            specialNeedType=patient_input.specialNeedType,
+            specialNeeds=patient_input.specialNeeds,
+            del24HrPlus=patient_input.del24HrPlus,
+            bedType=patient_input.bedType,
+            homeHospital=patient_input.homeHospital
+        )
 
-    return {"recommended_hospitals": response}
+        # Generate recommendations
+        recommendation_model = HospitalRecommendation(HOSPITALS)
+        recommended_hospitals = recommendation_model.get_hospital_recommendations(patient=patient)
+
+        # Prepare the response
+        response = [{"hospital_name": hospital.name} for hospital in recommended_hospitals]
+
+        return {"recommended_hospitals": response}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")

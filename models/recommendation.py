@@ -199,7 +199,8 @@ class HospitalRecommendation:
         """
         Filter hospitals based on service availability and occupancy rate.
         """
-        if not self.patient:
+        if not self.patient or self.patient.patientType not in PATIENT_TYPE:
+            logging.error("Patient type not recognized.")
             return
 
         self.available_hospitals = [
@@ -286,8 +287,8 @@ class HospitalRecommendation:
         Returns:
             List[Hospital]: Up to 3 most suitable hospitals, sorted by priority
         """
-        if not self.patient:
-            return []
+        if not self.patient or self.patient.patientType not in PATIENT_TYPE:
+            return ValueError("Patient type not recognized.")
         if not self.available_hospitals:
             return []
         

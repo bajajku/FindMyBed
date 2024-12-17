@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-import numpy as np
 from transitions import Machine
 from models.patient import Patient
 from models.hospital import Hospital
@@ -9,7 +8,7 @@ from utils.geographic import calculate_distance
 import logging
 
 logging.basicConfig(
-    filename='hospital_recommendation.log',
+    filename='logs/hospital_recommendation.log',
     filemode='a',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -144,7 +143,7 @@ class HospitalRecommendation:
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
             ]
             self.patient.condition = 5
-        print(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
+        logging.info(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
 
 
     def find_nearest_and_best_occupancy_hospitals(self) -> None:
@@ -193,7 +192,7 @@ class HospitalRecommendation:
         home_hospital = next((h for h in self.hospitals if h.name == self.patient.homeHospital), None)
         if home_hospital and home_hospital not in self.available_hospitals:
             self.available_hospitals.append(home_hospital)
-        print(f"Patient's preferred hospital added to Available Hospital List: {self.patient.homeHospital}")
+        logging.info(f"Patient's preferred hospital added to Available Hospital List: {self.patient.homeHospital}")
 
     def determine_services(self) -> None:
         """
@@ -207,7 +206,7 @@ class HospitalRecommendation:
             if all(need in hospital.get_hospital_services() for need in self.patient.specialNeedType)
         ]
         self.find_nearest_and_best_occupancy_hospitals()
-        print(f"Filtered hospitals based on services and occupancy: {[h.name for h in self.available_hospitals]}")
+        logging.info(f"Filtered hospitals based on services and occupancy: {[h.name for h in self.available_hospitals]}")
 
     def filter_bed_type(self) -> None:
         """
@@ -216,7 +215,7 @@ class HospitalRecommendation:
         if not self.available_hospitals or not self.patient:
             return
 
-        print(f"Filtering hospitals by bed type: {self.patient.bedType}")
+        logging.info(f"Filtering hospitals by bed type: {self.patient.bedType}")
         
         self.available_hospitals = [
             hospital for hospital in self.available_hospitals
@@ -230,7 +229,7 @@ class HospitalRecommendation:
         if not self.available_hospitals or not self.patient:
             return
 
-        print(f"Sorting hospitals by distance from patient at {self.patient.gpsPos}")
+        logging.info(f"Sorting hospitals by distance from patient at {self.patient.gpsPos}")
 
         #Sorting patients by occupancy rates, removing hospitals with higher occupancy than threshold value
         self.available_hospitals = [hospital for hospital in self.available_hospitals
@@ -243,7 +242,7 @@ class HospitalRecommendation:
             )
         )
 
-        print(f"Sorted hospitals by distance: "
+        logging.info(f"Sorted hospitals by distance: "
                     f"{[hospital.name for hospital in self.available_hospitals]}")
 
     def get_top_hospitals(self) -> List[Hospital]:
@@ -266,7 +265,7 @@ class HospitalRecommendation:
                 preferred_hospitals = [home_hospital]
                 available_hospitals_copy.remove(home_hospital)
                 preferred_hospitals += available_hospitals_copy[:2]
-                print(f"Patient's preferred hospital removed from Available Hospital List: {self.patient.homeHospital}")
+                logging.info(f"Patient's preferred hospital removed from Available Hospital List: {self.patient.homeHospital}")
             else:
                 preferred_hospitals = available_hospitals_copy[:3]
             return preferred_hospitals
@@ -293,7 +292,7 @@ class HospitalRecommendation:
         
         if success:
             self.selected_hospital.assigned_patients += 1
-            print(f"Patient assigned to {self.selected_hospital.name}")
+            logging.info(f"Patient assigned to {self.selected_hospital.name}")
         else:
             self.queue.append(self.patient)
             logging.warning("Admission failed. Patient added to queue.")
@@ -314,7 +313,7 @@ class HospitalRecommendation:
             List[Hospital]: Top recommended hospitals for the patient
         """
         self.patient = patient
-        print("\nGenerating hospital recommendations for the patient...\n")
+        logging.info("\nGenerating hospital recommendations for the patient...\n")
         
         # Perform the recommendation steps up to geographic distance check
         self.process_input()
@@ -327,7 +326,7 @@ class HospitalRecommendation:
         recommendations = self.get_top_hospitals()
         self.restart()
 
-        print(f"Top hospital recommendations: {[h.name for h in recommendations]}")
+        logging.info(f"Top hospital recommendations: {[h.name for h in recommendations]}")
         return recommendations
     '''
     This function is used to run the complete hospital recommendation process for a patient.
@@ -343,7 +342,7 @@ class HospitalRecommendation:
             patient: Patient object to process
         """
         self.patient = patient
-        print("\nProcessing new patient...\n")
+        logging.info("Processing This patient...")
         # Execute state machine transitions
         self.process_input()
         self.check_conditions()
@@ -351,6 +350,7 @@ class HospitalRecommendation:
         self.check_bed_type()
         self.check_geographic_distance()
         self.restart()
+        logging.info("Patient processing complete.\n")
 
     def get_queue_size(self) -> int:
         """

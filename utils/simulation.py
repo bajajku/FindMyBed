@@ -2,7 +2,6 @@ import random
 import math
 import numpy as np
 import pygame
-
 from models.PausePlayButton import PausePlayButton
 from models.hospital import Hospital
 from models.patient import SimulatedPatient
@@ -16,8 +15,8 @@ from utils.animation import initialize_screen, draw_hospitals, draw_patient, ani
 import pandas as pd
 from datetime import timedelta
 from concurrent.futures import ThreadPoolExecutor
+import logging
 
-DATA_LOADER = None
 
 # concerned with simulation
 def discharge_all_patients(hospitals: list[Hospital], arrived_discharged: dict) -> None:
@@ -377,21 +376,20 @@ def create_patient(hour, births_by_fsa, data_loader):
         queue_position=0
     )
     # Log patient attributes in a readable format
-    with open("output/patients_log.txt", "a") as file:
-        file.write(f"Patient Created:\n")
-        file.write(f"  Postal Code: {postal_code}\n")
-        file.write(f"  Bed Type: {bed_type}\n")
-        file.write(f"  Special Needs: {', '.join(special_needs)}\n")
-        file.write(f"  Arrival Time: {hour}:00\n")
-        file.write(f"  GPS Position: {gps_pos}\n")
-        file.write(f"  Patient Type: {patient_type}\n")
-        file.write(f"  Delivery within 24 Hours: {del24HrPlus}\n")
-        file.write(f"  Transport Need Count: {patient.transportNeedCnt}\n")
-        file.write(f"  Animation GPS Position: {patient.aniGpsPos}\n")
-        file.write(f"  Discharged: {patient.discharged}\n")
-        file.write(f"  Arrived at Hospital: {patient.arrived_at_hospital}\n")
-        file.write(f"  Queue Position: {patient.queue_position}\n")
-        file.write("\n")
+    logging.info("Patient Created:")
+    logging.info(f"  Postal Code: {postal_code}")
+    logging.info(f"  Bed Type: {bed_type}")
+    logging.info(f"  Special Needs: {', '.join(special_needs)}")
+    logging.info(f"  Arrival Time: {hour}:00")
+    logging.info(f"  GPS Position: {gps_pos}")
+    logging.info(f"  Patient Type: {patient_type}")
+    logging.info(f"  Delivery within 24 Hours: {del24HrPlus}")
+    logging.info(f"  Transport Need Count: {patient.transportNeedCnt}")
+    logging.info(f"  Animation GPS Position: {patient.aniGpsPos}")
+    logging.info(f"  Discharged: {patient.discharged}")
+    logging.info(f"  Arrived at Hospital: {patient.arrived_at_hospital}")
+    logging.info(f"  Queue Position: {patient.queue_position}")
+    
     return patient
 
 def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):

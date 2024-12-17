@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+import yaml
 from transitions import Machine
 from models.patient import Patient
 from models.hospital import Hospital
@@ -13,6 +14,12 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+
+# Access the configuration value.
+weight_of_distance = config['WEIGHT_OF_SORTING_BY_DISTANCE']
 
 class HospitalRecommendation:
     """
@@ -232,7 +239,7 @@ class HospitalRecommendation:
             if hospital.get_capacity(self.patient.bedType) > 1
         ]
 
-    def filter_by_distance_and_occupancy_rate(self, weight_distance: float = 1.0, weight_occupancy: float = 0.0) -> None:
+    def filter_by_distance_and_occupancy_rate(self, weight_distance: float = weight_of_distance, weight_occupancy: float = 1 - weight_of_distance) -> None:
         """
         Filter hospitals considering both distance and occupancy rate,
         prioritizing based on a weighted score.

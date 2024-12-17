@@ -127,7 +127,10 @@ pip install -r requirements.txt
    uvicorn api:app --reload
    ```
 
-
+### **For API unit tests:**
+  ```bash
+  python tests/test.py
+ ```
 ---
 
 # **Libraries Used**

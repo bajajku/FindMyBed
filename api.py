@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Tuple
 from models.recommendation import HospitalRecommendation
-from models.hospital import Hospital
 from models.patient import Patient
 from utils.data_loader import DataLoader
 import yaml

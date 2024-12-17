@@ -1078,3 +1078,363 @@
 2024-12-17 14:56:52,877 - INFO - Finished processing state input enter callbacks.
 2024-12-17 14:56:52,877 - INFO - Patient processing complete.
 
+2024-12-17 14:21:05,052 - INFO - Patient Created:
+2024-12-17 14:21:05,053 - INFO -   Postal Code: H8Z
+2024-12-17 14:21:05,053 - INFO -   Bed Type: Intermediate
+2024-12-17 14:21:05,053 - INFO -   Special Needs: Infectious diseases
+2024-12-17 14:21:05,053 - INFO -   Arrival Time: 4:00
+2024-12-17 14:21:05,053 - INFO -   GPS Position: (45.5096, -73.8417)
+2024-12-17 14:21:05,053 - INFO -   Patient Type: Neonatal
+2024-12-17 14:21:05,053 - INFO -   Delivery within 24 Hours: False
+2024-12-17 14:21:05,055 - INFO -   Transport Need Count: 3
+2024-12-17 14:21:05,055 - INFO -   Animation GPS Position: [505, 758]
+2024-12-17 14:21:05,055 - INFO -   Discharged: False
+2024-12-17 14:21:05,055 - INFO -   Arrived at Hospital: False
+2024-12-17 14:21:05,055 - INFO -   Queue Position: 0
+2024-12-17 14:21:05,055 - INFO - Processing This patient...
+2024-12-17 14:21:05,056 - INFO - Finished processing state input exit callbacks.
+2024-12-17 14:21:05,056 - INFO - Finished processing state condition_check enter callbacks.
+2024-12-17 14:21:05,056 - INFO - Filtered hospitals based on restriction conditions : ['CHU-SJ', 'CHUQ', 'CHUS', 'CUSM', 'HGJ', 'HMR']
+2024-12-17 14:21:05,056 - INFO - Executed callback 'apply_restrictions'
+2024-12-17 14:21:05,056 - INFO - Finished processing state condition_check exit callbacks.
+2024-12-17 14:21:05,056 - INFO - Finished processing state service_determination enter callbacks.
+2024-12-17 14:21:05,056 - INFO - Executed callback 'home_hospital_check'
+2024-12-17 14:21:05,057 - INFO - Filtered hospitals based on services and occupancy: ['CHU-SJ', 'CUSM', 'CHUS', 'CHUQ']
+2024-12-17 14:21:05,057 - INFO - Executed callback 'determine_services'
+2024-12-17 14:21:05,057 - INFO - Finished processing state service_determination exit callbacks.
+2024-12-17 14:21:05,058 - INFO - Finished processing state bed_type_check enter callbacks.
+2024-12-17 14:21:05,058 - INFO - Filtering hospitals by bed type: Intermediate
+2024-12-17 14:21:05,058 - INFO - Executed callback 'filter_bed_type'
+2024-12-17 14:21:05,058 - INFO - Finished processing state bed_type_check exit callbacks.
+2024-12-17 14:21:05,058 - INFO - Finished processing state geographic_check enter callbacks.
+2024-12-17 14:21:05,058 - INFO - Sorting hospitals by distance from patient at (45.5096, -73.8417)
+2024-12-17 14:21:05,058 - INFO - Sorted hospitals by distance: ['CHU-SJ', 'CUSM', 'CHUS', 'CHUQ']
+2024-12-17 14:21:05,058 - INFO - Executed callback 'filter_by_distance_and_occupancy_rate'
+2024-12-17 14:21:05,058 - INFO - Finished processing state geographic_check exit callbacks.
+2024-12-17 14:21:05,058 - INFO - Finished processing state hospital_recommendation enter callbacks.
+2024-12-17 14:21:05,058 - INFO - Patient assigned to CHU-SJ
+2024-12-17 14:21:05,058 - INFO - Executed callback 'recommend_hospital'
+2024-12-17 14:21:05,059 - INFO - Finished processing state hospital_recommendation exit callbacks.
+2024-12-17 14:21:05,059 - INFO - Finished processing state input enter callbacks.
+2024-12-17 14:21:05,059 - INFO - Patient processing complete.
+
+2024-12-17 14:21:05,185 - INFO - Patient Created:
+2024-12-17 14:21:05,185 - INFO -   Postal Code: H7P
+2024-12-17 14:21:05,185 - INFO -   Bed Type: Intensive
+2024-12-17 14:21:05,185 - INFO -   Special Needs: Neurology
+2024-12-17 14:21:05,185 - INFO -   Arrival Time: 9:00
+2024-12-17 14:21:05,185 - INFO -   GPS Position: (45.5654, -73.8118)
+2024-12-17 14:21:05,185 - INFO -   Patient Type: Neonatal
+2024-12-17 14:21:05,185 - INFO -   Delivery within 24 Hours: False
+2024-12-17 14:21:05,185 - INFO -   Transport Need Count: 3
+2024-12-17 14:21:05,185 - INFO -   Animation GPS Position: [506, 756]
+2024-12-17 14:21:05,185 - INFO -   Discharged: False
+2024-12-17 14:21:05,186 - INFO -   Arrived at Hospital: False
+2024-12-17 14:21:05,186 - INFO -   Queue Position: 0
+2024-12-17 14:21:05,186 - INFO - Processing This patient...
+2024-12-17 14:21:05,186 - INFO - Finished processing state input exit callbacks.
+2024-12-17 14:21:05,186 - INFO - Finished processing state condition_check enter callbacks.
+2024-12-17 14:21:05,186 - INFO - Filtered hospitals based on restriction conditions : ['CHU-SJ', 'CHUQ', 'CUSM']
+2024-12-17 14:21:05,186 - INFO - Executed callback 'apply_restrictions'
+2024-12-17 14:21:05,186 - INFO - Finished processing state condition_check exit callbacks.
+2024-12-17 14:21:05,187 - INFO - Finished processing state service_determination enter callbacks.
+2024-12-17 14:21:05,187 - INFO - Executed callback 'home_hospital_check'
+2024-12-17 14:21:05,187 - INFO - Filtered hospitals based on services and occupancy: ['CHU-SJ', 'CUSM', 'CHUQ']
+2024-12-17 14:21:05,187 - INFO - Executed callback 'determine_services'
+2024-12-17 14:21:05,187 - INFO - Finished processing state service_determination exit callbacks.
+2024-12-17 14:21:05,187 - INFO - Finished processing state bed_type_check enter callbacks.
+2024-12-17 14:21:05,188 - INFO - Filtering hospitals by bed type: Intensive
+2024-12-17 14:21:05,188 - INFO - Executed callback 'filter_bed_type'
+2024-12-17 14:21:05,188 - INFO - Finished processing state bed_type_check exit callbacks.
+2024-12-17 14:21:05,188 - INFO - Finished processing state geographic_check enter callbacks.
+2024-12-17 14:21:05,188 - INFO - Sorting hospitals by distance from patient at (45.5654, -73.8118)
+2024-12-17 14:21:05,188 - INFO - Sorted hospitals by distance: ['CHU-SJ', 'CUSM', 'CHUQ']
+2024-12-17 14:21:05,188 - INFO - Executed callback 'filter_by_distance_and_occupancy_rate'
+2024-12-17 14:21:05,188 - INFO - Finished processing state geographic_check exit callbacks.
+2024-12-17 14:21:05,188 - INFO - Finished processing state hospital_recommendation enter callbacks.
+2024-12-17 14:21:05,189 - INFO - Patient assigned to CHU-SJ
+2024-12-17 14:21:05,189 - INFO - Executed callback 'recommend_hospital'
+2024-12-17 14:21:05,189 - INFO - Finished processing state hospital_recommendation exit callbacks.
+2024-12-17 14:21:05,189 - INFO - Finished processing state input enter callbacks.
+2024-12-17 14:21:05,189 - INFO - Patient processing complete.
+
+2024-12-17 14:21:05,362 - INFO - Patient Created:
+2024-12-17 14:21:05,362 - INFO -   Postal Code: J0S
+2024-12-17 14:21:05,362 - INFO -   Bed Type: Intensive
+2024-12-17 14:21:05,362 - INFO -   Special Needs: Cardiac Surgery
+2024-12-17 14:21:05,362 - INFO -   Arrival Time: 16:00
+2024-12-17 14:21:05,362 - INFO -   GPS Position: (45.1349, -74.0425)
+2024-12-17 14:21:05,363 - INFO -   Patient Type: Neonatal
+2024-12-17 14:21:05,363 - INFO -   Delivery within 24 Hours: False
+2024-12-17 14:21:05,363 - INFO -   Transport Need Count: 2
+2024-12-17 14:21:05,363 - INFO -   Animation GPS Position: [499, 774]
+2024-12-17 14:21:05,363 - INFO -   Discharged: False
+2024-12-17 14:21:05,363 - INFO -   Arrived at Hospital: False
+2024-12-17 14:21:05,363 - INFO -   Queue Position: 0
+2024-12-17 14:21:05,363 - INFO - Processing This patient...
+2024-12-17 14:21:05,363 - INFO - Finished processing state input exit callbacks.
+2024-12-17 14:21:05,363 - INFO - Finished processing state condition_check enter callbacks.
+2024-12-17 14:21:05,363 - INFO - Filtered hospitals based on restriction conditions : ['CHU-SJ', 'CHUQ', 'CHUS', 'CUSM', 'HGJ', 'HMR']
+2024-12-17 14:21:05,363 - INFO - Executed callback 'apply_restrictions'
+2024-12-17 14:21:05,363 - INFO - Finished processing state condition_check exit callbacks.
+2024-12-17 14:21:05,363 - INFO - Finished processing state service_determination enter callbacks.
+2024-12-17 14:21:05,363 - INFO - Executed callback 'home_hospital_check'
+2024-12-17 14:21:05,364 - INFO - Filtered hospitals based on services and occupancy: ['CUSM', 'CHU-SJ', 'CHUQ']
+2024-12-17 14:21:05,364 - INFO - Executed callback 'determine_services'
+2024-12-17 14:21:05,364 - INFO - Finished processing state service_determination exit callbacks.
+2024-12-17 14:21:05,364 - INFO - Finished processing state bed_type_check enter callbacks.
+2024-12-17 14:21:05,364 - INFO - Filtering hospitals by bed type: Intensive
+2024-12-17 14:21:05,364 - INFO - Executed callback 'filter_bed_type'
+2024-12-17 14:21:05,364 - INFO - Finished processing state bed_type_check exit callbacks.
+2024-12-17 14:21:05,364 - INFO - Finished processing state geographic_check enter callbacks.
+2024-12-17 14:21:05,364 - INFO - Sorting hospitals by distance from patient at (45.1349, -74.0425)
+2024-12-17 14:21:05,365 - INFO - Sorted hospitals by distance: ['CUSM', 'CHU-SJ', 'CHUQ']
+2024-12-17 14:21:05,365 - INFO - Executed callback 'filter_by_distance_and_occupancy_rate'
+2024-12-17 14:21:05,365 - INFO - Finished processing state geographic_check exit callbacks.
+2024-12-17 14:21:05,365 - INFO - Finished processing state hospital_recommendation enter callbacks.
+2024-12-17 14:21:05,365 - INFO - Patient assigned to CUSM
+2024-12-17 14:21:05,365 - INFO - Executed callback 'recommend_hospital'
+2024-12-17 14:21:05,365 - INFO - Finished processing state hospital_recommendation exit callbacks.
+2024-12-17 14:21:05,366 - INFO - Finished processing state input enter callbacks.
+2024-12-17 14:21:05,366 - INFO - Patient processing complete.
+
+2024-12-17 14:21:05,526 - INFO - Patient Created:
+2024-12-17 14:21:05,526 - INFO -   Postal Code: J7C
+2024-12-17 14:21:05,526 - INFO -   Bed Type: Intensive
+2024-12-17 14:21:05,526 - INFO -   Special Needs: Endocrinology
+2024-12-17 14:21:05,526 - INFO -   Arrival Time: 22:00
+2024-12-17 14:21:05,526 - INFO -   GPS Position: (45.6782, -73.9029)
+2024-12-17 14:21:05,526 - INFO -   Patient Type: Neonatal
+2024-12-17 14:21:05,527 - INFO -   Delivery within 24 Hours: False
+2024-12-17 14:21:05,527 - INFO -   Transport Need Count: 0
+2024-12-17 14:21:05,527 - INFO -   Animation GPS Position: [503, 751]
+2024-12-17 14:21:05,527 - INFO -   Discharged: False
+2024-12-17 14:21:05,527 - INFO -   Arrived at Hospital: False
+2024-12-17 14:21:05,527 - INFO -   Queue Position: 0
+2024-12-17 14:21:05,527 - INFO - Processing This patient...
+2024-12-17 14:21:05,527 - INFO - Finished processing state input exit callbacks.
+2024-12-17 14:21:05,527 - INFO - Finished processing state condition_check enter callbacks.
+2024-12-17 14:21:05,527 - INFO - Filtered hospitals based on restriction conditions : ['CHU-SJ', 'CHUQ', 'CHUS', 'CUSM', 'HGJ', 'HMR']
+2024-12-17 14:21:05,527 - INFO - Executed callback 'apply_restrictions'
+2024-12-17 14:21:05,527 - INFO - Finished processing state condition_check exit callbacks.
+2024-12-17 14:21:05,527 - INFO - Finished processing state service_determination enter callbacks.
+2024-12-17 14:21:05,528 - INFO - Executed callback 'home_hospital_check'
+2024-12-17 14:21:05,529 - INFO - Filtered hospitals based on services and occupancy: ['CHU-SJ', 'HMR', 'HGJ', 'CUSM', 'CHUS', 'CHUQ']
+2024-12-17 14:21:05,529 - INFO - Executed callback 'determine_services'
+2024-12-17 14:21:05,529 - INFO - Finished processing state service_determination exit callbacks.
+2024-12-17 14:21:05,529 - INFO - Finished processing state bed_type_check enter callbacks.
+2024-12-17 14:21:05,529 - INFO - Filtering hospitals by bed type: Intensive
+2024-12-17 14:21:05,529 - INFO - Executed callback 'filter_bed_type'
+2024-12-17 14:21:05,529 - INFO - Finished processing state bed_type_check exit callbacks.
+2024-12-17 14:21:05,529 - INFO - Finished processing state geographic_check enter callbacks.
+2024-12-17 14:21:05,530 - INFO - Sorting hospitals by distance from patient at (45.6782, -73.9029)
+2024-12-17 14:21:05,531 - INFO - Sorted hospitals by distance: ['CHU-SJ', 'HMR', 'HGJ', 'CUSM', 'CHUS', 'CHUQ']
+2024-12-17 14:21:05,531 - INFO - Executed callback 'filter_by_distance_and_occupancy_rate'
+2024-12-17 14:21:05,531 - INFO - Finished processing state geographic_check exit callbacks.
+2024-12-17 14:21:05,531 - INFO - Finished processing state hospital_recommendation enter callbacks.
+2024-12-17 14:21:05,531 - INFO - Patient assigned to CHU-SJ
+2024-12-17 14:21:05,531 - INFO - Executed callback 'recommend_hospital'
+2024-12-17 14:21:05,531 - INFO - Finished processing state hospital_recommendation exit callbacks.
+2024-12-17 14:21:05,531 - INFO - Finished processing state input enter callbacks.
+2024-12-17 14:21:05,531 - INFO - Patient processing complete.
+
+2024-12-17 14:21:05,616 - INFO - Patient Created:
+2024-12-17 14:21:05,616 - INFO -   Postal Code: G9N
+2024-12-17 14:21:05,616 - INFO -   Bed Type: Intensive
+2024-12-17 14:21:05,616 - INFO -   Special Needs: General Surgery
+2024-12-17 14:21:05,616 - INFO -   Arrival Time: 1:00
+2024-12-17 14:21:05,616 - INFO -   GPS Position: (46.5359, -72.7502)
+2024-12-17 14:21:05,617 - INFO -   Patient Type: Neonatal
+2024-12-17 14:21:05,617 - INFO -   Delivery within 24 Hours: False
+2024-12-17 14:21:05,617 - INFO -   Transport Need Count: 0
+2024-12-17 14:21:05,617 - INFO -   Animation GPS Position: [540, 715]
+2024-12-17 14:21:05,617 - INFO -   Discharged: False
+2024-12-17 14:21:05,617 - INFO -   Arrived at Hospital: False
+2024-12-17 14:21:05,617 - INFO -   Queue Position: 0
+2024-12-17 14:21:05,617 - INFO - Processing This patient...
+2024-12-17 14:21:05,617 - INFO - Finished processing state input exit callbacks.
+2024-12-17 14:21:05,617 - INFO - Finished processing state condition_check enter callbacks.
+2024-12-17 14:21:05,619 - INFO - Filtered hospitals based on restriction conditions : ['CHU-SJ', 'CHUQ', 'CHUS', 'CUSM']
+2024-12-17 14:21:05,619 - INFO - Executed callback 'apply_restrictions'
+2024-12-17 14:21:05,619 - INFO - Finished processing state condition_check exit callbacks.
+2024-12-17 14:21:05,619 - INFO - Finished processing state service_determination enter callbacks.
+2024-12-17 14:21:05,619 - INFO - Executed callback 'home_hospital_check'
+2024-12-17 14:21:05,619 - INFO - Filtered hospitals based on services and occupancy: ['CHUQ', 'CHU-SJ', 'CUSM', 'CHUS']
+2024-12-17 14:21:05,619 - INFO - Executed callback 'determine_services'
+2024-12-17 14:21:05,619 - INFO - Finished processing state service_determination exit callbacks.
+2024-12-17 14:21:05,619 - INFO - Finished processing state bed_type_check enter callbacks.
+2024-12-17 14:21:05,619 - INFO - Filtering hospitals by bed type: Intensive
+2024-12-17 14:21:05,619 - INFO - Executed callback 'filter_bed_type'
+2024-12-17 14:21:05,619 - INFO - Finished processing state bed_type_check exit callbacks.
+2024-12-17 14:21:05,620 - INFO - Finished processing state geographic_check enter callbacks.
+2024-12-17 14:21:05,620 - INFO - Sorting hospitals by distance from patient at (46.5359, -72.7502)
+2024-12-17 14:21:05,620 - INFO - Sorted hospitals by distance: ['CHUQ', 'CHU-SJ', 'CUSM', 'CHUS']
+2024-12-17 14:21:05,620 - INFO - Executed callback 'filter_by_distance_and_occupancy_rate'
+2024-12-17 14:21:05,620 - INFO - Finished processing state geographic_check exit callbacks.
+2024-12-17 14:21:05,621 - INFO - Finished processing state hospital_recommendation enter callbacks.
+2024-12-17 14:21:05,621 - INFO - Patient assigned to CHUQ
+2024-12-17 14:21:05,621 - INFO - Executed callback 'recommend_hospital'
+2024-12-17 14:21:05,621 - INFO - Finished processing state hospital_recommendation exit callbacks.
+2024-12-17 14:21:05,622 - INFO - Finished processing state input enter callbacks.
+2024-12-17 14:21:05,622 - INFO - Patient processing complete.
+
+2024-12-17 14:21:05,764 - INFO - Patient Created:
+2024-12-17 14:21:05,764 - INFO -   Postal Code: J6E
+2024-12-17 14:21:05,764 - INFO -   Bed Type: Intensive
+2024-12-17 14:21:05,764 - INFO -   Special Needs: Surgery
+2024-12-17 14:21:05,764 - INFO -   Arrival Time: 6:00
+2024-12-17 14:21:05,764 - INFO -   GPS Position: (46.0295, -73.4393)
+2024-12-17 14:21:05,764 - INFO -   Patient Type: Maternal
+2024-12-17 14:21:05,764 - INFO -   Delivery within 24 Hours: False
+2024-12-17 14:21:05,764 - INFO -   Transport Need Count: 3
+2024-12-17 14:21:05,765 - INFO -   Animation GPS Position: [518, 736]
+2024-12-17 14:21:05,765 - INFO -   Discharged: False
+2024-12-17 14:21:05,765 - INFO -   Arrived at Hospital: False
+2024-12-17 14:21:05,765 - INFO -   Queue Position: 0
+2024-12-17 14:21:05,765 - INFO - Processing This patient...
+2024-12-17 14:21:05,765 - INFO - Finished processing state input exit callbacks.
+2024-12-17 14:21:05,765 - INFO - Finished processing state condition_check enter callbacks.
+2024-12-17 14:21:05,765 - INFO - Filtered hospitals based on restriction conditions : ['CHU-SJ', 'CHUQ', 'CHUS', 'CUSM', 'HGJ', 'HMR']
+2024-12-17 14:21:05,765 - INFO - Executed callback 'apply_restrictions'
+2024-12-17 14:21:05,765 - INFO - Finished processing state condition_check exit callbacks.
+2024-12-17 14:21:05,766 - INFO - Finished processing state service_determination enter callbacks.
+2024-12-17 14:21:05,766 - INFO - Executed callback 'home_hospital_check'
+2024-12-17 14:21:05,767 - INFO - Filtered hospitals based on services and occupancy: ['HMR', 'HGJ', 'CUSM', 'CHUS', 'CHUQ']
+2024-12-17 14:21:05,767 - INFO - Executed callback 'determine_services'
+2024-12-17 14:21:05,767 - INFO - Finished processing state service_determination exit callbacks.
+2024-12-17 14:21:05,767 - INFO - Finished processing state bed_type_check enter callbacks.
+2024-12-17 14:21:05,767 - INFO - Filtering hospitals by bed type: Intensive
+2024-12-17 14:21:05,767 - INFO - Executed callback 'filter_bed_type'
+2024-12-17 14:21:05,767 - INFO - Finished processing state bed_type_check exit callbacks.
+2024-12-17 14:21:05,767 - INFO - Finished processing state geographic_check enter callbacks.
+2024-12-17 14:21:05,767 - INFO - Sorting hospitals by distance from patient at (46.0295, -73.4393)
+2024-12-17 14:21:05,768 - INFO - Sorted hospitals by distance: ['HMR', 'HGJ', 'CUSM', 'CHUS', 'CHUQ']
+2024-12-17 14:21:05,768 - INFO - Executed callback 'filter_by_distance_and_occupancy_rate'
+2024-12-17 14:21:05,768 - INFO - Finished processing state geographic_check exit callbacks.
+2024-12-17 14:21:05,768 - INFO - Finished processing state hospital_recommendation enter callbacks.
+2024-12-17 14:21:05,769 - INFO - Patient assigned to HMR
+2024-12-17 14:21:05,769 - INFO - Executed callback 'recommend_hospital'
+2024-12-17 14:21:05,769 - INFO - Finished processing state hospital_recommendation exit callbacks.
+2024-12-17 14:21:05,769 - INFO - Finished processing state input enter callbacks.
+2024-12-17 14:21:05,769 - INFO - Patient processing complete.
+
+2024-12-17 14:21:06,109 - INFO - Patient Created:
+2024-12-17 14:21:06,109 - INFO -   Postal Code: J7V
+2024-12-17 14:21:06,109 - INFO -   Bed Type: Intensive
+2024-12-17 14:21:06,109 - INFO -   Special Needs: Neurosurgery
+2024-12-17 14:21:06,109 - INFO -   Arrival Time: 19:00
+2024-12-17 14:21:06,109 - INFO -   GPS Position: (45.4021, -74.0241)
+2024-12-17 14:21:06,109 - INFO -   Patient Type: Neonatal
+2024-12-17 14:21:06,109 - INFO -   Delivery within 24 Hours: False
+2024-12-17 14:21:06,109 - INFO -   Transport Need Count: 0
+2024-12-17 14:21:06,109 - INFO -   Animation GPS Position: [499, 762]
+2024-12-17 14:21:06,109 - INFO -   Discharged: False
+2024-12-17 14:21:06,109 - INFO -   Arrived at Hospital: False
+2024-12-17 14:21:06,109 - INFO -   Queue Position: 0
+2024-12-17 14:21:06,109 - INFO - Processing This patient...
+2024-12-17 14:21:06,110 - INFO - Finished processing state input exit callbacks.
+2024-12-17 14:21:06,110 - INFO - Finished processing state condition_check enter callbacks.
+2024-12-17 14:21:06,110 - INFO - Filtered hospitals based on restriction conditions : ['CHU-SJ', 'CHUQ', 'CHUS', 'CUSM', 'HGJ', 'HMR']
+2024-12-17 14:21:06,110 - INFO - Executed callback 'apply_restrictions'
+2024-12-17 14:21:06,110 - INFO - Finished processing state condition_check exit callbacks.
+2024-12-17 14:21:06,110 - INFO - Finished processing state service_determination enter callbacks.
+2024-12-17 14:21:06,110 - INFO - Executed callback 'home_hospital_check'
+2024-12-17 14:21:06,111 - INFO - Filtered hospitals based on services and occupancy: ['CHU-SJ', 'CUSM', 'CHUQ']
+2024-12-17 14:21:06,111 - INFO - Executed callback 'determine_services'
+2024-12-17 14:21:06,111 - INFO - Finished processing state service_determination exit callbacks.
+2024-12-17 14:21:06,111 - INFO - Finished processing state bed_type_check enter callbacks.
+2024-12-17 14:21:06,111 - INFO - Filtering hospitals by bed type: Intensive
+2024-12-17 14:21:06,111 - INFO - Executed callback 'filter_bed_type'
+2024-12-17 14:21:06,111 - INFO - Finished processing state bed_type_check exit callbacks.
+2024-12-17 14:21:06,111 - INFO - Finished processing state geographic_check enter callbacks.
+2024-12-17 14:21:06,112 - INFO - Sorting hospitals by distance from patient at (45.4021, -74.0241)
+2024-12-17 14:21:06,112 - INFO - Sorted hospitals by distance: ['CHU-SJ', 'CUSM', 'CHUQ']
+2024-12-17 14:21:06,112 - INFO - Executed callback 'filter_by_distance_and_occupancy_rate'
+2024-12-17 14:21:06,112 - INFO - Finished processing state geographic_check exit callbacks.
+2024-12-17 14:21:06,112 - INFO - Finished processing state hospital_recommendation enter callbacks.
+2024-12-17 14:21:06,113 - INFO - Patient assigned to CHU-SJ
+2024-12-17 14:21:06,113 - INFO - Executed callback 'recommend_hospital'
+2024-12-17 14:21:06,113 - INFO - Finished processing state hospital_recommendation exit callbacks.
+2024-12-17 14:21:06,113 - INFO - Finished processing state input enter callbacks.
+2024-12-17 14:21:06,113 - INFO - Patient processing complete.
+
+2024-12-17 14:21:07,052 - INFO - Patient Created:
+2024-12-17 14:21:07,052 - INFO -   Postal Code: J0M
+2024-12-17 14:21:07,053 - INFO -   Bed Type: Intensive
+2024-12-17 14:21:07,053 - INFO -   Special Needs: Cardiac problems
+2024-12-17 14:21:07,053 - INFO -   Arrival Time: 6:00
+2024-12-17 14:21:07,053 - INFO -   GPS Position: (58.7278, -69.9506)
+2024-12-17 14:21:07,053 - INFO -   Patient Type: Maternal
+2024-12-17 14:21:07,053 - INFO -   Delivery within 24 Hours: False
+2024-12-17 14:21:07,053 - INFO -   Transport Need Count: 2
+2024-12-17 14:21:07,053 - INFO -   Animation GPS Position: [630, 201]
+2024-12-17 14:21:07,053 - INFO -   Discharged: False
+2024-12-17 14:21:07,053 - INFO -   Arrived at Hospital: False
+2024-12-17 14:21:07,053 - INFO -   Queue Position: 0
+2024-12-17 14:21:07,054 - INFO - Processing This patient...
+2024-12-17 14:21:07,054 - INFO - Finished processing state input exit callbacks.
+2024-12-17 14:21:07,054 - INFO - Finished processing state condition_check enter callbacks.
+2024-12-17 14:21:07,054 - INFO - Filtered hospitals based on restriction conditions : ['CUSM']
+2024-12-17 14:21:07,054 - INFO - Executed callback 'apply_restrictions'
+2024-12-17 14:21:07,054 - INFO - Finished processing state condition_check exit callbacks.
+2024-12-17 14:21:07,054 - INFO - Finished processing state service_determination enter callbacks.
+2024-12-17 14:21:07,054 - INFO - Executed callback 'home_hospital_check'
+2024-12-17 14:21:07,055 - INFO - Filtered hospitals based on services and occupancy: ['CUSM']
+2024-12-17 14:21:07,055 - INFO - Executed callback 'determine_services'
+2024-12-17 14:21:07,055 - INFO - Finished processing state service_determination exit callbacks.
+2024-12-17 14:21:07,055 - INFO - Finished processing state bed_type_check enter callbacks.
+2024-12-17 14:21:07,055 - INFO - Filtering hospitals by bed type: Intensive
+2024-12-17 14:21:07,055 - INFO - Executed callback 'filter_bed_type'
+2024-12-17 14:21:07,055 - INFO - Finished processing state bed_type_check exit callbacks.
+2024-12-17 14:21:07,055 - INFO - Finished processing state geographic_check enter callbacks.
+2024-12-17 14:21:07,055 - INFO - Sorting hospitals by distance from patient at (58.7278, -69.9506)
+2024-12-17 14:21:07,055 - INFO - Sorted hospitals by distance: ['CUSM']
+2024-12-17 14:21:07,055 - INFO - Executed callback 'filter_by_distance_and_occupancy_rate'
+2024-12-17 14:21:07,056 - INFO - Finished processing state geographic_check exit callbacks.
+2024-12-17 14:21:07,056 - INFO - Finished processing state hospital_recommendation enter callbacks.
+2024-12-17 14:21:07,056 - INFO - Patient assigned to CUSM
+2024-12-17 14:21:07,056 - INFO - Executed callback 'recommend_hospital'
+2024-12-17 14:21:07,056 - INFO - Finished processing state hospital_recommendation exit callbacks.
+2024-12-17 14:21:07,056 - INFO - Finished processing state input enter callbacks.
+2024-12-17 14:21:07,056 - INFO - Patient processing complete.
+
+2024-12-17 14:21:07,406 - INFO - Patient Created:
+2024-12-17 14:21:07,406 - INFO -   Postal Code: J9X
+2024-12-17 14:21:07,406 - INFO -   Bed Type: Intensive
+2024-12-17 14:21:07,406 - INFO -   Special Needs: General surgery
+2024-12-17 14:21:07,406 - INFO -   Arrival Time: 19:00
+2024-12-17 14:21:07,406 - INFO -   GPS Position: (48.2263, -79.0288)
+2024-12-17 14:21:07,406 - INFO -   Patient Type: Maternal
+2024-12-17 14:21:07,406 - INFO -   Delivery within 24 Hours: False
+2024-12-17 14:21:07,406 - INFO -   Transport Need Count: 2
+2024-12-17 14:21:07,406 - INFO -   Animation GPS Position: [339, 644]
+2024-12-17 14:21:07,406 - INFO -   Discharged: False
+2024-12-17 14:21:07,407 - INFO -   Arrived at Hospital: False
+2024-12-17 14:21:07,407 - INFO -   Queue Position: 0
+2024-12-17 14:21:07,407 - INFO - Processing This patient...
+2024-12-17 14:21:07,407 - INFO - Finished processing state input exit callbacks.
+2024-12-17 14:21:07,407 - INFO - Finished processing state condition_check enter callbacks.
+2024-12-17 14:21:07,407 - INFO - Filtered hospitals based on restriction conditions : ['CHU-SJ', 'CHUQ', 'CHUS', 'CUSM', 'HGJ', 'HMR']
+2024-12-17 14:21:07,407 - INFO - Executed callback 'apply_restrictions'
+2024-12-17 14:21:07,408 - INFO - Finished processing state condition_check exit callbacks.
+2024-12-17 14:21:07,408 - INFO - Finished processing state service_determination enter callbacks.
+2024-12-17 14:21:07,408 - INFO - Executed callback 'home_hospital_check'
+2024-12-17 14:21:07,409 - INFO - Filtered hospitals based on services and occupancy: ['HMR', 'HGJ', 'CUSM', 'CHUQ', 'CHUS']
+2024-12-17 14:21:07,409 - INFO - Executed callback 'determine_services'
+2024-12-17 14:21:07,409 - INFO - Finished processing state service_determination exit callbacks.
+2024-12-17 14:21:07,409 - INFO - Finished processing state bed_type_check enter callbacks.
+2024-12-17 14:21:07,409 - INFO - Filtering hospitals by bed type: Intensive
+2024-12-17 14:21:07,410 - INFO - Executed callback 'filter_bed_type'
+2024-12-17 14:21:07,410 - INFO - Finished processing state bed_type_check exit callbacks.
+2024-12-17 14:21:07,410 - INFO - Finished processing state geographic_check enter callbacks.
+2024-12-17 14:21:07,410 - INFO - Sorting hospitals by distance from patient at (48.2263, -79.0288)
+2024-12-17 14:21:07,411 - INFO - Sorted hospitals by distance: ['HMR', 'HGJ', 'CUSM', 'CHUQ', 'CHUS']
+2024-12-17 14:21:07,411 - INFO - Executed callback 'filter_by_distance_and_occupancy_rate'
+2024-12-17 14:21:07,411 - INFO - Finished processing state geographic_check exit callbacks.
+2024-12-17 14:21:07,411 - INFO - Finished processing state hospital_recommendation enter callbacks.
+2024-12-17 14:21:07,411 - INFO - Patient assigned to HMR
+2024-12-17 14:21:07,411 - INFO - Executed callback 'recommend_hospital'
+2024-12-17 14:21:07,412 - INFO - Finished processing state hospital_recommendation exit callbacks.
+2024-12-17 14:21:07,412 - INFO - Finished processing state input enter callbacks.
+2024-12-17 14:21:07,412 - INFO - Patient processing complete.
+

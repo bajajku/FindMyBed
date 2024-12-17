@@ -9,7 +9,7 @@ from utils.geographic import calculate_distance
 import logging
 
 logging.basicConfig(
-    filename='hospital_recommendation.log',
+    filename='output/hospital_recommendation.log',
     filemode='a',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'

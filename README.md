@@ -60,7 +60,7 @@ The `config.yaml` file is a configuration file for the simulator. It defines par
 
 Ensure the following are installed on your system:
 
-- **Python 3.x** (recommended version: 3.8 or later)
+- **Python 3.x** (recommended version: 3.10 or later to support the latest libraries)
 - **Git**
 - A terminal or command prompt 
 

@@ -37,8 +37,8 @@ The `config.yaml` file is a configuration file for the simulator. It defines par
 - **`NUMBER_OF_DAYS`**: The number of days the simulation will run. Adjust this to match the duration required for the simulation.
 
 #### **Input File Paths**
-- **`EXCEL_PATH`**:  Path to the historical hospital data
-- **`EXCEL_PATH_NEWDATA`**:  Path to the geographic data 
+- **`EXCEL_PATH`**:  Path to the hospital data, including incoming rate, discharge rate, and capacity.
+- **`EXCEL_PATH_NEWDATA`**: Path to the patient data, used to calculate the birth rate per FSA and generate patients based on this data.
 
 #### **Output File Paths**
 - **`REPORT`**: Path where the PDF report will be generated.
@@ -46,8 +46,8 @@ The `config.yaml` file is a configuration file for the simulator. It defines par
 
 #### **Hospital Occupancy Thresholds**
 - These thresholds are used to check the occupancy rate before assigning patients, ensuring hospitals do not exceed safe limits for patient care.
-- **`INTENSIVE_OCCUPANCY_THRESHOLDS`**: Specifies the maximum occupancy rate allowed for intensive beds at each hospital. 
-- **`INTERMEDIATE_OCCUPANCY_THRESHOLDS`**: Specifies the maximum occupancy rate allowed for intermediate beds at each hospital. 
+- **`INTENSIVE_OCCUPANCY_THRESHOLDS`**: Maximum occupancy rate allowed for intensive beds at each hospital. 
+- **`INTERMEDIATE_OCCUPANCY_THRESHOLDS`**: Maximum occupancy rate allowed for intermediate beds at each hospital.
 
 ### **Steps to Set Up `config.yaml`**
 1. Create a `config.yaml` file in the project root directory if it doesn’t already exist.
@@ -97,7 +97,7 @@ A virtual environment is required to isolate dependencies and prevent conflicts 
 ### **For Windows:**
 1. Create the virtual environment:
    ```bash
-   python -m venv env
+   python -m venv venv
    ```
 2. Activate the virtual environment:
    ```bash
@@ -121,6 +121,7 @@ pip install -r requirements.txt
    ```bash
    python main.py
    ```
+
 ### **For API:**
    ```bash
    uvicorn api:app --reload
@@ -130,6 +131,7 @@ pip install -r requirements.txt
 ---
 
 # **Libraries Used**
+
 Below is a list of libraries used in this project, along with their versions and specific purposes within the context of the project:
 
 | Library           | Version   | Purpose                                                                                          |

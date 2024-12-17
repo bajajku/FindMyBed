@@ -161,8 +161,9 @@ class HospitalRecommendation:
             )
         )
         # Set the nearest hospital
-        nearest_hospital = self.available_hospitals[0]
-        self.patient.nearestHospital = nearest_hospital.name
+        if self.available_hospitals:
+            nearest_hospital = self.available_hospitals[0]
+            self.patient.nearestHospital = nearest_hospital.name
 
         # Find the hospital with the best (lowest) occupancy rate
         best_occupancy_hospital = min(
@@ -205,7 +206,16 @@ class HospitalRecommendation:
             hospital for hospital in self.available_hospitals 
             if all(need in hospital.get_hospital_services() for need in self.patient.specialNeedType)
         ]
-        self.find_nearest_and_best_occupancy_hospitals()
+        #Assigning nearest hospital to patients who will be assigned to transport centre later on
+        temp_sorted_hospitals = sorted(
+            self.available_hospitals,
+            key=lambda hospital: calculate_distance(
+                hospital.geolocation,
+                self.patient.gpsPos
+            )
+        )
+        nearest_hospital = temp_sorted_hospitals[0]
+        self.patient.nearestHospital = nearest_hospital.name
         logging.info(f"Filtered hospitals based on services and occupancy: {[h.name for h in self.available_hospitals]}")
 
     def filter_bed_type(self) -> None:
@@ -222,27 +232,51 @@ class HospitalRecommendation:
             if hospital.get_capacity(self.patient.bedType) > 1
         ]
 
-    def filter_by_distance_and_occupancy_rate(self) -> None:
+    def filter_by_distance_and_occupancy_rate(self, weight_distance: float = 1.0, weight_occupancy: float = 0.0) -> None:
         """
-        Sort hospitals by distance to patient location.
+        Filter hospitals considering both distance and occupancy rate,
+        prioritizing based on a weighted score.
+
+        Args:
+            weight_distance (float): Weight for distance in the score calculation.
+            weight_occupancy (float): Weight for occupancy rate in the score calculation.
         """
         if not self.available_hospitals or not self.patient:
             return
 
-        logging.info(f"Sorting hospitals by distance from patient at {self.patient.gpsPos}")
+        logging.info(f"Sorting hospitals by distance and occupancy for patient at {self.patient.gpsPos}")
 
         #Sorting patients by occupancy rates, removing hospitals with higher occupancy than threshold value
         self.available_hospitals = [hospital for hospital in self.available_hospitals
-                                    if hospital.can_admit_patient(self.patient) ]
-        #Then sorting hospitals by distance
-        self.available_hospitals.sort(
-            key=lambda hospital: calculate_distance(
-                hospital.geolocation,
-                self.patient.gpsPos
-            )
-        )
+                                    if hospital.can_admit_patient(self.patient)]
+        self.find_nearest_and_best_occupancy_hospitals()
 
-        logging.info(f"Sorted hospitals by distance: "
+        # Calculate distances for all hospitals
+        distances = [
+            calculate_distance(hospital.geolocation, self.patient.gpsPos)
+            for hospital in self.available_hospitals
+        ]
+
+        # Find min and max distances for normalization
+        min_distance = min(distances)
+        max_distance = max(distances)
+
+        def calculate_hospital_score(hospital):
+            # Normalize distance
+            distance = calculate_distance(hospital.geolocation, self.patient.gpsPos)
+            if max_distance != min_distance:  # Avoid division by zero
+                normalized_distance = (distance - min_distance) / (max_distance - min_distance)
+            else:
+                normalized_distance = 0  # If all distances are the same, normalize to 0
+
+            occupancy = hospital.get_occupancy_rate(self.patient.bedType)  # Lower occupancy preferred
+
+            return weight_distance * normalized_distance + weight_occupancy * occupancy
+
+        # Sort hospitals by the calculated score
+        self.available_hospitals.sort(key=calculate_hospital_score)
+
+        logging.info(f"anked hospitals by distance and occupancy: "
                     f"{[hospital.name for hospital in self.available_hospitals]}")
 
     def get_top_hospitals(self) -> List[Hospital]:

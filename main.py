@@ -17,6 +17,10 @@ report_path = config['REPORT']
 table_path = config['TABLE']
 
 def main():
+
+    # clear patient log file
+    with open("output/patients_log.txt", "w") as file:
+        file.write("")
     
     results = simulate_hospital_system(num_days=number_of_days, excel=excel_path ,excel_newdata=excel_path_newdata)
     print_hospital_data(results)

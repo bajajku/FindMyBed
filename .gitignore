@@ -9,3 +9,4 @@ __pycache__/
 __temp_pipreqsnb_folder/
 
 output/
+logs/

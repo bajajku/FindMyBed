@@ -346,10 +346,7 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
 # Patient Processing Logic
 def create_patient(hour, births_by_fsa, data_loader):
     patient_type = random.choice(PATIENT_TYPE)
-    # Current transport data has only neonatal patient type so I set the type as "Neonatal" for now 
-    #patient_type ="Neonatal"
     postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
-    bed_type = data_loader.assign_bed_type_poisson()
 
     if patient_type == "Maternal":
         # Determine if delivery is within 24 hours
@@ -363,7 +360,6 @@ def create_patient(hour, births_by_fsa, data_loader):
         patientType=patient_type,
         gpsPos=gps_pos,
         postalCode=postal_code,
-        bedType=bed_type,
         del24HrPlus=del24HrPlus,
         transportNeedCnt=random.randint(0, 3),
         specialNeedType=special_needs,
@@ -390,7 +386,6 @@ def create_patient(hour, births_by_fsa, data_loader):
     # Log patient attributes in a readable format
     logging.info("Patient Created:")
     logging.info(f"  Postal Code: {postal_code}")
-    logging.info(f"  Bed Type: {bed_type}")
     logging.info(f"  Special Needs: {', '.join(special_needs)}")
     logging.info(f"  Arrival Time: {hour}:00")
     logging.info(f"  GPS Position: {gps_pos}")

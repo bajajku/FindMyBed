@@ -374,8 +374,8 @@ def create_patient(hour, births_by_fsa, data_loader):
         arrived_at_hospital=False,
         queue_position=0,
         # new attrobutes 
-        DaysOldOnAdmission = random.randint(20, 40)
-        GestationalAgeWeeks = random.randint(0, 10)
+        DaysOldOnAdmission = random.randint(20, 40),
+        GestationalAgeWeeks = random.randint(0, 10),
         minorCongAnomaly = bool(random.randint(0, 1)),
         majorCongAnomaly = bool(random.randint(0, 1)),
         cardiacCongAnomaly = bool(random.randint(0, 1)),

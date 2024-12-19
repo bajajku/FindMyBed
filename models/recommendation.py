@@ -125,7 +125,7 @@ class HospitalRecommendation:
             self.patient.condition = 3
 
         # Condition 4: Prematurity (GA<26 weeks)
-        elif is_prematurity_ga_lt_26:
+        elif self.patient.GestationalAgeWeeks < 26:
             valid_hospitals = ["CUSM", "CHU-SJ", "HGJ", "CHUQ", "CHUS"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals

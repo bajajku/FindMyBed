@@ -71,7 +71,20 @@ class SimulatedPatient:
     nearestHospital :str = ""
     bestOccupancyHospital: str = ""
     # Adding a new attribute to manage hospital restrictions for generating patient tables.
-    condition: int = 0 
+    condition: int = 0
+    DaysOldOnAdmission: int = 0 # J Column 
+    GestationalAgeWeeks: int = 0 # K Column 
+    minorCongAnomaly: bool = False # N Column 
+    majorCongAnomaly: bool = False # O Colummn 
+    cardiacCongAnomaly: bool = False # P 
+    neuroCongAnomaly: bool  = False # Q
+    CDH: bool = False # R
+    Gastroschisis: bool = False # S
+    HIE: bool  = False # T
+    iNOFirstAdmDay1: bool = False # U 
+    iNODuringStay: bool = False # V
+    HighestRSuppOn1stAdmDay1: str = None # W
+
 
     def get_arrival_time_index(self) -> int:
         return ARRIVAL_TIMES.index(self.arrival_time)

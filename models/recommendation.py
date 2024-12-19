@@ -98,28 +98,18 @@ class HospitalRecommendation:
         )
     def apply_restrictions(self) -> None:
         """Filter hospitals based on service availability and occupancy rate."""
-        condition2_services = ["Neurology", "Cardiology"]
-        condition3_services = [ "General Surgery", "Genetic","Gastroenterology","Plastic Surgery","Respirology"]
-
         # Helper checks
         is_prematurity_ga_lt_26 = "Prematurity (GA<26 weeks)" in self.patient.specialNeeds
-        has_condition2_services = any(service in self.patient.specialNeeds for service in condition2_services)
-        has_condition3_services = any(service in self.patient.specialNeeds for service in condition3_services)
 
-
-        # TODO: Fix this. This is a temporary fix to avoid the error.
-        '''For now I have added hasattr check for postalCode, as patient doesn't have postalCode attribute.
-        so this is just a temporary check to avoid the error. This will be updated once the patient class is updated.
-        '''
-        # Condition 1: Indigenous patients
-        if hasattr(self.patient, "postalCode") and self.patient.postalCode == "J0M":
+        # Condition 1: First Nations 
+        if self.patient.postalCode == "J0M" or self.patient.postalCode[0] in ("X", "Y"):
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name == "CUSM"
             ]
             self.patient.condition = 1
 
         # Condition 2: Major anomaly AND cardiac OR neuro
-        elif has_condition2_services:
+        elif (self.patient.majorCongAnomaly and self.patient.neuroCongAnomaly or  self.patient.cardiacCongAnomaly or self.patient.HIE):
             valid_hospitals = ["CUSM", "CHU-SJ", "CHUQ"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
@@ -127,8 +117,7 @@ class HospitalRecommendation:
             self.patient.condition = 2
 
         # Condition 3: Major anomaly BUT not condition 2 or prematurity
-#        elif not has_condition2_services and not is_prematurity_ga_lt_26:
-        elif has_condition3_services:
+        elif (self.patient.majorCongAnomaly and not (self.patient.cardiacCongAnomaly or self.patient.neuroCongAnomaly or self.patient.HIE or self.patient.CDH)):
             valid_hospitals = ["CUSM", "CHU-SJ", "CHUQ", "CHUS"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals

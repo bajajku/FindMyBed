@@ -372,7 +372,20 @@ def create_patient(hour, births_by_fsa, data_loader):
         aniGpsPos= latlon_to_pixel(gps_pos[0], gps_pos[1], map_width, map_height, map_bounds),
         discharged=False,
         arrived_at_hospital=False,
-        queue_position=0
+        queue_position=0,
+        # new attrobutes 
+        DaysOldOnAdmission = random.randint(20, 40)
+        GestationalAgeWeeks = random.randint(0, 10)
+        minorCongAnomaly = bool(random.randint(0, 1)),
+        majorCongAnomaly = bool(random.randint(0, 1)),
+        cardiacCongAnomaly = bool(random.randint(0, 1)),
+        neuroCongAnomaly = bool(random.randint(0, 1)),
+        CDH = bool(random.randint(0, 1)),
+        Gastroschisis = bool(random.randint(0, 1)),
+        HIE = bool(random.randint(0, 1)),
+        iNOFirstAdmDay1 = bool(random.randint(0, 1)),
+        iNODuringStay= bool(random.randint(0, 1)),
+        HighestRSuppOn1stAdmDay1 = bool(random.randint(0, 1))
     )
     # Log patient attributes in a readable format
     logging.info("Patient Created:")
@@ -417,5 +430,6 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
             "is it assigned to the best option (both occupancy and distance)": (
                 patient.nearestHospital == patient.assignedHospital and
                 patient.bestOccupancyHospital == patient.assignedHospital
-            )
+            ), 
+            "Best Occupancy Hospital" : patient.bestOccupancyHospital 
         })

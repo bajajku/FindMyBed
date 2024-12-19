@@ -431,5 +431,7 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
                 patient.nearestHospital == patient.assignedHospital and
                 patient.bestOccupancyHospital == patient.assignedHospital
             ), 
-            "Best Occupancy Hospital" : patient.bestOccupancyHospital 
+            "Best Occupancy Hospital" : patient.bestOccupancyHospital
+            
+
         })

@@ -29,6 +29,7 @@ class HospitalRecommendation:
     states = [
         'input',
         'condition_check',
+        'bed_type_determination' , 
         'discharge_patients',
         'service_determination',
         'bed_type_check',
@@ -64,11 +65,15 @@ class HospitalRecommendation:
             dest='condition_check',
             after='apply_restrictions'
         )
-
-        # Define transitions
         self.machine.add_transition(
             trigger='check_conditions',
             source='condition_check',
+            dest='bed_type_determination',
+            after='decide_bed_type'
+        )
+        self.machine.add_transition(
+            trigger='decide_bedtype',
+            source='bed_type_determination',
             dest='service_determination',
             after=['home_hospital_check', 'determine_services']
         )
@@ -141,6 +146,27 @@ class HospitalRecommendation:
             self.patient.condition = 5
         logging.info(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
 
+    def decide_bed_type(self) -> None:
+        """Decide the bed types based on the attributes """
+
+        # Condition 1: GA < 32 weeks and admitted < 2 days after birth => INTENSIVE
+        if self.patient.GestationalAgeWeeks < 32 and self.patient.DaysOldOnAdmission < 2:
+            self.bed_type = "Intensive"
+        
+        # Condition 2: If HIE or any major congenital anomaly => INTENSIVE
+        elif self.patient.HIE or self.patient.majorCongAnomaly or self.patient.cardiacCongAnomaly or self.patient.neuroCongAnomaly:
+            self.bed_type = "Intensive"
+        
+        # Condition 3: If iNO day 1 => INTENSIVE
+        elif self.patient.iNOFirstAdmDay1:
+            self.bed_type = "Intensive"
+        
+        # Condition 4: If respiratory support on day 1 is one of the specified values => INTENSIVE
+        elif self.patient.HighestRSuppOn1stAdmDay1 in ["IPPV", "HFOV", "HFJT", "NIV", "CPAP", "High flow"]:
+            self.bed_type = "Intensive"
+        else:
+            self.bed_type = "Intermediate"
+        logging.info(f"Patient's bed type is  : {self.patient.bedType}")
 
     def find_nearest_and_best_occupancy_hospitals(self) -> None:
         """
@@ -377,6 +403,7 @@ class HospitalRecommendation:
         # Execute state machine transitions
         self.process_input()
         self.check_conditions()
+        self.decide_bedtype()
         self.determine_service()
         self.check_bed_type()
         self.check_geographic_distance()

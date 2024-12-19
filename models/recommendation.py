@@ -109,7 +109,7 @@ class HospitalRecommendation:
             self.patient.condition = 1
 
         # Condition 2: Major anomaly AND cardiac OR neuro
-        elif (self.patient.majorCongAnomaly and self.patient.neuroCongAnomaly or  self.patient.cardiacCongAnomaly or self.patient.HIE):
+        elif (self.patient.majorCongAnomaly and (self.patient.neuroCongAnomaly or self.patient.cardiacCongAnomaly or self.patient.HIE)):
             valid_hospitals = ["CUSM", "CHU-SJ", "CHUQ"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals

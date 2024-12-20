@@ -24,7 +24,7 @@ def get_patients(excel_file: str, sheet):
         postalCode = row['PostalCode']
         firstSiteCode = row['firstSiteCode']
 
-        if pd.isna(postalCode)
+        if pd.isna(postalCode):
             continue
         # Determine patient type
         patient_type = "Neonatal"

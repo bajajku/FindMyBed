@@ -101,6 +101,7 @@ def get_fsa_center(fsa_code: str) -> Tuple[float, float]:
         return (45.764001, -73.811363)
     elif fsa_code == 'J3J':
         return (2.6143617,-76.3771967)
+    
     else:
         fsa_info = fsa_codes[fsa_code]
         if fsa_info:

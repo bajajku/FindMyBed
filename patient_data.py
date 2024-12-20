@@ -31,7 +31,13 @@ def get_patients(excel_file: str, sheet):
 
         special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 1))
         print(postalCode)
-        gpsPos = get_fsa_center(postalCode[:3])
+        try:
+            # Try to get the GPS position using the postal code
+            gpsPos = get_fsa_center(postalCode[:3])
+        except Exception as e:
+            # Handle the error (e.g., postal code not found)
+            print(f"Error retrieving GPS for postal code {postalCode}: {e}")
+            gpsPos = (0, 0)  # Default value if error occurs, or you can set another fallback
         
         print(gpsPos)
         # Determine condition
@@ -68,6 +74,6 @@ def get_patients(excel_file: str, sheet):
 
 sheets_to_load = ['2021-01-11 to 2021-12-31', '2022-10-01 to 2022-12-31', '2023-01-01 to 2023-12-31']
 
-patients = get_patients("data/Patients_data2.xlsx", sheets_to_load[0])
+patients = get_patients("data/Patients_data3.xlsx", sheets_to_load[0])
 
 print(patients[0])

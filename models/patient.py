@@ -51,6 +51,9 @@ class SimulatedPatient:
         queue_position (int): Patient's position in queue
         bedType (str): Type of bed required, defaults to empty string
     """
+    def __init__(self):
+        self.decide_bed_type()
+        self.decide_condition()
     # We set these up
     patientType: str
     # del24HrPlus: bool

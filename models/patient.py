@@ -113,4 +113,27 @@ class SimulatedPatient:
         else:
             self.patient.bedType = "Intermediate"
     
-    
+    def apply_restrictions(self) -> None:
+        """Filter hospitals based on service availability and occupancy rate."""
+        # Helper checks
+        is_prematurity_ga_lt_26 = "Prematurity (GA<26 weeks)" in self.patient.specialNeeds
+
+        # Condition 1: First Nations 
+        if self.patient.postalCode[:3] == "J0M" or self.patient.postalCode[0] in ("X", "Y"):
+            self.patient.condition = 1
+
+        # Condition 2: Major anomaly AND cardiac OR neuro
+        elif (self.patient.majorCongAnomaly and (self.patient.neuroCongAnomaly or self.patient.cardiacCongAnomaly or self.patient.HIE)):
+            self.patient.condition = 2
+
+        # Condition 3: Major anomaly BUT not condition 2 or prematurity
+        elif (self.patient.majorCongAnomaly and not (self.patient.cardiacCongAnomaly or self.patient.neuroCongAnomaly or self.patient.HIE or self.patient.CDH)):
+            self.patient.condition = 3
+
+        # Condition 4: Prematurity (GA<26 weeks)
+        elif self.patient.GestationalAgeWeeks < 26:
+            self.patient.condition = 4
+
+        # Condition 5
+        else:
+            self.patient.condition = 5

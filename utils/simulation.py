@@ -90,7 +90,7 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
                     gpsPos=hospital.geolocation,
                     postalCode="None",
                     bedType=bed_type,
-                    del24HrPlus=False,
+                    # del24HrPlus=False,
                     transportNeedCnt=0,
                     specialNeedType=["None"],
                     specialNeeds=["None"],

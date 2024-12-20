@@ -48,10 +48,8 @@ def get_patients(excel_file: str, sheet):
             condition = 3
         elif not pd.isna(Condition4):
             condition = 4
-        elif not pd.isna(Condition5):
-            condition = 5
         else:
-            condition = 0  # If all conditions are "No match" or NaN
+            condition = 5
         # Create a simulated patient instance
         # still need to set patientArrival, and patientAniGpsPos
         patient = SimulatedPatient(

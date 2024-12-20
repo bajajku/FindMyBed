@@ -98,7 +98,7 @@ class HospitalRecommendation:
         )
     def apply_restrictions(self) -> None:
         """Filter hospitals based on service availability and occupancy rate."""
-
+        logging.info(self.patient.condition)
         # Condition 1: First Nations 
         if self.patient.condition == 1:
             self.available_hospitals = [

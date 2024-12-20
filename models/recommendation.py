@@ -139,27 +139,28 @@ class HospitalRecommendation:
             ]
         logging.info(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
 
-    def decide_bed_type(self) -> None:
-        """Decide the bed types based on the attributes """
+    '''Shifted to patient.py'''
+    # def decide_bed_type(self) -> None:
+    #     """Decide the bed types based on the attributes """
 
-        # Condition 1: GA < 32 weeks and admitted < 2 days after birth => INTENSIVE
-        if self.patient.GestationalAgeWeeks < 32 and self.patient.DaysOldOnAdmission < 2:
-            self.patient.bedType = "Intensive"
+    #     # Condition 1: GA < 32 weeks and admitted < 2 days after birth => INTENSIVE
+    #     if self.patient.GestationalAgeWeeks < 32 and self.patient.DaysOldOnAdmission < 2:
+    #         self.patient.bedType = "Intensive"
         
-        # Condition 2: If HIE or any major congenital anomaly => INTENSIVE
-        elif self.patient.HIE or self.patient.majorCongAnomaly or self.patient.cardiacCongAnomaly or self.patient.neuroCongAnomaly:
-            self.patient.bedType = "Intensive"
+    #     # Condition 2: If HIE or any major congenital anomaly => INTENSIVE
+    #     elif self.patient.HIE or self.patient.majorCongAnomaly or self.patient.cardiacCongAnomaly or self.patient.neuroCongAnomaly:
+    #         self.patient.bedType = "Intensive"
         
-        # Condition 3: If iNO day 1 => INTENSIVE
-        elif self.patient.iNOFirstAdmDay1:
-            self.patient.bedType = "Intensive"
+    #     # Condition 3: If iNO day 1 => INTENSIVE
+    #     elif self.patient.iNOFirstAdmDay1:
+    #         self.patient.bedType = "Intensive"
         
-        # Condition 4: If respiratory support on day 1 is one of the specified values => INTENSIVE
-        elif self.patient.HighestRSuppOn1stAdmDay1 in ["IPPV", "HFOV", "HFJT", "NIV", "CPAP", "High flow"]:
-            self.patient.bedType = "Intensive"
-        else:
-            self.patient.bedType = "Intermediate"
-        logging.info(f"Patient's bed type is  : {self.patient.bedType}")
+    #     # Condition 4: If respiratory support on day 1 is one of the specified values => INTENSIVE
+    #     elif self.patient.HighestRSuppOn1stAdmDay1 in ["IPPV", "HFOV", "HFJT", "NIV", "CPAP", "High flow"]:
+    #         self.patient.bedType = "Intensive"
+    #     else:
+    #         self.patient.bedType = "Intermediate"
+    #     logging.info(f"Patient's bed type is  : {self.patient.bedType}")
 
     def find_nearest_and_best_occupancy_hospitals(self) -> None:
         """

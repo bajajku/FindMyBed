@@ -51,26 +51,25 @@ class SimulatedPatient:
         queue_position (int): Patient's position in queue
         bedType (str): Type of bed required, defaults to empty string
     """
+    # We set these up
     patientType: str
     gpsPos: Tuple[float, float]
     postalCode: str
-    del24HrPlus: bool
-    transportNeedCnt: int
-    specialNeedType: str
-    specialNeeds: List[str]
+    # del24HrPlus: bool
+    # transportNeedCnt: int
+    # specialNeedType: str
+    # specialNeeds: List[str]
     arrival_time: int
     aniGpsPos: list
     discharged: bool
     arrived_at_hospital: bool
     queue_position: int
-    bedType: str = ""
     assignedHospital: str = ""
     homeHospital: Optional[str] = None
     distanceToHospital : int = 0
-    # To check what's the best option in terms of distance and occupancy rate 
-    nearestHospital :str = ""
-    bestOccupancyHospital: str = ""
-    # Adding a new attribute to manage hospital restrictions for generating patient tables.
+
+    #From the excel sheet
+    bedType: str = ""
     condition: int = 0
     DaysOldOnAdmission: int = 0 # J Column 
     GestationalAgeWeeks: int = 0 # K Column 
@@ -85,6 +84,9 @@ class SimulatedPatient:
     iNODuringStay: bool = False # V
     HighestRSuppOn1stAdmDay1: str = None # W
 
+    # we will decide these based on algorithm
+    nearestHospital :str = ""
+    bestOccupancyHospital: str = ""
 
     def get_arrival_time_index(self) -> int:
         return ARRIVAL_TIMES.index(self.arrival_time)

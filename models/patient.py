@@ -73,6 +73,7 @@ class SimulatedPatient:
     postalCode: str = ""
     bedType: str = ""
     condition: int = 0
+    firstSiteCode: str = ""
 
     # we will decide these based on algorithm
     nearestHospital :str = ""

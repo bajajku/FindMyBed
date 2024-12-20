@@ -22,12 +22,17 @@ def get_patients(excel_file: str, sheet):
         Condition4 = row['Condition 4']
         Condition5 = row['Condition 5']
         postalCode = row['PostalCode']
+        firstSiteCode = row['firstSiteCode']
+
+        if pd.isna(postalCode)
+            continue
         # Determine patient type
         patient_type = "Neonatal"
 
         special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 1))
-
+        print(postalCode)
         gpsPos = get_fsa_center(postalCode[:3])
+        
         print(gpsPos)
         # Determine condition
         if Condition1 != "No Match":
@@ -54,7 +59,8 @@ def get_patients(excel_file: str, sheet):
             queue_position=0,
             postalCode=postalCode,
             bedType=bedType,
-            condition=condition
+            condition=condition,
+            firstSiteCode=firstSiteCode
         )
         patients.append(patient)
 

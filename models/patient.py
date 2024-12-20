@@ -57,32 +57,22 @@ class SimulatedPatient:
     transportNeedCnt: int
     specialNeedType: str
     specialNeeds: List[str]
-    arrival_time: int
-    aniGpsPos: list
+    
     discharged: bool
     arrived_at_hospital: bool
     queue_position: int
     assignedHospital: str = ""
     homeHospital: Optional[str] = None
     distanceToHospital : int = 0
+    aniGpsPos: list = None
+    arrival_time: int = 0
+
 
     #From the excel sheet
     gpsPos: Tuple[float, float] = (0,0)
     postalCode: str = ""
     bedType: str = ""
     condition: int = 0
-    DaysOldOnAdmission: int = 0 # J Column 
-    GestationalAgeWeeks: int = 0 # K Column 
-    minorCongAnomaly: bool = False # N Column 
-    majorCongAnomaly: bool = False # O Colummn 
-    cardiacCongAnomaly: bool = False # P 
-    neuroCongAnomaly: bool  = False # Q
-    CDH: bool = False # R
-    Gastroschisis: bool = False # S
-    HIE: bool  = False # T
-    iNOFirstAdmDay1: bool = False # U 
-    iNODuringStay: bool = False # V
-    HighestRSuppOn1stAdmDay1: str = None # W
 
     # we will decide these based on algorithm
     nearestHospital :str = ""

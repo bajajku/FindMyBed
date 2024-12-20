@@ -343,6 +343,7 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
 
     return all_patients_arrived
 
+
 # Patient Processing Logic
 def create_patient(hour, births_by_fsa, data_loader):
     patient_type = random.choice(PATIENT_TYPE)
@@ -384,20 +385,23 @@ def create_patient(hour, births_by_fsa, data_loader):
         HighestRSuppOn1stAdmDay1 = bool(random.randint(0, 1))
     )
     # Log patient attributes in a readable format
+    log_patient_attributes(patient)
+    
+    return patient
+
+def log_patient_attributes(patient):
     logging.info("Patient Created:")
-    logging.info(f"  Postal Code: {postal_code}")
-    logging.info(f"  Special Needs: {', '.join(special_needs)}")
-    logging.info(f"  Arrival Time: {hour}:00")
-    logging.info(f"  GPS Position: {gps_pos}")
-    logging.info(f"  Patient Type: {patient_type}")
-    logging.info(f"  Delivery within 24 Hours: {del24HrPlus}")
+    logging.info(f"  Postal Code: {patient.postalCode}")
+    logging.info(f"  Special Needs: {', '.join(patient.specialNeeds)}")
+    logging.info(f"  Arrival Time: {patient.arrival_time}:00")
+    logging.info(f"  GPS Position: {patient.gpsPos}")
+    logging.info(f"  Patient Type: {patient.patientType}")
+    logging.info(f"  Delivery within 24 Hours: {patient.del24HrPlus}")
     logging.info(f"  Transport Need Count: {patient.transportNeedCnt}")
     logging.info(f"  Animation GPS Position: {patient.aniGpsPos}")
     logging.info(f"  Discharged: {patient.discharged}")
     logging.info(f"  Arrived at Hospital: {patient.arrived_at_hospital}")
     logging.info(f"  Queue Position: {patient.queue_position}")
-    
-    return patient
 
 def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
     recommendation_system.run(patient)

@@ -6,6 +6,7 @@ from models.PausePlayButton import PausePlayButton
 from models.hospital import Hospital
 from models.patient import SimulatedPatient
 from models.recommendation import HospitalRecommendation
+from patient_data import get_patients
 from utils.constants import *
 from utils.data_loader import DataLoader
 from utils.geographic import fsa_to_coordinates, calculate_distance, \
@@ -121,6 +122,10 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
     data_loader = DataLoader()
     data_loader.load_data(excel_file=excel)
     HOSPITALS = data_loader.create_hospitals()
+
+    # TODO: Concatenate the sheets to load
+    sheets_to_load = ['2021-01-11 to 2021-12-31', '2022-10-01 to 2022-12-31', '2023-01-01 to 2023-12-31']
+    patients = get_patients("data/Patients_data3.xlsx", sheets_to_load[0])
 
     births_by_fsa = data_loader.calculate_birth_rates_by_fsa(excel_file=excel_newdata)
     recommendation_system = HospitalRecommendation(HOSPITALS)

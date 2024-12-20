@@ -3,7 +3,6 @@ import numpy as np
 from models.patient import SimulatedPatient
 import pandas as pd
 import random
-
 from utils.constants import NEONATAL_SPECIAL_NEEDS
 from utils.geographic import  get_fsa_center
 

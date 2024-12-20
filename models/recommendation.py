@@ -103,47 +103,40 @@ class HospitalRecommendation:
         )
     def apply_restrictions(self) -> None:
         """Filter hospitals based on service availability and occupancy rate."""
-        # Helper checks
-        is_prematurity_ga_lt_26 = "Prematurity (GA<26 weeks)" in self.patient.specialNeeds
 
         # Condition 1: First Nations 
-        if self.patient.postalCode == "J0M" or self.patient.postalCode[0] in ("X", "Y"):
+        if self.patient.condition == 1:
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name == "CUSM"
             ]
-            self.patient.condition = 1
 
         # Condition 2: Major anomaly AND cardiac OR neuro
-        elif (self.patient.majorCongAnomaly and (self.patient.neuroCongAnomaly or self.patient.cardiacCongAnomaly or self.patient.HIE)):
+        elif (self.patient.condition == 2):
             valid_hospitals = ["CUSM", "CHU-SJ", "CHUQ"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
-            ]
-            self.patient.condition = 2
+            ]   
 
         # Condition 3: Major anomaly BUT not condition 2 or prematurity
-        elif (self.patient.majorCongAnomaly and not (self.patient.cardiacCongAnomaly or self.patient.neuroCongAnomaly or self.patient.HIE or self.patient.CDH)):
+        elif (self.patient.condition == 3):
             valid_hospitals = ["CUSM", "CHU-SJ", "CHUQ", "CHUS"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
             ]
-            self.patient.condition = 3
 
         # Condition 4: Prematurity (GA<26 weeks)
-        elif self.patient.GestationalAgeWeeks < 26:
+        elif self.patient.condition == 4:
             valid_hospitals = ["CUSM", "CHU-SJ", "HGJ", "CHUQ", "CHUS"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
             ]
-            self.patient.condition = 4
-
+            
         # Condition 5
-        else:
+        elif self.patient.condition == 5:
             valid_hospitals = ["CUSM", "CHU-SJ", "HGJ", "CHUQ", "CHUS", "HMR"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
             ]
-            self.patient.condition = 5
         logging.info(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
 
     def decide_bed_type(self) -> None:

@@ -113,11 +113,8 @@ class SimulatedPatient:
         else:
             self.patient.bedType = "Intermediate"
     
-    def apply_restrictions(self) -> None:
+    def decide_condition(self) -> None:
         """Filter hospitals based on service availability and occupancy rate."""
-        # Helper checks
-        is_prematurity_ga_lt_26 = "Prematurity (GA<26 weeks)" in self.patient.specialNeeds
-
         # Condition 1: First Nations 
         if self.patient.postalCode[:3] == "J0M" or self.patient.postalCode[0] in ("X", "Y"):
             self.patient.condition = 1

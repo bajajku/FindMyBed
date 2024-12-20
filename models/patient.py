@@ -55,7 +55,7 @@ class SimulatedPatient:
         self.decide_bed_type()
         self.decide_condition()
     # We set these up
-    patientType: str
+    patientType: str 
     # del24HrPlus: bool
     # transportNeedCnt: int
     # specialNeedType: str
@@ -90,7 +90,6 @@ class SimulatedPatient:
     # we will decide these based on algorithm
     nearestHospital :str = ""
     bestOccupancyHospital: str = ""
-
 
     def get_arrival_time_index(self) -> int:
         return ARRIVAL_TIMES.index(self.arrival_time)

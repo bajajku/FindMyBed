@@ -57,7 +57,7 @@ def get_patients(excel_file: str, sheet):
         # still need to set patientArrival, and patientAniGpsPos
         patient = SimulatedPatient(
             patientType=patient_type,
-            gpsPos=(0, 0),
+            gpsPos=gpsPos,
             transportNeedCnt=random.randint(0, 3),
             specialNeedType=special_needs,
             specialNeeds=special_needs,

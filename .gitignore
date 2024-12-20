@@ -10,3 +10,4 @@ __temp_pipreqsnb_folder/
 
 output/
 logs/
+*.log

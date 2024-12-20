@@ -29,7 +29,6 @@ class HospitalRecommendation:
     states = [
         'input',
         'condition_check',
-        'bed_type_determination' , 
         'discharge_patients',
         'service_determination',
         'bed_type_check',
@@ -65,15 +64,11 @@ class HospitalRecommendation:
             dest='condition_check',
             after='apply_restrictions'
         )
+
+        # Define transitions
         self.machine.add_transition(
             trigger='check_conditions',
             source='condition_check',
-            dest='bed_type_determination',
-            after='decide_bed_type'
-        )
-        self.machine.add_transition(
-            trigger='decide_bedtype',
-            source='bed_type_determination',
             dest='service_determination',
             after=['home_hospital_check', 'determine_services']
         )
@@ -397,7 +392,6 @@ class HospitalRecommendation:
         # Execute state machine transitions
         self.process_input()
         self.check_conditions()
-        self.decide_bedtype()
         self.determine_service()
         self.check_bed_type()
         self.check_geographic_distance()

@@ -94,14 +94,17 @@ def get_fsa_center(fsa_code: str) -> Tuple[float, float]:
     Returns:
         Tuple[float, float]: The latitude and longitude of the FSA center.
     """
-    while True:
-        # error happens only for the case when the fsa is J5N, put the manual output, will be edited
-        if fsa_code=="J5N":
-            return (45.764001, -73.811363)
-        else:
-            fsa_info = fsa_codes[fsa_code]
-            if fsa_info:
-                return float(fsa_info.latitude), float(fsa_info.longitude)
+    
+    # error happens only for the case when the fsa is J5N, put the manual output, will be edited
+
+    if fsa_code=="J5N":
+        return (45.764001, -73.811363)
+    elif fsa_code == 'J3J':
+        return (2.6143617,-76.3771967)
+    else:
+        fsa_info = fsa_codes[fsa_code]
+        if fsa_info:
+            return float(fsa_info.latitude), float(fsa_info.longitude)
 
 def get_hospital_coord(hospital_name: str)-> Tuple[float, float]:
     """

@@ -5,7 +5,7 @@ import pandas as pd
 import random
 
 from utils.constants import NEONATAL_SPECIAL_NEEDS
-from utils.geographic import get_coordinates_by_postal_code, latlon_to_pixel, get_fsa_center
+from utils.geographic import  get_fsa_center
 
 
 
@@ -54,6 +54,7 @@ def get_patients(excel_file: str, sheet):
         else:
             condition = 0  # If all conditions are "No match" or NaN
         # Create a simulated patient instance
+        # still need to set patientArrival, and patientAniGpsPos
         patient = SimulatedPatient(
             patientType=patient_type,
             gpsPos=(0, 0),

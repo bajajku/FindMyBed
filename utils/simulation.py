@@ -187,10 +187,11 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
                     arrivedDischarged[hospital.name][2] += occupancy_rates_intensive
                     arrivedDischarged[hospital.name][3] += occupancy_rates_intermediate
 
+                index = 0
                 # Create and simulate each patient
                 for i in range(num_patients):
                     #create patient
-                    patient = create_patient(hour, births_by_fsa, data_loader)
+                    patient = create_patient(hour, index)
                     patients.append(patient)  # Add patient to the list
                     # Run the patient through the recommendation system
                     print(f"\nProcessing Patient {i + 1}")
@@ -346,47 +347,47 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
 
 # Patient Processing Logic
 def create_patient(hour, births_by_fsa, data_loader):
-    patient_type = random.choice(PATIENT_TYPE)
-    postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
+    # patient_type = random.choice(PATIENT_TYPE)
+    # postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
 
-    if patient_type == "Maternal":
-        # Determine if delivery is within 24 hours
-        del24HrPlus = random.choice([True, False])
-        special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 1))
-    else:
-        del24HrPlus = False
-        special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 1))
+    # if patient_type == "Maternal":
+    #     # Determine if delivery is within 24 hours
+    #     del24HrPlus = random.choice([True, False])
+    #     special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 1))
+    # else:
+    #     del24HrPlus = False
+    #     special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 1))
 
-    patient = SimulatedPatient(
-        patientType=patient_type,
-        gpsPos=gps_pos,
-        postalCode=postal_code,
-        del24HrPlus=del24HrPlus,
-        transportNeedCnt=random.randint(0, 3),
-        specialNeedType=special_needs,
-        specialNeeds=special_needs,
-        arrival_time=hour,
-        aniGpsPos= latlon_to_pixel(gps_pos[0], gps_pos[1], map_width, map_height, map_bounds),
-        discharged=False,
-        arrived_at_hospital=False,
-        queue_position=0,
-        # new attrobutes 
-        DaysOldOnAdmission = random.randint(20, 40),
-        GestationalAgeWeeks = random.randint(0, 10),
-        minorCongAnomaly = bool(random.randint(0, 1)),
-        majorCongAnomaly = bool(random.randint(0, 1)),
-        cardiacCongAnomaly = bool(random.randint(0, 1)),
-        neuroCongAnomaly = bool(random.randint(0, 1)),
-        CDH = bool(random.randint(0, 1)),
-        Gastroschisis = bool(random.randint(0, 1)),
-        HIE = bool(random.randint(0, 1)),
-        iNOFirstAdmDay1 = bool(random.randint(0, 1)),
-        iNODuringStay= bool(random.randint(0, 1)),
-        HighestRSuppOn1stAdmDay1 = bool(random.randint(0, 1))
-    )
-    # Log patient attributes in a readable format
-    log_patient_attributes(patient)
-    
+    # patient = SimulatedPatient(
+    #     patientType=patient_type,
+    #     gpsPos=gps_pos,
+    #     postalCode=postal_code,
+    #     del24HrPlus=del24HrPlus,
+    #     transportNeedCnt=random.randint(0, 3),
+    #     specialNeedType=special_needs,
+    #     specialNeeds=special_needs,
+    #     arrival_time=hour,
+    #     aniGpsPos= latlon_to_pixel(gps_pos[0], gps_pos[1], map_width, map_height, map_bounds),
+    #     discharged=False,
+    #     arrived_at_hospital=False,
+    #     queue_position=0,
+    #     # new attrobutes 
+    #     DaysOldOnAdmission = random.randint(20, 40),
+    #     GestationalAgeWeeks = random.randint(0, 10),
+    #     minorCongAnomaly = bool(random.randint(0, 1)),
+    #     majorCongAnomaly = bool(random.randint(0, 1)),
+    #     cardiacCongAnomaly = bool(random.randint(0, 1)),
+    #     neuroCongAnomaly = bool(random.randint(0, 1)),
+    #     CDH = bool(random.randint(0, 1)),
+    #     Gastroschisis = bool(random.randint(0, 1)),
+    #     HIE = bool(random.randint(0, 1)),
+    #     iNOFirstAdmDay1 = bool(random.randint(0, 1)),
+    #     iNODuringStay= bool(random.randint(0, 1)),
+    #     HighestRSuppOn1stAdmDay1 = bool(random.randint(0, 1))
+    # )
+    # # Log patient attributes in a readable format
+    # log_patient_attributes(patient)
+    # patient =     
     return patient
 
 def log_patient_attributes(patient):

@@ -20,13 +20,16 @@ def get_patients(excel_file: str):
     for _, row in combined_data.iterrows():
         # Create a SimulatedPatient instance for each row
         patient = SimulatedPatient(
-            patientType="Neonatal",
+            patientType = "Neonatal",
             postalCode=row['PostalCode'],
             discharged=False,
             arrived_at_hospital=False,
             queue_position=0,
             arrival_time= 0, # should be changed 
             aniGpsPos=[0,1,2], # should be changed
+            transportNeedCnt=0,
+            specialNeedType=[''],
+            specialNeeds=[''],
             # new attributes 
             DaysOldOnAdmission=row['Days old on admission'] ,
             GestationalAgeWeeks=row['Gestational AgeWeeks'],
@@ -48,5 +51,5 @@ def get_patients(excel_file: str):
     # Return the list of patients
     return patients
 
-patients = get_patients('data/For Nick-Nov19-FindMyBed-transportData 2021 to 2023-Bed Type-hospital options.xlsx')
-print(len(patients))
+patients = get_patients('data/Patients_data2.xlsx')
+print(patients[0])

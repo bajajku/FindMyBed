@@ -134,29 +134,6 @@ class HospitalRecommendation:
             ]
         logging.info(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
 
-    '''Shifted to patient.py'''
-    # def decide_bed_type(self) -> None:
-    #     """Decide the bed types based on the attributes """
-
-    #     # Condition 1: GA < 32 weeks and admitted < 2 days after birth => INTENSIVE
-    #     if self.patient.GestationalAgeWeeks < 32 and self.patient.DaysOldOnAdmission < 2:
-    #         self.patient.bedType = "Intensive"
-        
-    #     # Condition 2: If HIE or any major congenital anomaly => INTENSIVE
-    #     elif self.patient.HIE or self.patient.majorCongAnomaly or self.patient.cardiacCongAnomaly or self.patient.neuroCongAnomaly:
-    #         self.patient.bedType = "Intensive"
-        
-    #     # Condition 3: If iNO day 1 => INTENSIVE
-    #     elif self.patient.iNOFirstAdmDay1:
-    #         self.patient.bedType = "Intensive"
-        
-    #     # Condition 4: If respiratory support on day 1 is one of the specified values => INTENSIVE
-    #     elif self.patient.HighestRSuppOn1stAdmDay1 in ["IPPV", "HFOV", "HFJT", "NIV", "CPAP", "High flow"]:
-    #         self.patient.bedType = "Intensive"
-    #     else:
-    #         self.patient.bedType = "Intermediate"
-    #     logging.info(f"Patient's bed type is  : {self.patient.bedType}")
-
     def find_nearest_and_best_occupancy_hospitals(self) -> None:
         """
         Find the nearest hospital to the patient and update the patient's nearest hospital attribute.
@@ -218,16 +195,7 @@ class HospitalRecommendation:
             hospital for hospital in self.available_hospitals 
             if all(need in hospital.get_hospital_services() for need in self.patient.specialNeedType)
         ]
-        #Assigning nearest hospital to patients who will be assigned to transport centre later on
-        temp_sorted_hospitals = sorted(
-            self.available_hospitals,
-            key=lambda hospital: calculate_distance(
-                hospital.geolocation,
-                self.patient.gpsPos
-            )
-        )
-        nearest_hospital = temp_sorted_hospitals[0]
-        self.patient.nearestHospital = nearest_hospital.name
+        
         logging.info(f"Filtered hospitals based on services and occupancy: {[h.name for h in self.available_hospitals]}")
 
     def filter_bed_type(self) -> None:

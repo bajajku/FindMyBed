@@ -182,7 +182,7 @@ class DataVisualizer:
             closest_hospital = group['Vicinity to Hospital'].mode()[0]
 
             # Calculate the center coordinates of the postal code
-            postal_center = get_fsa_center(postal_code)
+            postal_center = get_fsa_center(postal_code[:3])
 
             # Calculate the distance from the center to the closest hospital
             # closest_hospital_coords = get_hospital_coord(closest_hospital)

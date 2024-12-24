@@ -30,7 +30,6 @@ def get_patients(excel_file: str, sheet):
         patient_type = "Neonatal"
 
         special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 1))
-        print(postalCode)
         try:
             # Try to get the GPS position using the postal code
             gpsPos = get_fsa_center(postalCode[:3])
@@ -39,7 +38,6 @@ def get_patients(excel_file: str, sheet):
             print(f"Error retrieving GPS for postal code {postalCode}: {e}")
             gpsPos = (0, 0)  # Default value if error occurs, or you can set another fallback
         
-        print(gpsPos)
         # Determine condition
         if Condition1 != "No Match":
             condition = 1

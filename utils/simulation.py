@@ -354,48 +354,7 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
 
 
 # Patient Processing Logic
-def create_patient(hour, patient):
-    # patient_type = random.choice(PATIENT_TYPE)
-    # postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
-
-    # if patient_type == "Maternal":
-    #     # Determine if delivery is within 24 hours
-    #     del24HrPlus = random.choice([True, False])
-    #     special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 1))
-    # else:
-    #     del24HrPlus = False
-    #     special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 1))
-
-    # patient = SimulatedPatient(
-    #     patientType=patient_type,
-    #     gpsPos=gps_pos,
-    #     postalCode=postal_code,
-    #     del24HrPlus=del24HrPlus,
-    #     transportNeedCnt=random.randint(0, 3),
-    #     specialNeedType=special_needs,
-    #     specialNeeds=special_needs,
-    #     arrival_time=hour,
-    #     aniGpsPos= latlon_to_pixel(gps_pos[0], gps_pos[1], map_width, map_height, map_bounds),
-    #     discharged=False,
-    #     arrived_at_hospital=False,
-    #     queue_position=0,
-    #     # new attrobutes 
-    #     DaysOldOnAdmission = random.randint(20, 40),
-    #     GestationalAgeWeeks = random.randint(0, 10),
-    #     minorCongAnomaly = bool(random.randint(0, 1)),
-    #     majorCongAnomaly = bool(random.randint(0, 1)),
-    #     cardiacCongAnomaly = bool(random.randint(0, 1)),
-    #     neuroCongAnomaly = bool(random.randint(0, 1)),
-    #     CDH = bool(random.randint(0, 1)),
-    #     Gastroschisis = bool(random.randint(0, 1)),
-    #     HIE = bool(random.randint(0, 1)),
-    #     iNOFirstAdmDay1 = bool(random.randint(0, 1)),
-    #     iNODuringStay= bool(random.randint(0, 1)),
-    #     HighestRSuppOn1stAdmDay1 = bool(random.randint(0, 1))
-    # )
-    # # Log patient attributes in a readable format
-    # log_patient_attributes(patient)
-    # patient =     
+def create_patient(hour, patient):  
     patient.arrival_time = hour
     patient.aniGpsPos = latlon_to_pixel(patient.gpsPos[0], patient.gpsPos[1], map_width, map_height, map_bounds)
 
@@ -425,24 +384,25 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
             if hospital.name == patient.assignedHospital:
                 assigned_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
 
-        patients_data.append({
+        patients_data.append(
+            {
             "Postal Code": patient.postalCode,
             "Type": patient.bedType,
             "Date": current_date.strftime("%Y-%m-%d"),
             "Month": current_date.month,
+            "Condition" : patient.condition,
+            "Services" : patient.specialNeeds,
+            "First Site Code": patient.firstSiteCode,
             "Nearest Hospital": patient.nearestHospital,
             "Nearest Distance": nearest_distance,
             "Assigned Hospital": patient.assignedHospital,
             "Assigned Distance": assigned_distance,
-            "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital,
-            "Condition" : patient.condition,
-            "Services" : patient.specialNeeds,
-            "is it assigned to the best occupancy rate hospital": patient.bestOccupancyHospital == patient.assignedHospital,
+            "Best Occupancy Hospital" : patient.bestOccupancyHospital,
+            "is it assigned to the nearest hospital": patient.nearestHospital == patient.firstSiteCode,
+            "is it assigned to the best occupancy rate hospital": patient.bestOccupancyHospital == patient.firstSiteCode,
             "is it assigned to the best option (both occupancy and distance)": (
-                patient.nearestHospital == patient.assignedHospital and
-                patient.bestOccupancyHospital == patient.assignedHospital
-            ), 
-            "Best Occupancy Hospital" : patient.bestOccupancyHospital
-            
-
-        })
+                patient.nearestHospital == patient.firstSiteCode and
+                patient.bestOccupancyHospital == patient.firstSiteCode
+            )
+            }
+        )

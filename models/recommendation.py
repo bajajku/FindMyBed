@@ -10,7 +10,7 @@ import logging
 
 logging.basicConfig(
     filename='logs/hospital_recommendation.log',
-    filemode='a',
+    filemode='w',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )

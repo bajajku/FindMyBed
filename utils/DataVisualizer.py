@@ -182,8 +182,13 @@ class DataVisualizer:
             closest_hospital = group['Vicinity to Hospital'].mode()[0]
 
             # Calculate the center coordinates of the postal code
-            postal_center = get_fsa_center(postal_code[:3])
-
+            try:
+            # Try to get the GPS position using the postal code
+                postal_center = get_fsa_center(postal_code[:3])
+            except Exception as e:
+            # Handle the error (e.g., postal code not found)
+                print(f"Error retrieving GPS for postal code {postal_code}: {e}")
+                postal_center = (0, 0)  # Default value if error occurs, or you can set another fallback
             # Calculate the distance from the center to the closest hospital
             # closest_hospital_coords = get_hospital_coord(closest_hospital)
             # center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)

@@ -231,7 +231,7 @@ class DataVisualizer:
             # Handle the error (e.g., postal code not found)
                 print(f"Error retrieving GPS for postal code {postal_code}: {e}")
                 postal_center = (0, 0) # Compute average and standard deviation of distances to the closest hospital for this postal code
-                
+
             avg_distance = group['Distance to Closest Hospital'].mean()
             if len(group['Distance to Closest Hospital']) > 1:
                 std_distance = group['Distance to Closest Hospital'].std()
@@ -255,6 +255,7 @@ class DataVisualizer:
         # Convert aggregated list to DataFrame
         aggregated_intermediate_patients_table = pd.DataFrame(postal_agg_intermediate)
         # Initialize counters for metrics
+        total_patients = len(patients_df)
         better_occupancy_count = 0  # Count of patients who had a better option for occupancy rate
         better_distance_count = 0   # Count of patients who had a better option for distance
         better_both_count = 0       # Count of patients who had a better option for both
@@ -273,11 +274,13 @@ class DataVisualizer:
         # Create a DataFrame to store the metrics
         metrics_table = pd.DataFrame({
             "Metric": [
+                "Total Patients",  # Metric names
                 "Better Option for Occupancy Rate",  # Metric description
                 "Better Option for Distance",
                 "Better Option for Both"
             ],
             "Number of Patients": [
+                total_patients,  # Corresponding count for each metric
                 better_occupancy_count,  # Corresponding count for each metric
                 better_distance_count,
                 better_both_count

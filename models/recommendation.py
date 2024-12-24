@@ -364,7 +364,12 @@ class HospitalRecommendation:
         self.check_bed_type()
         self.check_geographic_distance()
         self.restart()
-        logging.info("Patient processing complete.\n")
+        logging.info("Patient processing complete.")
+        logging.info(f"Patient First Site Code: {self.patient.firstSiteCode}")
+        logging.info(f"Patient assigned to {self.patient.assignedHospital}")
+        logging.info(f"Nearest Hospital to patient: {self.patient.nearestHospital}")
+        logging.info(f"Best Occupancy Hospital: {self.patient.bestOccupancyHospital}")
+        logging.info(f"|---------------------------------|\n")
 
     def get_queue_size(self) -> int:
         """

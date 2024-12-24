@@ -23,6 +23,12 @@ def get_patients(excel_file: str, sheet):
         Condition5 = row['Condition 5']
         postalCode = row['PostalCode']
         firstSiteCode = row['firstSiteCode']
+        if firstSiteCode == "JGH":
+            firstSiteCode = "HGJ"
+        elif firstSiteCode == "MUHC":
+            firstSiteCode = "CUSM"
+        elif firstSiteCode == "HSJ":
+            firstSiteCode = "CHU-SJ"
 
         if pd.isna(postalCode):
             continue

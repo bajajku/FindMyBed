@@ -1,5 +1,5 @@
 #Number of days to run simulation
-NUMBER_OF_DAYS: 365
+NUMBER_OF_DAYS: 20
 
 # Paths to input and output files.
 EXCEL_PATH: "data/averagePerDay_v5.xlsx"

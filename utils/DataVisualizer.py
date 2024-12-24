@@ -188,7 +188,8 @@ class DataVisualizer:
             except Exception as e:
             # Handle the error (e.g., postal code not found)
                 print(f"Error retrieving GPS for postal code {postal_code}: {e}")
-                postal_center = (0, 0)  # Default value if error occurs, or you can set another fallback
+                postal_center = (0, 0)  
+            # Default value if error occurs, or you can set another fallback
             # Calculate the distance from the center to the closest hospital
             # closest_hospital_coords = get_hospital_coord(closest_hospital)
             # center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
@@ -223,8 +224,14 @@ class DataVisualizer:
             # Determine the closest hospital for each postal code based on patient data
             closest_hospital = group['Vicinity to Hospital'].mode()[0]
             # Calculate the center coordinates of the postal code
-            postal_center = get_fsa_center(postal_code)
-            # Compute average and standard deviation of distances to the closest hospital for this postal code
+            try:
+            # Try to get the GPS position using the postal code
+                postal_center = get_fsa_center(postal_code[:3])
+            except Exception as e:
+            # Handle the error (e.g., postal code not found)
+                print(f"Error retrieving GPS for postal code {postal_code}: {e}")
+                postal_center = (0, 0) # Compute average and standard deviation of distances to the closest hospital for this postal code
+                
             avg_distance = group['Distance to Closest Hospital'].mean()
             if len(group['Distance to Closest Hospital']) > 1:
                 std_distance = group['Distance to Closest Hospital'].std()

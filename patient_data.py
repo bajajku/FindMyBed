@@ -71,14 +71,6 @@ def get_patients(excel_file: str, sheet):
             condition=condition,
             firstSiteCode=firstSiteCode
         )
-        print(f"Created patient: {patient}")
-        print(f"Patient condition: {patient.condition}")
-        print(f"Patient special needs: {patient.specialNeeds}")
-        print(f"Patient bed type: {patient.bedType}")
-        print(f"Patient postal code: {patient.postalCode}")
-        
-
-        
         patients.append(patient)
 
     return patients

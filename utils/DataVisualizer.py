@@ -68,10 +68,12 @@ class DataVisualizer:
                 - Aggregated DataFrame for intermediate patients.
                 - Metrics DataFrame summarizing patient assignment metrics.
         """
-        # Rename columns for readability
         patients_df = patients_df.rename(columns={
             "Nearest Hospital": "Vicinity to Hospital",
-            "Nearest Distance": "Distance to Closest Hospital"
+            "Nearest Distance": "Distance to Closest Hospital",
+            "Assigned Hospital": "Assigned Hospital (from the simulator results)",
+            "First Site Code" : "Assigned Hospital (from the historical data)",
+
         })
         # Add hospitall Restriction Condition Columns 
         # Create columns for each condition and fill based on the 'Condition' value
@@ -99,7 +101,9 @@ class DataVisualizer:
             "Postal Code",
             "Vicinity to Hospital",
             "Distance to Closest Hospital",
-            "Assigned Hospital",
+            "Best Occupancy Hospital",
+            "Assigned Hospital (from the simulator results)",
+            "Assigned Hospital (from the historical data)",
             "Condition1",
             "Condition2",
             "Condition3",
@@ -113,7 +117,9 @@ class DataVisualizer:
             "Postal Code",
             "Vicinity to Hospital",
             "Distance to Closest Hospital",
-            "Assigned Hospital",
+            "Best Occupancy Hospital",
+            "Assigned Hospital (from the simulator results)",
+            "Assigned Hospital (from the historical data)",
             "Condition1",
             "Condition2",
             "Condition3",
@@ -124,6 +130,10 @@ class DataVisualizer:
         """
         To create a table regarding the hospitals 
         """
+        # Restore original column names
+        patients_df = patients_df.rename(columns={
+            "Assigned Hospital (from the simulator results)": "Assigned Hospital",
+        })
 
         # Step 1: Count intermediate and intensive patients by year and hospital
         # Group by 'Vicinity to Hospital' and 'Year', and then calculate the size for each type
@@ -142,16 +152,16 @@ class DataVisualizer:
         # Step 2: Calculate accepted patient percentages for each hospital
         # Add columns to patients_df for counting only accepted patients by hospital
         patients_df['Intermediate Count by Vicinity'] = patients_df.apply(
-            lambda x: 1 if x['Type'].lower() == 'intermediate' and x['is it assigned to the nearest hospital'] else 0, axis=1
+            lambda x: 1 if x['Type'].lower() == 'intermediate' and x['Assigned Hospital'] == x['Vicinity to Hospital'] else 0, axis=1
         )
         patients_df['Intensive Count by Vicinity'] = patients_df.apply(
-            lambda x: 1 if x['Type'].lower() == 'intensive' and x['is it assigned to the nearest hospital'] else 0, axis=1
+            lambda x: 1 if x['Type'].lower() == 'intensive' and x['Assigned Hospital'] == x['Vicinity to Hospital'] else 0, axis=1
         )
         # Group by hospital and year to sum accepted patients, then across years
-        vicinity_counts = patients_df.groupby(['Assigned Hospital', 'Year']).agg(
+        vicinity_counts = patients_df.groupby('Assigned Hospital').agg(
             Intermediate_Accepted=('Intermediate Count by Vicinity', 'sum'),
             Intensive_Accepted=('Intensive Count by Vicinity', 'sum')
-        ).groupby('Assigned Hospital').mean()
+        )
 
         # Join accepted counts into hospital_counts_df 
         hospital_counts_df = hospital_counts_df.join(vicinity_counts, how='left').fillna(0)

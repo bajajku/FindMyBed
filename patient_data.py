@@ -82,9 +82,3 @@ def get_patients(excel_file: str, sheet):
         patients.append(patient)
 
     return patients
-
-sheets_to_load = ['2021-01-11 to 2021-12-31', '2022-10-01 to 2022-12-31', '2023-01-01 to 2023-12-31']
-
-patients = get_patients("data/Patients_data3.xlsx", sheets_to_load[0])
-
-print(patients[0])

@@ -116,7 +116,7 @@ screen, clock, map_surface, map_width, map_height = initialize_screen()
 pause_play_button = PausePlayButton(1100, 10)
 map_bounds = [44.0, 63.0, -79.0, -57.0]
 
-def simulate_hospital_system(num_days, excel , excel_newdata):
+def simulate_hospital_system(num_days, excel):
     global total_patients # Declare total_patients as global within the function
     index = 0
     data_loader = DataLoader()
@@ -130,7 +130,6 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
         loaded_patients.extend(get_patients("data/Patients_data3.xlsx", sheet))
 
 # The 'patients' list now contains the combined results from all the sheets
-    births_by_fsa = data_loader.calculate_birth_rates_by_fsa(excel_file=excel_newdata)
     recommendation_system = HospitalRecommendation(HOSPITALS)
     results = []
     total_patients = 0

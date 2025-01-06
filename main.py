@@ -12,12 +12,11 @@ with open("config.yaml", "r") as file:
 # Access the configuration values.
 number_of_days = config['NUMBER_OF_DAYS']
 excel_path = config['EXCEL_PATH']
-excel_path_newdata = config['EXCEL_PATH_NEWDATA']
 report_path = config['REPORT']
 table_path = config['TABLE']
 
 def main():    
-    results = simulate_hospital_system(num_days=number_of_days, excel=excel_path ,excel_newdata=excel_path_newdata)
+    results = simulate_hospital_system(num_days=number_of_days, excel=excel_path)
     print_hospital_data(results)
 
     # Load simulation results

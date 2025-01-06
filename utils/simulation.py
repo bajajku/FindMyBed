@@ -164,7 +164,7 @@ def simulate_hospital_system(num_days, excel):
             continue  # Skip the simulation steps while paused
 
         # Loop through each day
-        if day < num_days:
+        if day < num_days and index < len(loaded_patients):
             current_date = START_DATE + timedelta(days=day)
             print(f"\n{'='*20} Day {day + 1} {'='*20}")
 
@@ -231,9 +231,9 @@ def simulate_hospital_system(num_days, excel):
                 clock.tick(60)
 
                 # Check if all patients have arrived and set `running` to False if so
-                if all_patients_arrived:
+                if all_patients_arrived or index >= len(loaded_patients):
                     running = False
-
+                    
     # Pause screen after simulation ends
     paused = True
     font = pygame.font.Font(None, 36)

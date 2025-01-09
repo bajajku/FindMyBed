@@ -212,6 +212,7 @@ class HospitalRecommendation:
             if hospital.get_capacity(self.patient.bedType) > 1
         ]
 
+    # TODO: #6 Error Handling for no available hospitals
     def filter_by_distance_and_occupancy_rate(self, weight_distance: float = weight_of_distance, weight_occupancy: float = 1 - weight_of_distance) -> None:
         """
         Filter hospitals considering both distance and occupancy rate,
@@ -229,6 +230,9 @@ class HospitalRecommendation:
         #Sorting patients by occupancy rates, removing hospitals with higher occupancy than threshold value
         self.available_hospitals = [hospital for hospital in self.available_hospitals
                                     if hospital.can_admit_patient(self.patient)]
+        
+        
+        print(f"Available Hospitals after filtering by occupancy: {[hospital.name for hospital in self.available_hospitals]}")
         self.find_nearest_and_best_occupancy_hospitals()
 
         # Calculate distances for all hospitals
@@ -256,7 +260,7 @@ class HospitalRecommendation:
         # Sort hospitals by the calculated score
         self.available_hospitals.sort(key=calculate_hospital_score)
 
-        logging.info(f"anked hospitals by distance and occupancy: "
+        logging.info(f"Ranked hospitals by distance and occupancy: "
                     f"{[hospital.name for hospital in self.available_hospitals]}")
 
     def get_top_hospitals(self) -> List[Hospital]:

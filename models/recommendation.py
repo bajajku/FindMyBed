@@ -10,7 +10,7 @@ import logging
 
 logging.basicConfig(
     filename='logs/hospital_recommendation.log',
-    filemode='a',
+    filemode='w',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
@@ -98,60 +98,41 @@ class HospitalRecommendation:
         )
     def apply_restrictions(self) -> None:
         """Filter hospitals based on service availability and occupancy rate."""
-        condition2_services = ["Neurology", "Cardiology"]
-        condition3_services = [ "General Surgery", "Genetic","Gastroenterology","Plastic Surgery","Respirology"]
-
-        # Helper checks
-        is_prematurity_ga_lt_26 = "Prematurity (GA<26 weeks)" in self.patient.specialNeeds
-        has_condition2_services = any(service in self.patient.specialNeeds for service in condition2_services)
-        has_condition3_services = any(service in self.patient.specialNeeds for service in condition3_services)
-
-
-        # TODO: Fix this. This is a temporary fix to avoid the error.
-        '''For now I have added hasattr check for postalCode, as patient doesn't have postalCode attribute.
-        so this is just a temporary check to avoid the error. This will be updated once the patient class is updated.
-        '''
-        # Condition 1: Indigenous patients
-        if hasattr(self.patient, "postalCode") and self.patient.postalCode == "J0M":
+        logging.info(self.patient.condition)
+        # Condition 1: First Nations 
+        if self.patient.condition == 1:
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name == "CUSM"
             ]
-            self.patient.condition = 1
 
         # Condition 2: Major anomaly AND cardiac OR neuro
-        elif has_condition2_services:
+        elif (self.patient.condition == 2):
             valid_hospitals = ["CUSM", "CHU-SJ", "CHUQ"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
-            ]
-            self.patient.condition = 2
+            ]   
 
         # Condition 3: Major anomaly BUT not condition 2 or prematurity
-#        elif not has_condition2_services and not is_prematurity_ga_lt_26:
-        elif has_condition3_services:
+        elif (self.patient.condition == 3):
             valid_hospitals = ["CUSM", "CHU-SJ", "CHUQ", "CHUS"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
             ]
-            self.patient.condition = 3
 
         # Condition 4: Prematurity (GA<26 weeks)
-        elif is_prematurity_ga_lt_26:
+        elif self.patient.condition == 4:
             valid_hospitals = ["CUSM", "CHU-SJ", "HGJ", "CHUQ", "CHUS"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
             ]
-            self.patient.condition = 4
-
+            
         # Condition 5
-        else:
+        elif self.patient.condition == 5:
             valid_hospitals = ["CUSM", "CHU-SJ", "HGJ", "CHUQ", "CHUS", "HMR"]
             self.available_hospitals = [
                 hospital for hospital in self.hospitals if hospital.name in valid_hospitals
             ]
-            self.patient.condition = 5
         logging.info(f"Filtered hospitals based on restriction conditions : {[h.name for h in self.available_hospitals]}")
-
 
     def find_nearest_and_best_occupancy_hospitals(self) -> None:
         """
@@ -214,16 +195,7 @@ class HospitalRecommendation:
             hospital for hospital in self.available_hospitals 
             if all(need in hospital.get_hospital_services() for need in self.patient.specialNeedType)
         ]
-        #Assigning nearest hospital to patients who will be assigned to transport centre later on
-        temp_sorted_hospitals = sorted(
-            self.available_hospitals,
-            key=lambda hospital: calculate_distance(
-                hospital.geolocation,
-                self.patient.gpsPos
-            )
-        )
-        nearest_hospital = temp_sorted_hospitals[0]
-        self.patient.nearestHospital = nearest_hospital.name
+        
         logging.info(f"Filtered hospitals based on services and occupancy: {[h.name for h in self.available_hospitals]}")
 
     def filter_bed_type(self) -> None:
@@ -257,13 +229,21 @@ class HospitalRecommendation:
         #Sorting patients by occupancy rates, removing hospitals with higher occupancy than threshold value
         self.available_hospitals = [hospital for hospital in self.available_hospitals
                                     if hospital.can_admit_patient(self.patient)]
+        
+        
+        print(f"Available Hospitals after filtering by occupancy: {[hospital.name for hospital in self.available_hospitals]}")
         self.find_nearest_and_best_occupancy_hospitals()
 
+        # Issue fixed: If no hospitals are available after filtering by occupancy, return
+        if not self.available_hospitals:
+            logging.warning("No available hospitals to filter by distance and occupancy.")
+            return 
         # Calculate distances for all hospitals
         distances = [
             calculate_distance(hospital.geolocation, self.patient.gpsPos)
             for hospital in self.available_hospitals
         ]
+
 
         # Find min and max distances for normalization
         min_distance = min(distances)
@@ -284,7 +264,7 @@ class HospitalRecommendation:
         # Sort hospitals by the calculated score
         self.available_hospitals.sort(key=calculate_hospital_score)
 
-        logging.info(f"anked hospitals by distance and occupancy: "
+        logging.info(f"Ranked hospitals by distance and occupancy: "
                     f"{[hospital.name for hospital in self.available_hospitals]}")
 
     def get_top_hospitals(self) -> List[Hospital]:
@@ -392,7 +372,12 @@ class HospitalRecommendation:
         self.check_bed_type()
         self.check_geographic_distance()
         self.restart()
-        logging.info("Patient processing complete.\n")
+        logging.info("Patient processing complete.")
+        logging.info(f"Patient First Site Code: {self.patient.firstSiteCode}")
+        logging.info(f"Patient assigned to {self.patient.assignedHospital}")
+        logging.info(f"Nearest Hospital to patient: {self.patient.nearestHospital}")
+        logging.info(f"Best Occupancy Hospital: {self.patient.bestOccupancyHospital}")
+        logging.info(f"|---------------------------------|\n")
 
     def get_queue_size(self) -> int:
         """

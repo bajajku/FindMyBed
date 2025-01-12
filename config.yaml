@@ -1,9 +1,9 @@
 #Number of days to run simulation
-NUMBER_OF_DAYS: 365
+NUMBER_OF_DAYS: 365 # 365 means 1 year, 730 means 2 years,and 1095 means 3 years.
 
 # Paths to input and output files.
 EXCEL_PATH: "data/averagePerDay_v5.xlsx"
-EXCEL_PATH_NEWDATA: "data/For Nick-Nov19-FindMyBed-transportData 2021 to 2023-Bed Type-hospital options.xlsx"
+EXCEL_PATH_NEWDATA: "data/Patients_data3.xlsx" # This is modfied version of "For Nick-Nov19-FindMyBed-transportData 2021 to 2023-Bed Type-hospital options" file.
 
 # Paths to the output files.
 REPORT: "output/report.pdf"

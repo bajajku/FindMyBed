@@ -154,6 +154,8 @@ class DataLoader:
             ) for i in range(len(self.hospital_names))
         ]
         return hospitals
+    
+    
 
     def get_average_admissions(self):
         """

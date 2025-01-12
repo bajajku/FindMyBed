@@ -6,6 +6,7 @@ from models.PausePlayButton import PausePlayButton
 from models.hospital import Hospital
 from models.patient import SimulatedPatient
 from models.recommendation import HospitalRecommendation
+from patient_data import get_patients
 from utils.constants import *
 from utils.data_loader import DataLoader
 from utils.geographic import fsa_to_coordinates, calculate_distance, \
@@ -89,7 +90,7 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
                     gpsPos=hospital.geolocation,
                     postalCode="None",
                     bedType=bed_type,
-                    del24HrPlus=False,
+                    # del24HrPlus=False,
                     transportNeedCnt=0,
                     specialNeedType=["None"],
                     specialNeeds=["None"],
@@ -115,14 +116,20 @@ screen, clock, map_surface, map_width, map_height = initialize_screen()
 pause_play_button = PausePlayButton(1100, 10)
 map_bounds = [44.0, 63.0, -79.0, -57.0]
 
-def simulate_hospital_system(num_days, excel , excel_newdata):
+def simulate_hospital_system(num_days, excel):
     global total_patients # Declare total_patients as global within the function
-
+    index = 0
     data_loader = DataLoader()
     data_loader.load_data(excel_file=excel)
     HOSPITALS = data_loader.create_hospitals()
 
-    births_by_fsa = data_loader.calculate_birth_rates_by_fsa(excel_file=excel_newdata)
+    # TODO: Concatenate the sheets to load
+    sheets_to_load = ['2021-01-11 to 2021-12-31', '2022-10-01 to 2022-12-31', '2023-01-01 to 2023-12-31']
+    loaded_patients = []
+    for sheet in sheets_to_load:
+        loaded_patients.extend(get_patients("data/Patients_data3.xlsx", sheet))
+
+# The 'patients' list now contains the combined results from all the sheets
     recommendation_system = HospitalRecommendation(HOSPITALS)
     results = []
     total_patients = 0
@@ -157,7 +164,7 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
             continue  # Skip the simulation steps while paused
 
         # Loop through each day
-        if day < num_days:
+        if day < num_days and index < len(loaded_patients):
             current_date = START_DATE + timedelta(days=day)
             print(f"\n{'='*20} Day {day + 1} {'='*20}")
 
@@ -190,7 +197,8 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
                 # Create and simulate each patient
                 for i in range(num_patients):
                     #create patient
-                    patient = create_patient(hour, births_by_fsa, data_loader)
+                    patient = create_patient(hour, loaded_patients[index])
+                    index += 1
                     patients.append(patient)  # Add patient to the list
                     # Run the patient through the recommendation system
                     print(f"\nProcessing Patient {i + 1}")
@@ -223,9 +231,9 @@ def simulate_hospital_system(num_days, excel , excel_newdata):
                 clock.tick(60)
 
                 # Check if all patients have arrived and set `running` to False if so
-                if all_patients_arrived:
+                if all_patients_arrived or index >= len(loaded_patients):
                     running = False
-
+                    
     # Pause screen after simulation ends
     paused = True
     font = pygame.font.Font(None, 36)
@@ -343,53 +351,27 @@ def update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, 
 
     return all_patients_arrived
 
+
 # Patient Processing Logic
-def create_patient(hour, births_by_fsa, data_loader):
-    patient_type = random.choice(PATIENT_TYPE)
-    # Current transport data has only neonatal patient type so I set the type as "Neonatal" for now 
-    #patient_type ="Neonatal"
-    postal_code, gps_pos = fsa_to_coordinates(births_by_fsa)
-    bed_type = data_loader.assign_bed_type_poisson()
+def create_patient(hour, patient):  
+    patient.arrival_time = hour
+    patient.aniGpsPos = latlon_to_pixel(patient.gpsPos[0], patient.gpsPos[1], map_width, map_height, map_bounds)
 
-    if patient_type == "Maternal":
-        # Determine if delivery is within 24 hours
-        del24HrPlus = random.choice([True, False])
-        special_needs = random.sample(MATERNAL_SPECIAL_NEEDS, random.randint(1, 1))
-    else:
-        del24HrPlus = False
-        special_needs = random.sample(NEONATAL_SPECIAL_NEEDS, random.randint(1, 1))
+    return patient
 
-    patient = SimulatedPatient(
-        patientType=patient_type,
-        gpsPos=gps_pos,
-        postalCode=postal_code,
-        bedType=bed_type,
-        del24HrPlus=del24HrPlus,
-        transportNeedCnt=random.randint(0, 3),
-        specialNeedType=special_needs,
-        specialNeeds=special_needs,
-        arrival_time=hour,
-        aniGpsPos= latlon_to_pixel(gps_pos[0], gps_pos[1], map_width, map_height, map_bounds),
-        discharged=False,
-        arrived_at_hospital=False,
-        queue_position=0
-    )
-    # Log patient attributes in a readable format
+def log_patient_attributes(patient):
     logging.info("Patient Created:")
-    logging.info(f"  Postal Code: {postal_code}")
-    logging.info(f"  Bed Type: {bed_type}")
-    logging.info(f"  Special Needs: {', '.join(special_needs)}")
-    logging.info(f"  Arrival Time: {hour}:00")
-    logging.info(f"  GPS Position: {gps_pos}")
-    logging.info(f"  Patient Type: {patient_type}")
-    logging.info(f"  Delivery within 24 Hours: {del24HrPlus}")
+    logging.info(f"  Postal Code: {patient.postalCode}")
+    logging.info(f"  Special Needs: {', '.join(patient.specialNeeds)}")
+    logging.info(f"  Arrival Time: {patient.arrival_time}:00")
+    logging.info(f"  GPS Position: {patient.gpsPos}")
+    logging.info(f"  Patient Type: {patient.patientType}")
+    logging.info(f"  Delivery within 24 Hours: {patient.del24HrPlus}")
     logging.info(f"  Transport Need Count: {patient.transportNeedCnt}")
     logging.info(f"  Animation GPS Position: {patient.aniGpsPos}")
     logging.info(f"  Discharged: {patient.discharged}")
     logging.info(f"  Arrived at Hospital: {patient.arrived_at_hospital}")
     logging.info(f"  Queue Position: {patient.queue_position}")
-    
-    return patient
 
 def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
     recommendation_system.run(patient)
@@ -401,21 +383,25 @@ def process_patient(patient, recommendation_system, hospitals, patients_data, cu
             if hospital.name == patient.assignedHospital:
                 assigned_distance = calculate_distance(hospital.geolocation, patient.gpsPos)
 
-        patients_data.append({
+        patients_data.append(
+            {
             "Postal Code": patient.postalCode,
             "Type": patient.bedType,
             "Date": current_date.strftime("%Y-%m-%d"),
             "Month": current_date.month,
+            "Condition" : patient.condition,
+            "Services" : patient.specialNeeds,
+            "First Site Code": patient.firstSiteCode,
             "Nearest Hospital": patient.nearestHospital,
             "Nearest Distance": nearest_distance,
             "Assigned Hospital": patient.assignedHospital,
             "Assigned Distance": assigned_distance,
-            "is it assigned to the nearest hospital": patient.nearestHospital == patient.assignedHospital,
-            "Condition" : patient.condition,
-            "Services" : patient.specialNeeds,
-            "is it assigned to the best occupancy rate hospital": patient.bestOccupancyHospital == patient.assignedHospital,
+            "Best Occupancy Hospital" : patient.bestOccupancyHospital,
+            "is it assigned to the nearest hospital": patient.nearestHospital == patient.firstSiteCode,
+            "is it assigned to the best occupancy rate hospital": patient.bestOccupancyHospital == patient.firstSiteCode,
             "is it assigned to the best option (both occupancy and distance)": (
-                patient.nearestHospital == patient.assignedHospital and
-                patient.bestOccupancyHospital == patient.assignedHospital
+                patient.nearestHospital == patient.firstSiteCode and
+                patient.bestOccupancyHospital == patient.firstSiteCode
             )
-        })
+            }
+        )

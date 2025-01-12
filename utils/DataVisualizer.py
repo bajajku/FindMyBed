@@ -68,10 +68,12 @@ class DataVisualizer:
                 - Aggregated DataFrame for intermediate patients.
                 - Metrics DataFrame summarizing patient assignment metrics.
         """
-        # Rename columns for readability
         patients_df = patients_df.rename(columns={
             "Nearest Hospital": "Vicinity to Hospital",
-            "Nearest Distance": "Distance to Closest Hospital"
+            "Nearest Distance": "Distance to Closest Hospital",
+            "Assigned Hospital": "Assigned Hospital (from the simulator results)",
+            "First Site Code" : "Assigned Hospital (from the historical data)",
+
         })
         # Add hospitall Restriction Condition Columns 
         # Create columns for each condition and fill based on the 'Condition' value
@@ -99,7 +101,9 @@ class DataVisualizer:
             "Postal Code",
             "Vicinity to Hospital",
             "Distance to Closest Hospital",
-            "Assigned Hospital",
+            "Best Occupancy Hospital",
+            "Assigned Hospital (from the simulator results)",
+            "Assigned Hospital (from the historical data)",
             "Condition1",
             "Condition2",
             "Condition3",
@@ -113,7 +117,9 @@ class DataVisualizer:
             "Postal Code",
             "Vicinity to Hospital",
             "Distance to Closest Hospital",
-            "Assigned Hospital",
+            "Best Occupancy Hospital",
+            "Assigned Hospital (from the simulator results)",
+            "Assigned Hospital (from the historical data)",
             "Condition1",
             "Condition2",
             "Condition3",
@@ -124,6 +130,10 @@ class DataVisualizer:
         """
         To create a table regarding the hospitals 
         """
+        # Restore original column names
+        patients_df = patients_df.rename(columns={
+            "Assigned Hospital (from the simulator results)": "Assigned Hospital",
+        })
 
         # Step 1: Count intermediate and intensive patients by year and hospital
         # Group by 'Vicinity to Hospital' and 'Year', and then calculate the size for each type
@@ -142,16 +152,16 @@ class DataVisualizer:
         # Step 2: Calculate accepted patient percentages for each hospital
         # Add columns to patients_df for counting only accepted patients by hospital
         patients_df['Intermediate Count by Vicinity'] = patients_df.apply(
-            lambda x: 1 if x['Type'].lower() == 'intermediate' and x['is it assigned to the nearest hospital'] else 0, axis=1
+            lambda x: 1 if x['Type'].lower() == 'intermediate' and x['Assigned Hospital'] == x['Vicinity to Hospital'] else 0, axis=1
         )
         patients_df['Intensive Count by Vicinity'] = patients_df.apply(
-            lambda x: 1 if x['Type'].lower() == 'intensive' and x['is it assigned to the nearest hospital'] else 0, axis=1
+            lambda x: 1 if x['Type'].lower() == 'intensive' and x['Assigned Hospital'] == x['Vicinity to Hospital'] else 0, axis=1
         )
         # Group by hospital and year to sum accepted patients, then across years
-        vicinity_counts = patients_df.groupby(['Assigned Hospital', 'Year']).agg(
+        vicinity_counts = patients_df.groupby('Assigned Hospital').agg(
             Intermediate_Accepted=('Intermediate Count by Vicinity', 'sum'),
             Intensive_Accepted=('Intensive Count by Vicinity', 'sum')
-        ).groupby('Assigned Hospital').mean()
+        )
 
         # Join accepted counts into hospital_counts_df 
         hospital_counts_df = hospital_counts_df.join(vicinity_counts, how='left').fillna(0)
@@ -182,8 +192,14 @@ class DataVisualizer:
             closest_hospital = group['Vicinity to Hospital'].mode()[0]
 
             # Calculate the center coordinates of the postal code
-            postal_center = get_fsa_center(postal_code)
-
+            try:
+            # Try to get the GPS position using the postal code
+                postal_center = get_fsa_center(postal_code[:3])
+            except Exception as e:
+            # Handle the error (e.g., postal code not found)
+                print(f"Error retrieving GPS for postal code {postal_code}: {e}")
+                postal_center = (0, 0)  
+            # Default value if error occurs, or you can set another fallback
             # Calculate the distance from the center to the closest hospital
             # closest_hospital_coords = get_hospital_coord(closest_hospital)
             # center_distance_to_closest_hospital = calculate_distance(postal_center, closest_hospital_coords)
@@ -218,8 +234,14 @@ class DataVisualizer:
             # Determine the closest hospital for each postal code based on patient data
             closest_hospital = group['Vicinity to Hospital'].mode()[0]
             # Calculate the center coordinates of the postal code
-            postal_center = get_fsa_center(postal_code)
-            # Compute average and standard deviation of distances to the closest hospital for this postal code
+            try:
+            # Try to get the GPS position using the postal code
+                postal_center = get_fsa_center(postal_code[:3])
+            except Exception as e:
+            # Handle the error (e.g., postal code not found)
+                print(f"Error retrieving GPS for postal code {postal_code}: {e}")
+                postal_center = (0, 0) # Compute average and standard deviation of distances to the closest hospital for this postal code
+
             avg_distance = group['Distance to Closest Hospital'].mean()
             if len(group['Distance to Closest Hospital']) > 1:
                 std_distance = group['Distance to Closest Hospital'].std()
@@ -243,6 +265,7 @@ class DataVisualizer:
         # Convert aggregated list to DataFrame
         aggregated_intermediate_patients_table = pd.DataFrame(postal_agg_intermediate)
         # Initialize counters for metrics
+        total_patients = len(patients_df)
         better_occupancy_count = 0  # Count of patients who had a better option for occupancy rate
         better_distance_count = 0   # Count of patients who had a better option for distance
         better_both_count = 0       # Count of patients who had a better option for both
@@ -261,11 +284,13 @@ class DataVisualizer:
         # Create a DataFrame to store the metrics
         metrics_table = pd.DataFrame({
             "Metric": [
+                "Total Patients",  # Metric names
                 "Better Option for Occupancy Rate",  # Metric description
                 "Better Option for Distance",
                 "Better Option for Both"
             ],
             "Number of Patients": [
+                total_patients,  # Corresponding count for each metric
                 better_occupancy_count,  # Corresponding count for each metric
                 better_distance_count,
                 better_both_count

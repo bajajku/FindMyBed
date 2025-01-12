@@ -94,14 +94,18 @@ def get_fsa_center(fsa_code: str) -> Tuple[float, float]:
     Returns:
         Tuple[float, float]: The latitude and longitude of the FSA center.
     """
-    while True:
-        # error happens only for the case when the fsa is J5N, put the manual output, will be edited
-        if fsa_code=="J5N":
-            return (45.764001, -73.811363)
-        else:
-            fsa_info = fsa_codes[fsa_code]
-            if fsa_info:
-                return float(fsa_info.latitude), float(fsa_info.longitude)
+    
+    # error happens only for the case when the fsa is J5N, put the manual output, will be edited
+
+    if fsa_code=="J5N":
+        return (45.764001, -73.811363)
+    elif fsa_code == 'J3J':
+        return (2.6143617,-76.3771967)
+    
+    else:
+        fsa_info = fsa_codes[fsa_code]
+        if fsa_info:
+            return float(fsa_info.latitude), float(fsa_info.longitude)
 
 def get_hospital_coord(hospital_name: str)-> Tuple[float, float]:
     """
@@ -141,3 +145,19 @@ def latlon_to_pixel(lat, lon, map_width, map_height, bounds):
     x = ((lon - min_lon) / (max_lon - min_lon) * map_width) + 340
     y = (max_lat - lat) / (max_lat - min_lat) * map_height + 22
     return [int(x), int(y)]
+
+def get_coordinates_by_postal_code(postal_code: str) -> Tuple[float, float]:
+    """
+    Retrieve the geographic coordinates of a given postal code.
+
+    Args:
+        postal_code (str): The postal code.
+
+    Returns:
+        Tuple[float, float]: The latitude and longitude of the postal code.
+    """
+    postal_code_info = postal_codes.get(postal_code)
+    if postal_code_info:
+        return postal_code_info.latitude, postal_code_info.longitude
+    else:
+        raise ValueError(f"Postal code {postal_code} not found.")

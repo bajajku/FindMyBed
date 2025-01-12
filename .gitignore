@@ -2,13 +2,6 @@ venv/
 __pycache__/
 __pycache__/
 *.pyc
-<<<<<<< HEAD
-#/data/
->>>>>>> 4a667a9efb842d52121a6e8fa76f15d556a29671
-
-__temp_pipreqsnb_folder/
 
 output/
 logs/
-
-*.DS_Store

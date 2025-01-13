@@ -1,5 +1,5 @@
 #Number of days to run simulation
-NUMBER_OF_DAYS: 365 # 365 means 1 year, 730 means 2 years,and 1095 means 3 years.
+NUMBER_OF_DAYS: 1095 # 365 means 1 year, 730 means 2 years,and 1095 means 3 years.
 
 # Paths to input and output files.
 EXCEL_PATH: "data/averagePerDay_v5.xlsx"

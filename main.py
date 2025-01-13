@@ -1,4 +1,4 @@
-from utils.simulation import simulate_hospital_system
+from utils.simulation import simulate_hospital_system, simulate_hospital_system_without_animation
 from utils.helpers import print_hospital_data
 import pandas as pd
 from utils.DataVisualizer import *
@@ -16,7 +16,7 @@ report_path = config['REPORT']
 table_path = config['TABLE']
 
 def main():    
-    results = simulate_hospital_system(num_days=number_of_days, excel=excel_path)
+    results = simulate_hospital_system_without_animation(num_days=number_of_days, excel=excel_path)
     print_hospital_data(results)
 
     # Load simulation results

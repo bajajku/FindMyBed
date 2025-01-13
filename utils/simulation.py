@@ -261,6 +261,96 @@ def simulate_hospital_system(num_days, excel):
     patients_df.to_excel("output/patients.xlsx", index=False)
     return results
 
+def simulate_hospital_system_without_animation(num_days, excel):
+    global total_patients  # Declare total_patients as global within the function
+    index = 0
+    data_loader = DataLoader()
+    data_loader.load_data(excel_file=excel)
+    HOSPITALS = data_loader.create_hospitals()
+
+    # Load patients from specified sheets
+    sheets_to_load = ['2021-01-11 to 2021-12-31', '2022-10-01 to 2022-12-31', '2023-01-01 to 2023-12-31']
+    loaded_patients = []
+    for sheet in sheets_to_load:
+        loaded_patients.extend(get_patients("data/Patients_data3.xlsx", sheet))
+
+    recommendation_system = HospitalRecommendation(HOSPITALS)
+    results = []
+    total_patients = 0
+    patients = []  # List to hold current patients
+    patients_data = []
+
+    for hospital in HOSPITALS:
+        hospital_patient_list = prepopulate_patients(hospital)
+        patients = patients + hospital_patient_list["Intensive"] + hospital_patient_list["Intermediate"]
+
+    day = 0  # Initialize day counter
+    current_date = START_DATE
+
+    while day < num_days and index < len(loaded_patients):
+        current_date = START_DATE + timedelta(days=day)
+        print(f"\n{'='*20} Day {day + 1} {'='*20}")
+
+        arrivedDischarged = {hospital.name: [0, 0, 0, 0] for hospital in HOSPITALS}
+
+        # Loop through each hour
+        for hour in range(24):
+            print(f"\n{'*'*10} Arrival Time {hour}:00 {'*'*10}")
+            discharge_all_patients_parallel(HOSPITALS, arrivedDischarged)
+
+            # Generate a random number of patients for this arrival time
+            num_patients = np.random.poisson(data_loader.get_average_admissions())
+            print(f"New patients arriving: {num_patients}")
+            total_patients += num_patients
+
+            # Store the occupancy rate per time slot for each hospital
+            for hospital in HOSPITALS:
+                occupancy_rates_intensive = max(0, min(1, hospital.get_occupancy_rate("Intensive")))
+                occupancy_rates_intermediate = max(0, min(1, hospital.get_occupancy_rate("Intermediate")))
+
+                print(f"Hospital: {hospital.name}")
+                print(f"  - Intensive Care Occupancy: {occupancy_rates_intensive:.2%}")
+                print(f"  - Intermediate Care Occupancy: {occupancy_rates_intermediate:.2%}")
+
+                arrivedDischarged[hospital.name][2] += occupancy_rates_intensive
+                arrivedDischarged[hospital.name][3] += occupancy_rates_intermediate
+
+            # Create and simulate each patient
+            for i in range(num_patients):
+                if index >= len(loaded_patients):
+                    break
+
+                patient = create_patient(hour, loaded_patients[index])
+                index += 1
+                patients.append(patient)  # Add patient to the list
+
+                print(f"\nProcessing Patient {i + 1}")
+                process_patient(patient, recommendation_system, HOSPITALS, patients_data, current_date, arrivedDischarged)
+
+                # Print current hospital capacities
+                for hospital in HOSPITALS:
+                    print(f"Current capacity for {hospital.name}:")
+                    print(f"  - Intensive Care: {math.floor(hospital.available_beds[0])}/{hospital.total_capacity_intensive}")
+                    print(f"  - Intermediate Care: {math.floor(hospital.available_beds[1])}/{hospital.total_capacity_intermediate}")
+                    print(f"  - Total Available: {math.floor(hospital.available_beds[0] + hospital.available_beds[1])}")
+
+        # Record daily statistics
+        record_daily_statistics(day, current_date, HOSPITALS, arrivedDischarged, results)
+        day += 1
+
+    print(f"Total Patients: {total_patients}")
+    print(f"Queue: {recommendation_system.get_queue_size()}")
+    print(f"Patients assigned to hospitals: {total_patients - recommendation_system.get_queue_size()}")
+
+    # Create DataFrames for results
+    results_df = pd.DataFrame(results)
+    patients_df = pd.DataFrame(patients_data)
+
+    # Save the results to Excel files
+    results_df.to_excel("output/simulation.xlsx", index=False)
+    patients_df.to_excel("output/patients.xlsx", index=False)
+    
+    return results
 
 def record_daily_statistics(day, current_date, hospitals, arrivedDischarged, results):
     for hospital in hospitals:

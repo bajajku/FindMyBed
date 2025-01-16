@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import ast
 from models.hospital import Hospital
 import random
@@ -37,6 +37,7 @@ class DataLoader:
         self.total_capacity_intensive = None
         self.total_capacity_intermediate = None
         self.birth_rates_by_fsa = None
+        self.hospital_occupancy_configuration = None
     @staticmethod
     def parse_into_list_of_lists(df_col: pd.Series) -> List[List[float]]:
         """
@@ -84,7 +85,7 @@ class DataLoader:
         """
         return tuple(map(float, coord_str.split(',')))
 
-    def load_data(self, excel_file: str) -> List[Hospital]:
+    def load_data(self, excel_file: str, hospital_occupancy_configuration: Dict[str: Dict]) -> List[Hospital]:
         """
         Loads hospital data from an Excel file and creates a list of Hospital instances.
 
@@ -131,6 +132,8 @@ class DataLoader:
 
         self.intensive_rate = df['Bed Type Rate Intensive'].sum()
         self.intermediate_rate = df['Bed Type Rate Intermediate'].sum()
+        self.hospital_occupancy_configuration = hospital_occupancy_configuration
+
 
     def create_hospitals(self):
         """
@@ -150,7 +153,9 @@ class DataLoader:
                 discharge_rates_intermediate=self.discharge_rates_intermediate[i],
                 total_capacity=self.total_capacity[i],
                 total_capacity_intensive=self.total_capacity_intensive[i],
-                total_capacity_intermediate=self.total_capacity_intermediate[i]
+                total_capacity_intermediate=self.total_capacity_intermediate[i],
+                hospital_occupancy_configuration=self.hospital_occupancy_configuration[i]
+
             ) for i in range(len(self.hospital_names))
         ]
         return hospitals

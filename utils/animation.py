@@ -28,10 +28,6 @@ for i in range(gradient_steps):
     r, g, b, _ = cmap(normalized_value)  # RGBA values
     gradient_table.append((int(r * 255), int(g * 255), int(b * 255)))
 
-data_loader = DataLoader()
-data_loader.load_data(excel_file=excel_path)
-HOSPITALS = data_loader.create_hospitals()
-hospital_dict = {hospital.name: hospital for hospital in HOSPITALS}
 
 #load patient icon
 patient_icon1 = pygame.image.load("icons/patient.png")
@@ -219,7 +215,6 @@ def draw_patient(screen, patient, hospital_pos):
         patient_icon = patient_icon1
 
     if patient.assignedHospital != "":
-        hospital = hospital_dict.get(patient.assignedHospital)
         distance = patient.distanceToHospital
         # Define a max distance for the gradient
         max_distance = 100

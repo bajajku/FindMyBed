@@ -42,7 +42,8 @@ class Hospital:
                  total_capacity_intermediate: int,
                  birth_center_capacity: int = None,
                  antepartum_capacity: int = None,
-                 postpartum_capacity: int = None):
+                 postpartum_capacity: int = None,
+                 hospital_occupancy_configuration: Dict[str, float] = None):
         self.name = name
         self.geolocation = geolocation
         self.maternal_services = set(maternal_services)  # Convert to set for O(1) lookups
@@ -68,6 +69,7 @@ class Hospital:
         self.birth_center_capacity = birth_center_capacity or 50
         self.antepartum_capacity = antepartum_capacity or 50
         self.postpartum_capacity = postpartum_capacity or 50
+        self.hospital_occupancy_configuration = hospital_occupancy_configuration or {}
 
         self.BEDTYPE_INDEX = {"Intensive" : 0, "Intermediate" : 1, "BirthCenter" : 2, "Antepartum" : 3, "Postpartum" : 4}
 
@@ -135,9 +137,9 @@ class Hospital:
         CONDITION = 0.9
         if patient.patientType == "Neonatal":
             if patient.bedType == "Intensive":
-                return self.get_occupancy_rate("Intensive") < intensive_threshold[self.name] 
+                return self.get_occupancy_rate("Intensive") < self.hospital_occupancy_configuration.get("Intensive", 0.95)
             elif patient.bedType == "Intermediate":
-                return self.get_occupancy_rate("Intermediate") < intermediate_threshold[self.name]
+                return self.get_occupancy_rate("Intermediate") < self.hospital_occupancy_configuration.get("Intermediate", 0.95)
         elif patient.patientType == "Maternal":
             # Get obstetrics rate (with fallback)
             birthcenter_rate = self.get_occupancy_rate("BirthCenter")
@@ -145,10 +147,10 @@ class Hospital:
             # Need to consider both obstetrics and NICU rates
             if patient.bedType == "Intensive":
                 nicu_rate = self.get_occupancy_rate("Intensive")
-                return max(birthcenter_rate, antepartum_rate, nicu_rate) < intensive_threshold[self.name]  
+                return max(birthcenter_rate, antepartum_rate, nicu_rate) < self.hospital_occupancy_configuration.get("Intensive", 0.95)  
             elif patient.bedType == "Intermediate":
                 nicu_rate = self.get_occupancy_rate("Intermediate")
-                return max(birthcenter_rate, antepartum_rate, nicu_rate) < intermediate_threshold[self.name]
+                return max(birthcenter_rate, antepartum_rate, nicu_rate) < self.hospital_occupancy_configuration.get("Intermediate", 0.95)
             else:
                 # Only need obstetrics rate
                 return birthcenter_rate < CONDITION

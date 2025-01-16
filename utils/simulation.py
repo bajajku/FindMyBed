@@ -106,21 +106,15 @@ def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]
             hospital.patients[patient.bedType].append(patient)
     return hospital.patients
 
-def load_data_loader(excel_path):
-    if DATA_LOADER is None:
-        DATA_LOADER = DataLoader()
-        DATA_LOADER.load_data(excel_file=excel_path)
-    return DATA_LOADER
-
 screen, clock, map_surface, map_width, map_height = initialize_screen()
 pause_play_button = PausePlayButton(1100, 10)
 map_bounds = [44.0, 63.0, -79.0, -57.0]
 
-def simulate_hospital_system(num_days, excel):
+def simulate_hospital_system(num_days, excel, hospital_occupancy_configuration):
     global total_patients # Declare total_patients as global within the function
     index = 0
     data_loader = DataLoader()
-    data_loader.load_data(excel_file=excel)
+    data_loader.load_data(excel_file=excel, hospital_occupancy_configuration=hospital_occupancy_configuration)
     HOSPITALS = data_loader.create_hospitals()
 
     # TODO: Concatenate the sheets to load
@@ -261,11 +255,11 @@ def simulate_hospital_system(num_days, excel):
     patients_df.to_excel("output/patients.xlsx", index=False)
     return results
 
-def simulate_hospital_system_without_animation(num_days, excel):
+def simulate_hospital_system_without_animation(num_days, excel, hospital_occupancy_configuration):
     global total_patients  # Declare total_patients as global within the function
     index = 0
     data_loader = DataLoader()
-    data_loader.load_data(excel_file=excel)
+    data_loader.load_data(excel_file=excel, hospital_occupancy_configuration=hospital_occupancy_configuration)
     HOSPITALS = data_loader.create_hospitals()
 
     # Load patients from specified sheets

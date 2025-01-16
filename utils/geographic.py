@@ -118,7 +118,7 @@ def get_hospital_coord(hospital_name: str)-> Tuple[float, float]:
         Tuple[float, float]: The latitude and longitude of the hospital.
     """
     data_loader = DataLoader()
-    data_loader.load_data(excel_file=excel_path)
+    data_loader.load_data(excel_file=excel_path, hospital_occupancy_configuration=None)
     HOSPITALS = data_loader.create_hospitals()
 
     for hospital in HOSPITALS:

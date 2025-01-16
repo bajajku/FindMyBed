@@ -19,10 +19,16 @@ try:
 except Exception as e:
     raise RuntimeError(f"Failed to load configuration: {e}")
 
+hospital_occupancy_configuration = {"CHU-SJ": {"Intensive": 0.95, "Intermediate": 0.95},
+                                    "CHUQ": {"Intensive": 0.95, "Intermediate": 0.95},  
+                                    "CHUS": {"Intensive": 0.95, "Intermediate": 0.95},
+                                    "CUSM": {"Intensive": 0.95, "Intermediate": 0.95},
+                                    "HGJ": {"Intensive": 0.95, "Intermediate": 0.95},
+                                    "HMR": {"Intensive": 0.95, "Intermediate": 0.95},}
 # Initialize the data loader and hospitals list.
 data_loader = DataLoader()
 try:
-    data_loader.load_data(excel_file=excel_path)
+    data_loader.load_data(excel_file=excel_path, hospital_occupancy_configuration=hospital_occupancy_configuration)
     HOSPITALS = data_loader.create_hospitals()
 except Exception as e:
     raise RuntimeError(f"Failed to initialize hospitals: {e}")

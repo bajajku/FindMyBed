@@ -24,7 +24,7 @@ hospital_occupancy_configuration = {"CHU-SJ": {"Intensive": 0.95, "Intermediate"
                                     "CHUS": {"Intensive": 0.95, "Intermediate": 0.95},
                                     "CUSM": {"Intensive": 0.95, "Intermediate": 0.95},
                                     "HGJ": {"Intensive": 0.95, "Intermediate": 0.95},
-                                    "HMR": {"Intensive": 0.95, "Intermediate": 0.95},}
+                                    "HMR": {"Intensive": 0.95, "Intermediate": 0.95}}
 # Initialize the data loader and hospitals list.
 data_loader = DataLoader()
 try:

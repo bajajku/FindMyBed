@@ -85,7 +85,7 @@ class DataLoader:
         """
         return tuple(map(float, coord_str.split(',')))
 
-    def load_data(self, excel_file: str, hospital_occupancy_configuration: Dict[str: Dict]) -> List[Hospital]:
+    def load_data(self, excel_file: str, hospital_occupancy_configuration: Dict[str, Dict[str, float]]) -> List[Hospital]:
         """
         Loads hospital data from an Excel file and creates a list of Hospital instances.
 
@@ -154,7 +154,7 @@ class DataLoader:
                 total_capacity=self.total_capacity[i],
                 total_capacity_intensive=self.total_capacity_intensive[i],
                 total_capacity_intermediate=self.total_capacity_intermediate[i],
-                hospital_occupancy_configuration=self.hospital_occupancy_configuration[i]
+                hospital_occupancy_configuration=self.hospital_occupancy_configuration[self.hospital_names[i]]
 
             ) for i in range(len(self.hospital_names))
         ]

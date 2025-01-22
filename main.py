@@ -6,6 +6,7 @@ from utils.ReportGenerator import *
 import yaml
 from itertools import product
 from datetime import datetime
+import numpy as np
 
 # Load the configuration from the YAML file.
 with open("config.yaml", "r") as file:
@@ -59,101 +60,200 @@ def main():
                                                         index=False)
         print(f"Table generated: {table_path}")
 
+
+
+# TODO: Save metrics in better format
+def analyze_simulation_results(results, patients_df):
+    """
+    Analyze simulation results and calculate key metrics.
+
+    Args:
+        results: Simulation results
+        patients_df: Patients DataFrame
+
+    Returns:
+        metrics: Dictionary of metrics
+    """
+    # Convert results to DataFrame if not already
+    results_df = pd.DataFrame(results)
+    metrics = {}
+    
+    # 1. Calculate occupancy metrics per hospital
+    for hospital in results_df['Hospital'].unique():
+        hospital_data = results_df[results_df['Hospital'] == hospital]
+        
+        metrics[hospital] = {
+            'avg_intensive_occupancy': hospital_data['Intensive Occupancy Rate'].mean(),
+            'min_intensive_occupancy': hospital_data['Intensive Occupancy Rate'].min(),
+            'max_intensive_occupancy': hospital_data['Intensive Occupancy Rate'].max(),
+            'std_intensive_occupancy': hospital_data['Intensive Occupancy Rate'].std(),
+            
+            'avg_intermediate_occupancy': hospital_data['Intermediate Occupancy Rate'].mean(),
+            'min_intermediate_occupancy': hospital_data['Intermediate Occupancy Rate'].min(),
+            'max_intermediate_occupancy': hospital_data['Intermediate Occupancy Rate'].max(),
+            'std_intermediate_occupancy': hospital_data['Intermediate Occupancy Rate'].std(),
+        }
+    
+    # 2. Calculate travel distance metrics
+    metrics['global'] = {
+        'avg_travel_distance': patients_df['Assigned Distance'].mean(),
+        'max_travel_distance': patients_df['Assigned Distance'].max(),
+        'std_travel_distance': patients_df['Assigned Distance'].std(),
+        'total_patients': len(patients_df),
+        'patients_at_nearest': (patients_df['is it assigned to the nearest hospital']).mean() * 100,
+        'patients_at_best_occupancy': (patients_df['is it assigned to the best occupancy rate hospital']).mean() * 100,
+    }
+    
+    return metrics
+
 def run_grid_search():
     """
     Generate all possible configurations, run simulations, and analyze results.
+
+    Returns:
+        all_configurations_results: List of all configurations results
+        optimal_configs: List of optimal configurations
     """
+
+    # Our hospitals
     hospitals = ["CHU-SJ", "CHUQ", "CHUS", "CUSM", "HGJ", "HMR"]
-    occupancy_rates = [round(rate/100, 2) for rate in range(90, 96)]  # [0.90, 0.91, 0.92, 0.93, 0.94, 0.95]
+    occupancy_rates = [0.90, 0.91, 0.92, 0.93, 0.94, 0.95] # Occupancy rates to test
     
     # Create timestamp for unique file names
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_file = f"output/grid_search_results_{timestamp}.xlsx"
     
     # Initialize results storage
-    all_results = []
+    all_configurations_results = []
     
     # Generate all possible combinations
-    all_combinations = product(occupancy_rates, repeat=len(hospitals))
-    total_configs = len(occupancy_rates)**len(hospitals)
+    all_combinations = list(product(occupancy_rates, repeat=len(hospitals)))
+    # Take only first 10 combinations for testing
+    total_configs = len(all_combinations)
     
-    print(f"Starting grid search with {total_configs} configurations...")
-
-    print(total_configs)
-
+    print(f"Starting test grid search with {total_configs} configurations...")
 
     for i, rates in enumerate(all_combinations, 1):
-        # Create configuration
         config = {
             hospital: {"Intensive": rate, "Intermediate": rate}
             for hospital, rate in zip(hospitals, rates)
-        }        
+        }
+        
         try:
-            # Run simulation with current configuration
+            # Run simulation
             results = simulate_hospital_system_without_animation(
                 num_days=number_of_days,
                 excel=excel_path,
                 hospital_occupancy_configuration=config
             )
-            print_hospital_data(results)
-
             
-            #Extract metrics from results
-            metrics = {
+            # Load the generated files for analysis
+            results_df = pd.read_excel("output/simulation.xlsx")
+            patients_df = pd.read_excel("output/patients.xlsx")
+            
+            # Analyze results
+            metrics = analyze_simulation_results(results, patients_df)
+            
+            # Store configuration and its metrics
+            config_results = {
                 'configuration_id': i,
-                'config': str(config),  # Store configuration as string
+                'config': str(config),
+                'metrics': metrics
             }
             
-            # Add all relevant metrics from your simulation results
-            metrics.update(results)  # Assuming results contains your metrics
+            all_configurations_results.append(config_results)
             
-            # Store results
-            all_results.append(metrics)
-            
-            # Print progress
+            # Save intermediate results
             if i % 100 == 0:
+                save_analysis_results(all_configurations_results, f"output/grid_search_analysis_{timestamp}.xlsx")
                 print(f"Completed {i}/{total_configs} configurations ({(i/total_configs)*100:.1f}%)")
                 
-                # Save intermediate results every 100 configurations
-                results_df = pd.DataFrame(all_results)
-                results_df.to_excel(results_file, index=False)
-                
         except Exception as e:
-            print(f"Error in configuration {i}: {str(e)}")
+            print(f"Error in configuration {i}:")
+            print(f"Configuration: {config}")
+            print(f"Error details: {str(e)}")
             continue
     
-    # Convert results to DataFrame
-    results_df = pd.DataFrame(all_results)
+    # Find optimal configurations
+    optimal_configs = find_optimal_configurations(all_configurations_results)
     
     # Save final results
-    results_df.to_excel(results_file, index=False)
+    save_analysis_results(all_configurations_results, f"output/final_grid_search_analysis_{timestamp}.xlsx")
+    save_optimal_configurations(optimal_configs, f"output/optimal_configurations_{timestamp}.xlsx")
     
-    # Find and print best configurations based on different metrics
-    print("\nAnalysis of Results:")
-    print("-" * 80)
+    return all_configurations_results, optimal_configs
+
+def find_optimal_configurations(all_results):
+    """
+    Find optimal configurations based on different criteria with improved sensitivity.
+    """
+    df = pd.DataFrame(all_results)
     
-    # Example metrics to optimize (adjust based on your actual metrics)
-    metrics_to_analyze = [
-        'average_wait_time',
-        'total_patients_served',
-        'resource_utilization'
-    ]
+    # Define weights for optimization function
+    weights = {
+        'occupancy_balance': 0.4,
+        'travel_distance': 0.3,
+        'patient_satisfaction': 0.3
+    }
     
-    for metric in metrics_to_analyze:
-        if metric in results_df.columns:
-            print(f"\nTop 5 configurations by {metric}:")
-            if metric == 'average_wait_time':  # Lower is better
-                best_configs = results_df.nsmallest(5, metric)
-            else:  # Higher is better
-                best_configs = results_df.nlargest(5, metric)
-            
-            print(best_configs[['configuration_id', metric, 'config']].to_string())
+    # Calculate composite scores
+    scores = []
+    for _, row in df.iterrows():
+        metrics = row['metrics']
+        
+        # Calculate occupancy balance score with more sensitivity
+        occupancy_variations = []
+        for hospital in metrics.keys():
+            if hospital != 'global':
+                # Include both average and variation in scoring
+                occupancy_variations.append(metrics[hospital]['std_intensive_occupancy'])
+                occupancy_variations.append(metrics[hospital]['avg_intensive_occupancy'])
+                occupancy_variations.append(metrics[hospital]['std_intermediate_occupancy'])
+                occupancy_variations.append(metrics[hospital]['avg_intermediate_occupancy'])
+        
+        # Normalize occupancy score differently
+        occupancy_balance = 1 / (1 + np.mean(occupancy_variations))
+        
+        # Calculate travel distance score with more granularity
+        avg_distance = metrics['global']['avg_travel_distance']
+        max_distance = metrics['global']['max_travel_distance']
+        travel_score = np.exp(-avg_distance / max_distance)
+        
+        # Calculate patient satisfaction score with more weight on nearest hospital
+        satisfaction_score = (
+            0.6 * metrics['global']['patients_at_nearest'] + 
+            0.4 * metrics['global']['patients_at_best_occupancy']
+        ) / 100
+        
+        # Calculate optimization score, to find the best configuration
+        composite_score = (
+            weights['occupancy_balance'] * occupancy_balance +
+            weights['travel_distance'] * travel_score +
+            weights['patient_satisfaction'] * satisfaction_score
+        )
+        
+        scores.append(round(composite_score, 4))  # Round to 4 decimal places for differentiation
     
-    print(f"\nComplete results saved to: {results_file}")
-    return results_df
+    df['composite_score'] = scores
+    
+    # Return top 5 configurations with more details
+    top_configs = df.nlargest(5, 'composite_score')
+    print("\nTop 5 Configurations Details:")
+    for _, row in top_configs.iterrows():
+        print(f"\nScore: {row['composite_score']}")
+        print(f"Configuration: {row['config']}")
+        print("Metrics:", row['metrics'])
+    
+    return top_configs
+
+def save_analysis_results(results, filename):
+    """Save analysis results to Excel file."""
+    df = pd.DataFrame(results)
+    df.to_excel(filename, index=False)
+
+def save_optimal_configurations(configs, filename):
+    """Save optimal configurations to Excel file."""
+    configs.to_excel(filename, index=False)
 
 if __name__ == "__main__":
-    # Run grid search instead of single simulation
-    # results_df = run_grid_search()
     # main()
     run_grid_search()

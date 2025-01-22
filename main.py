@@ -17,9 +17,6 @@ excel_path = config['EXCEL_PATH']
 report_path = config['REPORT']
 table_path = config['TABLE']
 
-msg = "Hello World"
-print(msg)
-
 hospital_occupancy_configuration = {"CHU-SJ": {"Intensive": 0.95, "Intermediate": 0.95},
                                     "CHUQ": {"Intensive": 0.95, "Intermediate": 0.95},  
                                     "CHUS": {"Intensive": 0.95, "Intermediate": 0.95},
@@ -81,14 +78,16 @@ def run_grid_search():
     total_configs = len(occupancy_rates)**len(hospitals)
     
     print(f"Starting grid search with {total_configs} configurations...")
-    
+
+    print(total_configs)
+
+
     for i, rates in enumerate(all_combinations, 1):
         # Create configuration
         config = {
             hospital: {"Intensive": rate, "Intermediate": rate}
             for hospital, rate in zip(hospitals, rates)
-        }
-        
+        }        
         try:
             # Run simulation with current configuration
             results = simulate_hospital_system_without_animation(
@@ -99,25 +98,25 @@ def run_grid_search():
             print_hospital_data(results)
 
             
-            # Extract metrics from results
-            # metrics = {
-            #     'configuration_id': i,
-            #     'config': str(config),  # Store configuration as string
-            # }
+            #Extract metrics from results
+            metrics = {
+                'configuration_id': i,
+                'config': str(config),  # Store configuration as string
+            }
             
-            # # Add all relevant metrics from your simulation results
-            # metrics.update(results)  # Assuming results contains your metrics
+            # Add all relevant metrics from your simulation results
+            metrics.update(results)  # Assuming results contains your metrics
             
-            # # Store results
-            # all_results.append(metrics)
+            # Store results
+            all_results.append(metrics)
             
-            # # Print progress
-            # if i % 100 == 0:
-            #     print(f"Completed {i}/{total_configs} configurations ({(i/total_configs)*100:.1f}%)")
+            # Print progress
+            if i % 100 == 0:
+                print(f"Completed {i}/{total_configs} configurations ({(i/total_configs)*100:.1f}%)")
                 
-            #     # Save intermediate results every 100 configurations
-            #     results_df = pd.DataFrame(all_results)
-            #     results_df.to_excel(results_file, index=False)
+                # Save intermediate results every 100 configurations
+                results_df = pd.DataFrame(all_results)
+                results_df.to_excel(results_file, index=False)
                 
         except Exception as e:
             print(f"Error in configuration {i}: {str(e)}")
@@ -156,4 +155,5 @@ def run_grid_search():
 if __name__ == "__main__":
     # Run grid search instead of single simulation
     # results_df = run_grid_search()
-    main()
+    # main()
+    run_grid_search()

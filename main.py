@@ -106,6 +106,7 @@ def analyze_simulation_results(results, patients_df):
     
     return metrics
 
+
 def run_grid_search():
     """
     Generate all possible configurations, run simulations, and analyze results.
@@ -117,8 +118,7 @@ def run_grid_search():
 
     # Our hospitals
     hospitals = ["CHU-SJ", "CHUQ", "CHUS", "CUSM", "HGJ", "HMR"]
-    occupancy_rates = [0.90, 0.91, 0.92, 0.93, 0.94, 0.95] # Occupancy rates to test
-    
+    occupancy_rates = [0.90, 0.91, 0.92, 0.93, 0.94, 0.95] # Occupancy thresholds to test
     # Create timestamp for unique file names
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
@@ -128,11 +128,16 @@ def run_grid_search():
     # Generate all possible combinations
     all_combinations = list(product(occupancy_rates, repeat=len(hospitals)))
     # Take only first 10 combinations for testing
-    total_configs = len(all_combinations)
+    total_configs = len(all_combinations) # 6^6 = 46656
+
+
+    # 6 6 , 6 6 , 6 6 , 6 6 , 6 6 , 6 6
+
+    # 6 ^ 12 = 2,176,782,336
     
     print(f"Starting test grid search with {total_configs} configurations...")
 
-    for i, rates in enumerate(all_combinations, 1):
+    for i, rates in enumerate(all_combinations[:5], 1):
         config = {
             hospital: {"Intensive": rate, "Intermediate": rate}
             for hospital, rate in zip(hospitals, rates)
@@ -189,12 +194,19 @@ def find_optimal_configurations(all_results):
     df = pd.DataFrame(all_results)
     
     # Define weights for optimization function
+
+    # TODO: Loop through different weights
+
+    # new weights
+    '''{
+         occupancy_balance: (occupancy_balance_intermediate occupancy_balance_intensive)
+    }'''
     weights = {
-        'occupancy_balance': 0.4,
-        'travel_distance': 0.3,
-        'patient_satisfaction': 0.3
+        'occupancy_balance': 0.4, # (0.2 - 0.7) 
+        'travel_distance': 0.3, # (1 - occupancy_balance)
+        # (0.2 - 0.7) * (0.2 - 0.7) 
+        'patient_satisfaction': 0.3 # remove this
     }
-    
     # Calculate composite scores
     scores = []
     for _, row in df.iterrows():

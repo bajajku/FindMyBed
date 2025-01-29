@@ -118,7 +118,7 @@ def run_grid_search():
 
     # Our hospitals
     hospitals = ["CHU-SJ", "CHUQ", "CHUS", "CUSM", "HGJ", "HMR"]
-    occupancy_rates = [0.90, 0.91, 0.92, 0.93, 0.94, 0.95] # Occupancy thresholds to test
+    occupancy_rates = [0.90, 0.925, 0.95] # Occupancy thresholds to test
     # Create timestamp for unique file names
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
@@ -189,82 +189,98 @@ def run_grid_search():
 
 def find_optimal_configurations(all_results):
     """
-    Find optimal configurations based on different criteria with improved sensitivity.
+    Find optimal configurations based on different optimization strategies.
+    Returns top configurations for each strategy.
     """
     df = pd.DataFrame(all_results)
     
-    # Define weights for optimization function
-
-    # TODO: Loop through different weights
-
-    # new weights
-    '''{
-         occupancy_balance: (occupancy_balance_intermediate occupancy_balance_intensive)
-    }'''
-    weights = {
-        'occupancy_balance': 0.4, # (0.2 - 0.7) 
-        'travel_distance': 0.3, # (1 - occupancy_balance)
-        # (0.2 - 0.7) * (0.2 - 0.7) 
-        'patient_satisfaction': 0.3 # remove this
+    optimization_strategies = {
+        'min_travel_distance': {
+            'distance_weight': 0.9,
+            'occupancy_weight': 0.1
+        },
+        'balanced_occupancy': {
+            'intensive_weight': 0.45,
+            'intermediate_weight': 0.45,
+            'distance_weight': 0.1
+        },
+        'balanced_overall': {
+            'distance_weight': 0.4,
+            'intensive_weight': 0.3,
+            'intermediate_weight': 0.3
+        }
     }
-    # Calculate composite scores
-    scores = []
-    for _, row in df.iterrows():
-        metrics = row['metrics']
-        
-        # Calculate occupancy balance score with more sensitivity
-        occupancy_variations = []
-        for hospital in metrics.keys():
-            if hospital != 'global':
-                # Include both average and variation in scoring
-                occupancy_variations.append(metrics[hospital]['std_intensive_occupancy'])
-                occupancy_variations.append(metrics[hospital]['avg_intensive_occupancy'])
-                occupancy_variations.append(metrics[hospital]['std_intermediate_occupancy'])
-                occupancy_variations.append(metrics[hospital]['avg_intermediate_occupancy'])
-        
-        # Normalize occupancy score differently
-        occupancy_balance = 1 / (1 + np.mean(occupancy_variations))
-        
-        # Calculate travel distance score with more granularity
-        avg_distance = metrics['global']['avg_travel_distance']
-        max_distance = metrics['global']['max_travel_distance']
-        travel_score = np.exp(-avg_distance / max_distance)
-        
-        # Calculate patient satisfaction score with more weight on nearest hospital
-        satisfaction_score = (
-            0.6 * metrics['global']['patients_at_nearest'] + 
-            0.4 * metrics['global']['patients_at_best_occupancy']
-        ) / 100
-        
-        # Calculate optimization score, to find the best configuration
-        composite_score = (
-            weights['occupancy_balance'] * occupancy_balance +
-            weights['travel_distance'] * travel_score +
-            weights['patient_satisfaction'] * satisfaction_score
-        )
-        
-        scores.append(round(composite_score, 4))  # Round to 4 decimal places for differentiation
     
-    df['composite_score'] = scores
+    results = {}
     
-    # Return top 5 configurations with more details
-    top_configs = df.nlargest(5, 'composite_score')
-    print("\nTop 5 Configurations Details:")
-    for _, row in top_configs.iterrows():
-        print(f"\nScore: {row['composite_score']}")
-        print(f"Configuration: {row['config']}")
-        print("Metrics:", row['metrics'])
+    for strategy, weights in optimization_strategies.items():
+        scores = []
+        for _, row in df.iterrows():
+            metrics = row['metrics']
+            
+            # Calculate distance score (normalized)
+            avg_distance = metrics['global']['avg_travel_distance']
+            max_distance = metrics['global']['max_travel_distance']
+            distance_score = 1 - (avg_distance / max_distance)
+            
+            # Calculate occupancy balance scores
+            occupancy_variations = {hospital: {
+                'intensive': metrics[hospital]['std_intensive_occupancy'],
+                'intermediate': metrics[hospital]['std_intermediate_occupancy'],
+                'avg_intensive': metrics[hospital]['avg_intensive_occupancy'],
+                'avg_intermediate': metrics[hospital]['avg_intermediate_occupancy']
+            } for hospital in metrics if hospital != 'global'}
+            
+            # Calculate average standard deviations for both types
+            intensive_std = np.mean([v['intensive'] for v in occupancy_variations.values()])
+            intermediate_std = np.mean([v['intermediate'] for v in occupancy_variations.values()])
+            
+            # Calculate final score based on strategy
+            if strategy == 'min_travel_distance':
+                score = (weights['distance_weight'] * distance_score +
+                        weights['occupancy_weight'] * (1 - (intensive_std + intermediate_std) / 2))
+            
+            elif strategy == 'balanced_occupancy':
+                occupancy_score = (1 - intensive_std) * weights['intensive_weight'] + \
+                                (1 - intermediate_std) * weights['intermediate_weight']
+                score = occupancy_score + (distance_score * weights['distance_weight'])
+            
+            else:  # balanced_overall
+                score = (distance_score * weights['distance_weight'] + 
+                        (1 - intensive_std) * weights['intensive_weight'] +
+                        (1 - intermediate_std) * weights['intermediate_weight'])
+            
+            scores.append(round(score, 4))
+        
+        df[f'score_{strategy}'] = scores
+        results[strategy] = df.nlargest(5, f'score_{strategy}')
     
-    return top_configs
+    # Save results for each strategy
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    for strategy, top_configs in results.items():
+        filename = f"output/optimal_configurations_{strategy}_{timestamp}.xlsx"
+        top_configs.to_excel(filename, index=False)
+        
+        print(f"\nTop 5 Configurations for {strategy}:")
+        for _, row in top_configs.iterrows():
+            print(f"\nScore: {row[f'score_{strategy}']}")
+            print(f"Configuration: {row['config']}")
+            print("Metrics:", row['metrics'])
+    
+    return results
 
 def save_analysis_results(results, filename):
     """Save analysis results to Excel file."""
     df = pd.DataFrame(results)
     df.to_excel(filename, index=False)
 
-def save_optimal_configurations(configs, filename):
+def save_optimal_configurations(configs, filename_prefix):
     """Save optimal configurations to Excel file."""
-    configs.to_excel(filename, index=False)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    for strategy, df in configs.items():
+        filename = f"{filename_prefix}_{strategy}_{timestamp}.xlsx"
+        df.to_excel(filename, index=False)
 
 if __name__ == "__main__":
     # main()

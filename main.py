@@ -7,6 +7,7 @@ import yaml
 from itertools import product
 from datetime import datetime
 import numpy as np
+from tqdm import tqdm
 
 # Load the configuration from the YAML file.
 with open("config.yaml", "r") as file:
@@ -137,7 +138,8 @@ def run_grid_search():
     
     print(f"Starting test grid search with {total_configs} configurations...")
 
-    for i, rates in enumerate(all_combinations[:5], 1):
+    # Add tqdm progress bar
+    for i, rates in enumerate(tqdm(all_combinations[:100], total=100, desc="Running grid search"), 1):
         config = {
             hospital: {"Intensive": rate, "Intermediate": rate}
             for hospital, rate in zip(hospitals, rates)

@@ -41,7 +41,7 @@ def get_patients(excel_file: str, sheet):
             gpsPos = get_fsa_center(postalCode[:3])
         except Exception as e:
             # Handle the error (e.g., postal code not found)
-            print(f"Error retrieving GPS for postal code {postalCode}: {e}")
+            # print(f"Error retrieving GPS for postal code {postalCode}: {e}")
             gpsPos = (0, 0)  # Default value if error occurs, or you can set another fallback
         
         # Determine condition

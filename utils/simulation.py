@@ -29,7 +29,7 @@ def discharge_all_patients(hospitals: list[Hospital], arrived_discharged: dict) 
         arrived_discharged: Dictionary tracking patient movement
     """
     # time_index = ARRIVAL_TIMES.index(arrival_time)
-    print("Discharging patients from all hospitals...")
+    # print("Discharging patients from all hospitals...")
     
     for hospital in hospitals:
         discharge_patients(hospital, arrived_discharged)
@@ -46,7 +46,7 @@ def discharge_patients(hospital, arrivedDischarged):
     # Ensure the discharge rates are rounded to integers
     num_discharged_intensive = int(round(np.random.poisson(hospital.get_discharge_rate("Intensive"))))
     num_discharged_intermediate = int(round(np.random.poisson(hospital.get_discharge_rate("Intermediate"))))
-    print(f"{num_discharged_intensive} {num_discharged_intermediate}")
+    # print(f"{num_discharged_intensive} {num_discharged_intermediate}")
 
     discharged_count = 0
     discharged_intensive = 0
@@ -70,8 +70,8 @@ def discharge_patients(hospital, arrivedDischarged):
         discharged_count += 1
         arrivedDischarged[hospital.name][1] += 1
 
-    print(
-        f"{hospital.name}: Discharged intensive: {discharged_intensive} intermediate: {discharged_intermediate} total: {discharged_count} patients ")
+    # print(
+    #     f"{hospital.name}: Discharged intensive: {discharged_intensive} intermediate: {discharged_intermediate} total: {discharged_count} patients ")
     return discharged_count
 
 def prepopulate_patients(hospital: Hospital) -> dict[str, list[SimulatedPatient]]:
@@ -160,19 +160,19 @@ def simulate_hospital_system(num_days, excel, hospital_occupancy_configuration):
         # Loop through each day
         if day < num_days and index < len(loaded_patients):
             current_date = START_DATE + timedelta(days=day)
-            print(f"\n{'='*20} Day {day + 1} {'='*20}")
+            # print(f"\n{'='*20} Day {day + 1} {'='*20}")
 
             arrivedDischarged = {"CHU-SJ":[0,0,0,0], "CHUQ":[0,0,0,0], "CHUS":[0,0,0,0],
                                "CUSM":[0,0,0,0], "HGJ":[0,0,0,0], "HMR":[0,0,0,0]}
 
             # Loop through each hour
             for hour in range(24):
-                print(f"\n{'*'*10} Arrival Time {hour}:00 {'*'*10}")
+                # print(f"\n{'*'*10} Arrival Time {hour}:00 {'*'*10}")
                 discharge_all_patients_parallel(HOSPITALS, arrivedDischarged)
 
                 # Generate a random number of patients for this arrival time
                 num_patients = np.random.poisson(data_loader.get_average_admissions())
-                print(f"New patients arriving: {num_patients}")
+                # print(f"New patients arriving: {num_patients}")
                 total_patients += num_patients
 
                 # Store the occupancy rate per time slot for each hospital
@@ -181,9 +181,9 @@ def simulate_hospital_system(num_days, excel, hospital_occupancy_configuration):
                     occupancy_rates_intermediate = max(0, min(1, hospital.get_occupancy_rate("Intermediate")))
 
                     # Accumulate occupancy rates for daily average calculation
-                    print(f"Hospital: {hospital.name}")
-                    print(f"  - Intensive Care Occupancy: {occupancy_rates_intensive:.2%}")
-                    print(f"  - Intermediate Care Occupancy: {occupancy_rates_intermediate:.2%}")
+                    # print(f"Hospital: {hospital.name}")
+                    # print(f"  - Intensive Care Occupancy: {occupancy_rates_intensive:.2%}")
+                    # print(f"  - Intermediate Care Occupancy: {occupancy_rates_intermediate:.2%}")
 
                     arrivedDischarged[hospital.name][2] += occupancy_rates_intensive
                     arrivedDischarged[hospital.name][3] += occupancy_rates_intermediate
@@ -195,16 +195,16 @@ def simulate_hospital_system(num_days, excel, hospital_occupancy_configuration):
                     index += 1
                     patients.append(patient)  # Add patient to the list
                     # Run the patient through the recommendation system
-                    print(f"\nProcessing Patient {i + 1}")
+                    # print(f"\nProcessing Patient {i + 1}")
 
                     process_patient(patient, recommendation_system, HOSPITALS, patients_data, current_date, arrivedDischarged)
 
                     # Print current hospital capacities
-                    for hospital in HOSPITALS:
-                        print(f"Current capacity for {hospital.name}:")
-                        print(f"  - Intensive Care: {math.floor(hospital.available_beds[0])}/{hospital.total_capacity_intensive}")
-                        print(f"  - Intermediate Care: {math.floor(hospital.available_beds[1])}/{hospital.total_capacity_intermediate}")
-                        print(f"  - Total Available: {math.floor(hospital.available_beds[0] + hospital.available_beds[1])}")
+                    # for hospital in HOSPITALS:
+                        # print(f"Current capacity for {hospital.name}:")
+                        # print(f"  - Intensive Care: {math.floor(hospital.available_beds[0])}/{hospital.total_capacity_intensive}")
+                        # print(f"  - Intermediate Care: {math.floor(hospital.available_beds[1])}/{hospital.total_capacity_intermediate}")
+                        # print(f"  - Total Available: {math.floor(hospital.available_beds[0] + hospital.available_beds[1])}")
 
                 update_and_draw_simulation(screen, patients, hospital_positions, HOSPITALS, WHITE, day, current_date, font, map_surface)
                 pause_play_button.draw(screen)
@@ -244,9 +244,9 @@ def simulate_hospital_system(num_days, excel, hospital_occupancy_configuration):
                 paused = False
 
     pygame.quit()
-    print(f"Total Paitents:{total_patients}")
-    print(f"Queue {recommendation_system.get_queue_size()}")
-    print(f"Patietns who are assigned to the hospitals {total_patients- recommendation_system.get_queue_size()}")
+    # print(f"Total Paitents:{total_patients}")
+    # print(f"Queue {recommendation_system.get_queue_size()}")
+    # print(f"Patietns who are assigned to the hospitals {total_patients- recommendation_system.get_queue_size()}")
     # Create a DataFrame from the results
     results_df = pd.DataFrame(results)
     patients_df = pd.DataFrame(patients_data)
@@ -283,18 +283,18 @@ def simulate_hospital_system_without_animation(num_days, excel, hospital_occupan
 
     while day < num_days and index < len(loaded_patients):
         current_date = START_DATE + timedelta(days=day)
-        print(f"\n{'='*20} Day {day + 1} {'='*20}")
+        # print(f"\n{'='*20} Day {day + 1} {'='*20}")
 
         arrivedDischarged = {hospital.name: [0, 0, 0, 0] for hospital in HOSPITALS}
 
         # Loop through each hour
         for hour in range(24):
-            print(f"\n{'*'*10} Arrival Time {hour}:00 {'*'*10}")
+            # print(f"\n{'*'*10} Arrival Time {hour}:00 {'*'*10}")
             discharge_all_patients_parallel(HOSPITALS, arrivedDischarged)
 
             # Generate a random number of patients for this arrival time
             num_patients = np.random.poisson(data_loader.get_average_admissions())
-            print(f"New patients arriving: {num_patients}")
+            # print(f"New patients arriving: {num_patients}")
             total_patients += num_patients
 
             # Store the occupancy rate per time slot for each hospital
@@ -302,9 +302,9 @@ def simulate_hospital_system_without_animation(num_days, excel, hospital_occupan
                 occupancy_rates_intensive = max(0, min(1, hospital.get_occupancy_rate("Intensive")))
                 occupancy_rates_intermediate = max(0, min(1, hospital.get_occupancy_rate("Intermediate")))
 
-                print(f"Hospital: {hospital.name}")
-                print(f"  - Intensive Care Occupancy: {occupancy_rates_intensive:.2%}")
-                print(f"  - Intermediate Care Occupancy: {occupancy_rates_intermediate:.2%}")
+                # print(f"Hospital: {hospital.name}")
+                # print(f"  - Intensive Care Occupancy: {occupancy_rates_intensive:.2%}")
+                # print(f"  - Intermediate Care Occupancy: {occupancy_rates_intermediate:.2%}")
 
                 arrivedDischarged[hospital.name][2] += occupancy_rates_intensive
                 arrivedDischarged[hospital.name][3] += occupancy_rates_intermediate
@@ -318,23 +318,23 @@ def simulate_hospital_system_without_animation(num_days, excel, hospital_occupan
                 index += 1
                 patients.append(patient)  # Add patient to the list
 
-                print(f"\nProcessing Patient {i + 1}")
+                # print(f"\nProcessing Patient {i + 1}")
                 process_patient(patient, recommendation_system, HOSPITALS, patients_data, current_date, arrivedDischarged)
 
                 # Print current hospital capacities
-                for hospital in HOSPITALS:
-                    print(f"Current capacity for {hospital.name}:")
-                    print(f"  - Intensive Care: {math.floor(hospital.available_beds[0])}/{hospital.total_capacity_intensive}")
-                    print(f"  - Intermediate Care: {math.floor(hospital.available_beds[1])}/{hospital.total_capacity_intermediate}")
-                    print(f"  - Total Available: {math.floor(hospital.available_beds[0] + hospital.available_beds[1])}")
+                #for hospital in HOSPITALS:
+                #    print(f"Current capacity for {hospital.name}:")
+                #    print(f"  - Intensive Care: {math.floor(hospital.available_beds[0])}/{hospital.total_capacity_intensive}")
+                #    print(f"  - Intermediate Care: {math.floor(hospital.available_beds[1])}/{hospital.total_capacity_intermediate}")
+                #    print(f"  - Total Available: {math.floor(hospital.available_beds[0] + hospital.available_beds[1])}")
 
         # Record daily statistics
         record_daily_statistics(day, current_date, HOSPITALS, arrivedDischarged, results)
         day += 1
 
-    print(f"Total Patients: {total_patients}")
-    print(f"Queue: {recommendation_system.get_queue_size()}")
-    print(f"Patients assigned to hospitals: {total_patients - recommendation_system.get_queue_size()}")
+    # print(f"Total Patients: {total_patients}")
+    # print(f"Queue: {recommendation_system.get_queue_size()}")
+    # print(f"Patients assigned to hospitals: {total_patients - recommendation_system.get_queue_size()}")
 
     # Create DataFrames for results
     results_df = pd.DataFrame(results)

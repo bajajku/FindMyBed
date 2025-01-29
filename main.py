@@ -30,7 +30,7 @@ hospital_occupancy_configuration = {"CHU-SJ": {"Intensive": 0.95, "Intermediate"
 def main():    
     
     results = simulate_hospital_system(num_days=number_of_days, excel=excel_path, hospital_occupancy_configuration=hospital_occupancy_configuration)
-    print_hospital_data(results)
+    # print_hospital_data(results)
 
     # Load simulation results
     results_df = pd.read_excel("output/simulation.xlsx")
@@ -172,7 +172,7 @@ def run_grid_search():
             # Save intermediate results
             if i % 100 == 0:
                 save_analysis_results(all_configurations_results, f"output/grid_search_analysis_{timestamp}.xlsx")
-                print(f"Completed {i}/{total_configs} configurations ({(i/total_configs)*100:.1f}%)")
+                # print(f"Completed {i}/{total_configs} configurations ({(i/total_configs)*100:.1f}%)")
                 
         except Exception as e:
             print(f"Error in configuration {i}:")
@@ -264,11 +264,11 @@ def find_optimal_configurations(all_results):
         filename = f"output/optimal_configurations_{strategy}_{timestamp}.xlsx"
         top_configs.to_excel(filename, index=False)
         
-        print(f"\nTop 5 Configurations for {strategy}:")
-        for _, row in top_configs.iterrows():
-            print(f"\nScore: {row[f'score_{strategy}']}")
-            print(f"Configuration: {row['config']}")
-            print("Metrics:", row['metrics'])
+        # print(f"\nTop 5 Configurations for {strategy}:")
+        # for _, row in top_configs.iterrows():
+        #     print(f"\nScore: {row[f'score_{strategy}']}")
+        #     print(f"Configuration: {row['config']}")
+        #     print("Metrics:", row['metrics'])
     
     return results
 

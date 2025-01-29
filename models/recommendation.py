@@ -231,7 +231,7 @@ class HospitalRecommendation:
                                     if hospital.can_admit_patient(self.patient)]
         
         
-        print(f"Available Hospitals after filtering by occupancy: {[hospital.name for hospital in self.available_hospitals]}")
+        # print(f"Available Hospitals after filtering by occupancy: {[hospital.name for hospital in self.available_hospitals]}")
         self.find_nearest_and_best_occupancy_hospitals()
 
         # Issue fixed: If no hospitals are available after filtering by occupancy, return

@@ -25,5 +25,5 @@ def print_hospital_data(results):
     ]
     
     # Print the table
-    print(tabulate(table_data, headers=headers, tablefmt="pretty"))
+    # print(tabulate(table_data, headers=headers, tablefmt="pretty"))
 

@@ -197,7 +197,7 @@ class DataVisualizer:
                 postal_center = get_fsa_center(postal_code[:3])
             except Exception as e:
             # Handle the error (e.g., postal code not found)
-                print(f"Error retrieving GPS for postal code {postal_code}: {e}")
+                # print(f"Error retrieving GPS for postal code {postal_code}: {e}")
                 postal_center = (0, 0)  
             # Default value if error occurs, or you can set another fallback
             # Calculate the distance from the center to the closest hospital
@@ -239,7 +239,7 @@ class DataVisualizer:
                 postal_center = get_fsa_center(postal_code[:3])
             except Exception as e:
             # Handle the error (e.g., postal code not found)
-                print(f"Error retrieving GPS for postal code {postal_code}: {e}")
+                # print(f"Error retrieving GPS for postal code {postal_code}: {e}")
                 postal_center = (0, 0) # Compute average and standard deviation of distances to the closest hospital for this postal code
 
             avg_distance = group['Distance to Closest Hospital'].mean()

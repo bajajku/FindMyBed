@@ -147,6 +147,7 @@ def run_grid_search():
         
         try:
             # Run simulation
+            # This simulation follows all recommendation criteria.
             results = simulate_hospital_system_without_animation(
                 num_days=number_of_days,
                 excel=excel_path,
@@ -196,6 +197,17 @@ def find_optimal_configurations(all_results):
     """
     df = pd.DataFrame(all_results)
     
+    # more strategies using grid search
+
+    '''
+        Total weight = 1
+        intensive_weight = [0.3 - 0.5]
+        intermediate_weight = [0.3 - 0.5]
+        distance_weight = [0.3 - 0.5]
+
+        all should sum to 1
+        so if
+    '''
     optimization_strategies = {
         'min_travel_distance': {
             'distance_weight': 0.9,
@@ -210,7 +222,9 @@ def find_optimal_configurations(all_results):
             'distance_weight': 0.4,
             'intensive_weight': 0.3,
             'intermediate_weight': 0.3
-        }
+        },
+
+
     }
     
     results = {}
@@ -223,6 +237,9 @@ def find_optimal_configurations(all_results):
             # Calculate distance score (normalized)
             avg_distance = metrics['global']['avg_travel_distance']
             max_distance = metrics['global']['max_travel_distance']
+
+            # Normalize the distance score, by dividing the average distance by the maximum distance
+            # such that the score is between 0 and 1
             distance_score = 1 - (avg_distance / max_distance)
             
             # Calculate occupancy balance scores

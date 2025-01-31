@@ -31,6 +31,7 @@ class Patient:
     bedType: str = ""
     homeHospital: Optional[str] = None
 
+# Simulated patient is sub class of Patient
 @dataclass
 class SimulatedPatient:
     """

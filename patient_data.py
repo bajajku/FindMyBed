@@ -8,6 +8,7 @@ from utils.constants import NEONATAL_SPECIAL_NEEDS
 from utils.geographic import  get_fsa_center
 
 
+# Saving the patients from excel file into the program: patient_data.py
 
 def get_patients(excel_file: str, sheet):
     # Load data from the specified sheet

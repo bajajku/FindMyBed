@@ -5,3 +5,4 @@ __pycache__/
 
 output/
 logs/
+*.loglogs/hospital_recommendation.log

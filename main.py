@@ -114,7 +114,6 @@ def run_grid_search():
 
     Returns:
         all_configurations_results: List of all configurations results
-        optimal_configs: List of optimal configurations
     """
 
     # Our hospitals
@@ -139,7 +138,7 @@ def run_grid_search():
     print(f"Starting test grid search with {total_configs} configurations...")
 
     # Add tqdm progress bar
-    for i, rates in enumerate(tqdm(all_combinations[:100], total=100, desc="Running grid search"), 1):
+    for i, rates in enumerate(tqdm(all_combinations[:10], total=10, desc="Running grid search"), 1):
         config = {
             hospital: {"Intensive": rate, "Intermediate": rate}
             for hospital, rate in zip(hospitals, rates)
@@ -181,125 +180,98 @@ def run_grid_search():
             print(f"Error details: {str(e)}")
             continue
     
-    # Find optimal configurations
+    # Find optimal configurations and save to single file
     optimal_configs = find_optimal_configurations(all_configurations_results)
     
-    # Save final results
-    save_analysis_results(all_configurations_results, f"output/final_grid_search_analysis_{timestamp}.xlsx")
-    save_optimal_configurations(optimal_configs, f"output/optimal_configurations_{timestamp}.xlsx")
-    
-    return all_configurations_results, optimal_configs
+    return all_configurations_results
 
 def find_optimal_configurations(all_results):
     """
     Find optimal configurations based on different optimization strategies.
-    Returns top configurations for each strategy.
+    Returns top 5 configurations for each strategy in a single Excel file.
     """
     df = pd.DataFrame(all_results)
     
-    # more strategies using grid search
-
-    '''
-        Total weight = 1
-        intensive_weight = [0.3 - 0.5]
-        intermediate_weight = [0.3 - 0.5]
-        distance_weight = [0.3 - 0.5]
-
-        all should sum to 1
-        so if
-    '''
-    optimization_strategies = {
-        'min_travel_distance': {
-            'distance_weight': 0.9,
-            'occupancy_weight': 0.1
-        },
-        'balanced_occupancy': {
-            'intensive_weight': 0.45,
-            'intermediate_weight': 0.45,
-            'distance_weight': 0.1
-        },
-        'balanced_overall': {
-            'distance_weight': 0.4,
-            'intensive_weight': 0.3,
-            'intermediate_weight': 0.3
-        },
-
-
-    }
+    # Define weight ranges for grid search (step size of 0.1)
+    weight_range = np.arange(0.2, 0.6, 0.1)  # [0.2, 0.3, 0.4, 0.5, 0.6]
     
-    results = {}
+    # Generate all possible weight combinations that sum to 1
+    strategies = []
+    for intensive in weight_range:
+        for intermediate in weight_range:
+            for distance in weight_range:
+                # Check if weights sum to approximately 1
+                if abs(intensive + intermediate + distance - 1.0) < 0.001:
+                    strategies.append({
+                        'intensive_weight': round(intensive, 2),
+                        'intermediate_weight': round(intermediate, 2),
+                        'distance_weight': round(distance, 2)
+                    })
     
-    for strategy, weights in optimization_strategies.items():
+    print(f"Total strategies to evaluate: {len(strategies)}")
+    
+    # Calculate scores for each strategy
+    for i, weights in enumerate(strategies):
+        strategy_name = f"strategy_{i}"
         scores = []
+        
         for _, row in df.iterrows():
             metrics = row['metrics']
             
-            # Calculate distance score (normalized)
+            # Calculate normalized distance score
             avg_distance = metrics['global']['avg_travel_distance']
             max_distance = metrics['global']['max_travel_distance']
-
-            # Normalize the distance score, by dividing the average distance by the maximum distance
-            # such that the score is between 0 and 1
             distance_score = 1 - (avg_distance / max_distance)
             
             # Calculate occupancy balance scores
             occupancy_variations = {hospital: {
                 'intensive': metrics[hospital]['std_intensive_occupancy'],
-                'intermediate': metrics[hospital]['std_intermediate_occupancy'],
-                'avg_intensive': metrics[hospital]['avg_intensive_occupancy'],
-                'avg_intermediate': metrics[hospital]['avg_intermediate_occupancy']
+                'intermediate': metrics[hospital]['std_intermediate_occupancy']
             } for hospital in metrics if hospital != 'global'}
             
-            # Calculate average standard deviations for both types
             intensive_std = np.mean([v['intensive'] for v in occupancy_variations.values()])
             intermediate_std = np.mean([v['intermediate'] for v in occupancy_variations.values()])
             
-            # Calculate final score based on strategy
-            if strategy == 'min_travel_distance':
-                score = (weights['distance_weight'] * distance_score +
-                        weights['occupancy_weight'] * (1 - (intensive_std + intermediate_std) / 2))
-            
-            elif strategy == 'balanced_occupancy':
-                occupancy_score = (1 - intensive_std) * weights['intensive_weight'] + \
-                                (1 - intermediate_std) * weights['intermediate_weight']
-                score = occupancy_score + (distance_score * weights['distance_weight'])
-            
-            else:  # balanced_overall
-                score = (distance_score * weights['distance_weight'] + 
-                        (1 - intensive_std) * weights['intensive_weight'] +
-                        (1 - intermediate_std) * weights['intermediate_weight'])
+            # Calculate weighted score
+            score = (
+                distance_score * weights['distance_weight'] +
+                (1 - intensive_std) * weights['intensive_weight'] +
+                (1 - intermediate_std) * weights['intermediate_weight']
+            )
             
             scores.append(round(score, 4))
         
-        df[f'score_{strategy}'] = scores
-        results[strategy] = df.nlargest(5, f'score_{strategy}')
+        df[f'score_{strategy_name}'] = scores
     
-    # Save results for each strategy
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Save results to Excel
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    excel_path = f"output/optimization_results_{timestamp}.xlsx"
     
-    for strategy, top_configs in results.items():
-        filename = f"output/optimal_configurations_{strategy}_{timestamp}.xlsx"
-        top_configs.to_excel(filename, index=False)
+    with pd.ExcelWriter(excel_path) as writer:
+        # Save strategy weights
+        pd.DataFrame(strategies).to_excel(writer, sheet_name='Strategy_Weights', index=True)
         
-        # print(f"\nTop 5 Configurations for {strategy}:")
-        # for _, row in top_configs.iterrows():
-        #     print(f"\nScore: {row[f'score_{strategy}']}")
-        #     print(f"Configuration: {row['config']}")
-        #     print("Metrics:", row['metrics'])
+        # Save top 5 configurations for each strategy
+        for i in range(len(strategies)):
+            strategy_name = f"strategy_{i}"
+            # Only include configuration details and the score for this specific strategy
+            top_5 = df.nlargest(5, f'score_{strategy_name}')[
+                ['configuration_id', 'config', f'score_{strategy_name}']
+            ]
+            # Rename the score column to make it clearer
+            top_5 = top_5.rename(columns={f'score_{strategy_name}': 'score'})
+            top_5.to_excel(writer, sheet_name=f'Top5_Strategy_{i}', index=False)
+        
+        # Save all results
+        df.to_excel(writer, sheet_name='All_Results', index=False)
     
-    return results
+    print(f"Results saved to: {excel_path}")
+    return df
 
 def save_analysis_results(results, filename):
     """Save analysis results to Excel file."""
     df = pd.DataFrame(results)
     df.to_excel(filename, index=False)
-
-def save_optimal_configurations(configs, filename_prefix):
-    """Save optimal configurations to Excel file."""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    for strategy, df in configs.items():
-        filename = f"{filename_prefix}_{strategy}_{timestamp}.xlsx"
-        df.to_excel(filename, index=False)
 
 if __name__ == "__main__":
     # main()

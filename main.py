@@ -211,52 +211,48 @@ def find_optimal_configurations(all_results):
         strategy_name = f"strategy_{i}"
         scores = []
         
-        '''
-        normalization of distances between 0 - 1
-        calculate std deviation of normalized distances.
-
-        score inversely proportional to average distance, std deviation
-        penalize if average distance i.e. avg / max
-        min / max 
-        '''
-
-        '''
-        TODO: 
-        For distance, occupancy....
-            --> x = std[0,1] * (avg / max) [:1]-> smaller is better
-            --> score = 1 - x, if x is smaller, score is higher
-            --> balancing between the shape 
-        '''
         for _, row in df.iterrows():
             metrics = row['metrics']
             
             # Calculate normalized distance score
             avg_distance = metrics['global']['avg_travel_distance']
             max_distance = metrics['global']['max_travel_distance']
-            # std_deviation = metrics['global']['std_travel_distance']
-
-            distance_score = 1 - (avg_distance / max_distance)
-
-            # score inversely proportional to average distance, std deviation
+            std_distance = metrics['global']['std_travel_distance']
             
+            # Normalize std_distance to 0-1 range by dividing by max_distance
+            normalized_std_distance = std_distance / max_distance
+            distance_x = normalized_std_distance * (avg_distance / max_distance)
+            distance_score = 1 - distance_x
+
             # Calculate occupancy balance scores
             occupancy_variations = {hospital: {
                 'intensive': metrics[hospital]['std_intensive_occupancy'],
                 'intermediate': metrics[hospital]['std_intermediate_occupancy']
             } for hospital in metrics if hospital != 'global'}
             
+            # Calculate intensive care score
             intensive_std = np.mean([v['intensive'] for v in occupancy_variations.values()])
+            intensive_avg = np.mean([metrics[h]['avg_intensive_occupancy'] for h in metrics if h != 'global'])
+            intensive_max = max([metrics[h]['max_intensive_occupancy'] for h in metrics if h != 'global'])
+            intensive_x = intensive_std * (intensive_avg / intensive_max)
+            intensive_score = 1 - intensive_x
+
+            # Calculate intermediate care score
             intermediate_std = np.mean([v['intermediate'] for v in occupancy_variations.values()])
+            intermediate_avg = np.mean([metrics[h]['avg_intermediate_occupancy'] for h in metrics if h != 'global'])
+            intermediate_max = max([metrics[h]['max_intermediate_occupancy'] for h in metrics if h != 'global'])
+            intermediate_x = intermediate_std * (intermediate_avg / intermediate_max)
+            intermediate_score = 1 - intermediate_x
             
             # Calculate weighted score
             score = (
                 distance_score * weights['distance_weight'] +
-                (1 - intensive_std) * weights['intensive_weight'] +
-                (1 - intermediate_std) * weights['intermediate_weight']
+                intensive_score * weights['intensive_weight'] +
+                intermediate_score * weights['intermediate_weight']
             )
             
             scores.append(round(score, 4))
-        
+
         df[f'score_{strategy_name}'] = scores
     
     # Save results to Excel

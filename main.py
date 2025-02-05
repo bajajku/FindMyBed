@@ -8,6 +8,10 @@ from itertools import product
 from datetime import datetime
 import numpy as np
 from tqdm import tqdm
+import random
+import matplotlib.pyplot as plt
+from collections import defaultdict
+from matplotlib.backends.backend_pdf import PdfPages
 
 # Load the configuration from the YAML file.
 with open("config.yaml", "r") as file:
@@ -285,5 +289,187 @@ def save_analysis_results(results, filename):
     df = pd.DataFrame(results)
     df.to_excel(filename, index=False)
 
+def run_multiple_simulations(num_simulations=3, num_configs=5):
+    """
+    Run multiple simulations with the same configurations and analyze results.
+    
+    Args:
+        num_simulations: Number of times to run each configuration
+        num_configs: Number of configurations to test
+    """
+    # Our hospitals
+    hospitals = ["CHU-SJ", "CHUQ", "CHUS", "CUSM", "HGJ", "HMR"]
+    occupancy_rates = [0.90, 0.925, 0.95]
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Generate fixed set of configurations
+    all_combinations = list(product(occupancy_rates, repeat=len(hospitals)))[:num_configs]
+    configs = [
+        {hospital: {"Intensive": rate, "Intermediate": rate}
+         for hospital, rate in zip(hospitals, rates)}
+        for rates in all_combinations
+    ]
+    
+    # Store results for all simulations
+    all_simulation_results = []
+    
+    # Run simulations
+    for sim_num in tqdm(range(num_simulations), desc="Running simulations"):
+        simulation_results = []
+        
+        for config_num, config in enumerate(configs, 1):
+            try:
+                results = simulate_hospital_system_without_animation(
+                    num_days=number_of_days,
+                    excel=excel_path,
+                    hospital_occupancy_configuration=config
+                )
+                
+                results_df = pd.read_excel("output/simulation.xlsx")
+                patients_df = pd.read_excel("output/patients.xlsx")
+                metrics = analyze_simulation_results(results, patients_df)
+                
+                simulation_results.append({
+                    'simulation_id': sim_num + 1,
+                    'configuration_id': config_num,
+                    'config': str(config),
+                    'metrics': metrics
+                })
+                
+            except Exception as e:
+                print(f"Error in simulation {sim_num + 1}, configuration {config_num}:")
+                print(f"Error details: {str(e)}")
+                continue
+        
+        all_simulation_results.extend(simulation_results)
+    
+    # Calculate scores and generate report
+    analyze_and_report_results(all_simulation_results, timestamp)
+
+def analyze_and_report_results(all_results, timestamp):
+    """
+    Analyze results from multiple simulations and generate reports.
+    """
+    # Convert results to DataFrame
+    results_df = pd.DataFrame(all_results)
+    
+    # Define strategies
+    weight_range = np.arange(0.2, 0.6, 0.1)
+    strategies = []
+    for intensive in weight_range:
+        for intermediate in weight_range:
+            for distance in weight_range:
+                if abs(intensive + intermediate + distance - 1.0) < 0.001:
+                    strategies.append({
+                        'intensive_weight': round(intensive, 2),
+                        'intermediate_weight': round(intermediate, 2),
+                        'distance_weight': round(distance, 2)
+                    })
+    
+    # Calculate scores for each strategy and simulation
+    for i, weights in enumerate(strategies):
+        strategy_name = f"strategy_{i}"
+        scores = calculate_scores(results_df, weights)
+        results_df[f'score_{strategy_name}'] = scores
+    
+    # Group by configuration_id and calculate mean scores for each strategy
+    avg_scores_df = results_df.groupby('configuration_id').agg({
+        f'score_strategy_{i}': 'mean' for i in range(len(strategies))
+    }).reset_index()
+    
+    # Generate visualization report
+    generate_strategy_plots(avg_scores_df, strategies, timestamp)
+    
+    # Save results to Excel
+    save_results_to_excel(results_df, avg_scores_df, strategies, timestamp)
+
+def calculate_scores(df, weights):
+    """Calculate scores for a given strategy weights."""
+    scores = []
+    for _, row in df.iterrows():
+        metrics = row['metrics']
+        
+        # Calculate normalized distance score
+        avg_distance = metrics['global']['avg_travel_distance']
+        max_distance = metrics['global']['max_travel_distance']
+        std_distance = metrics['global']['std_travel_distance']
+        
+        # Normalize std_distance to 0-1 range by dividing by max_distance
+        normalized_std_distance = std_distance / max_distance
+        distance_x = normalized_std_distance * (avg_distance / max_distance)
+        distance_score = 1 - distance_x
+
+        # Calculate occupancy balance scores
+        occupancy_variations = {hospital: {
+            'intensive': metrics[hospital]['std_intensive_occupancy'],
+            'intermediate': metrics[hospital]['std_intermediate_occupancy']
+        } for hospital in metrics if hospital != 'global'}
+        
+        # Calculate intensive care score
+        intensive_std = np.mean([v['intensive'] for v in occupancy_variations.values()])
+        intensive_avg = np.mean([metrics[h]['avg_intensive_occupancy'] for h in metrics if h != 'global'])
+        intensive_max = max([metrics[h]['max_intensive_occupancy'] for h in metrics if h != 'global'])
+        intensive_x = intensive_std * (intensive_avg / intensive_max)
+        intensive_score = 1 - intensive_x
+
+        # Calculate intermediate care score
+        intermediate_std = np.mean([v['intermediate'] for v in occupancy_variations.values()])
+        intermediate_avg = np.mean([metrics[h]['avg_intermediate_occupancy'] for h in metrics if h != 'global'])
+        intermediate_max = max([metrics[h]['max_intermediate_occupancy'] for h in metrics if h != 'global'])
+        intermediate_x = intermediate_std * (intermediate_avg / intermediate_max)
+        intermediate_score = 1 - intermediate_x
+        
+        # Calculate weighted score
+        score = (
+            distance_score * weights['distance_weight'] +
+            intensive_score * weights['intensive_weight'] +
+            intermediate_score * weights['intermediate_weight']
+        )
+        
+        scores.append(round(score, 4))
+    return scores
+
+def generate_strategy_plots(avg_scores_df, strategies, timestamp):
+    """Generate visualization plots for each strategy."""
+    pdf_path = f"output/strategy_analysis_{timestamp}.pdf"
+    
+    with PdfPages(pdf_path) as pdf:
+        for i, strategy in enumerate(strategies):
+            plt.figure(figsize=(15, 10))
+            
+            strategy_col = f'score_strategy_{i}'
+            plt.bar(avg_scores_df['configuration_id'], avg_scores_df[strategy_col])
+            
+            plt.title(f"Average Scores Across All Simulations for Strategy {i}\n" +
+                     f"(Weights: Intensive={strategy['intensive_weight']}, " +
+                     f"Intermediate={strategy['intermediate_weight']}, " +
+                     f"Distance={strategy['distance_weight']})")
+            plt.xlabel("Configuration ID")
+            plt.ylabel("Average Score")
+            plt.ylim(0, 1)
+            
+            # Add value labels on top of each bar
+            for idx, value in enumerate(avg_scores_df[strategy_col]):
+                plt.text(idx + 1, value, f'{value:.3f}', 
+                        ha='center', va='bottom')
+            
+            plt.grid(True, alpha=0.3)
+            pdf.savefig()
+            plt.close()
+
+def save_results_to_excel(results_df, avg_scores_df, strategies, timestamp):
+    """Save all results to a structured Excel file."""
+    excel_path = f"output/simulation_analysis_{timestamp}.xlsx"
+    
+    with pd.ExcelWriter(excel_path) as writer:
+        # Save strategy definitions
+        pd.DataFrame(strategies).to_excel(writer, sheet_name='Strategies', index=True)
+        
+        # Save raw simulation results
+        results_df.to_excel(writer, sheet_name='Raw_Results', index=False)
+        
+        # Save average scores
+        avg_scores_df.to_excel(writer, sheet_name='Average_Scores', index=False)
+
 if __name__ == "__main__":
-    run_grid_search()
+    run_multiple_simulations()

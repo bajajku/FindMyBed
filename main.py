@@ -131,10 +131,6 @@ def run_grid_search():
     total_configs = len(all_combinations) # 6^6 = 46656
 
 
-    # 6 6 , 6 6 , 6 6 , 6 6 , 6 6 , 6 6
-
-    # 6 ^ 12 = 2,176,782,336
-    
     print(f"Starting test grid search with {total_configs} configurations...")
 
     # Add tqdm progress bar
@@ -215,13 +211,33 @@ def find_optimal_configurations(all_results):
         strategy_name = f"strategy_{i}"
         scores = []
         
+        '''
+        normalization of distances between 0 - 1
+        calculate std deviation of normalized distances.
+
+        score inversely proportional to average distance, std deviation
+        penalize if average distance i.e. avg / max
+        min / max 
+        '''
+
+        '''
+        TODO: 
+        For distance, occupancy....
+            --> x = std[0,1] * (avg / max) [:1]-> smaller is better
+            --> score = 1 - x, if x is smaller, score is higher
+            --> balancing between the shape 
+        '''
         for _, row in df.iterrows():
             metrics = row['metrics']
             
             # Calculate normalized distance score
             avg_distance = metrics['global']['avg_travel_distance']
             max_distance = metrics['global']['max_travel_distance']
+            # std_deviation = metrics['global']['std_travel_distance']
+
             distance_score = 1 - (avg_distance / max_distance)
+
+            # score inversely proportional to average distance, std deviation
             
             # Calculate occupancy balance scores
             occupancy_variations = {hospital: {
@@ -274,5 +290,4 @@ def save_analysis_results(results, filename):
     df.to_excel(filename, index=False)
 
 if __name__ == "__main__":
-    # main()
     run_grid_search()

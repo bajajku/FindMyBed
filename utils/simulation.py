@@ -315,6 +315,7 @@ def simulate_hospital_system_without_animation(num_days, excel, hospital_occupan
                     break
 
                 patient = loaded_patients[index]
+                patient.arrival_time = hour
 
                 # Line below is for animation:
                 # patient = create_patient(hour, loaded_patients[index])

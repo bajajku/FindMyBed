@@ -35,12 +35,12 @@ def discharge_all_patients(hospitals: list[Hospital], arrived_discharged: dict) 
         discharge_patients(hospital, arrived_discharged)
 
 
+# TODO: Unit test for this function
 def discharge_all_patients_parallel(hospitals, arrived_discharged):
     with ThreadPoolExecutor() as executor:
         executor.map(lambda h: discharge_patients(h, arrived_discharged), hospitals)
 
-
-
+# TODO: Unit test for this function
 def discharge_patients(hospital, arrivedDischarged):
     """ Discharge patients based on the discharge rate at the patient's arrival time """
     # Ensure the discharge rates are rounded to integers
@@ -314,7 +314,10 @@ def simulate_hospital_system_without_animation(num_days, excel, hospital_occupan
                 if index >= len(loaded_patients):
                     break
 
-                patient = create_patient(hour, loaded_patients[index])
+                patient = loaded_patients[index]
+
+                # Line below is for animation:
+                # patient = create_patient(hour, loaded_patients[index])
                 index += 1
                 patients.append(patient)  # Add patient to the list
 
@@ -458,7 +461,9 @@ def log_patient_attributes(patient):
     logging.info(f"  Queue Position: {patient.queue_position}")
 
 def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
+
     recommendation_system.run(patient)
+
     if patient.assignedHospital:
         arrivedDischarged[f"{patient.assignedHospital}"][0] += 1
         for hospital in hospitals:

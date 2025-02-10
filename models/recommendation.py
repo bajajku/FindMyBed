@@ -21,6 +21,8 @@ with open("config.yaml", "r") as file:
 # Access the configuration value.
 weight_of_distance = config['WEIGHT_OF_SORTING_BY_DISTANCE']
 
+
+# TODO: Draw diagram of the state machine
 class HospitalRecommendation:
     """
     A state machine for hospital recommendations based on patient needs and hospital availability.

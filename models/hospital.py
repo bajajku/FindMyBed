@@ -115,12 +115,17 @@ class Hospital:
             return (self.total_capacity_intensive - self.available_beds[0]) / self.total_capacity_intensive
         elif bedType == "Intermediate":
             return (self.total_capacity_intermediate - self.available_beds[1]) / self.total_capacity_intermediate
+        
+        '''
+        This part is for maternal care beds:
+
         elif bedType == "BirthCenter":
             return (self.birth_center_capacity - self.available_beds[2]) / self.birth_center_capacity
         elif bedType == "Antepartum":
             return (self.antepartum_capacity - self.available_beds[3]) / self.antepartum_capacity
         elif bedType == "Postpartum":
             return (self.postpartum_capacity - self.available_beds[4]) / self.postpartum_capacity
+        '''
         return 0.0
 
     # REQUIRED

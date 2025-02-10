@@ -23,12 +23,12 @@ excel_path = config['EXCEL_PATH']
 report_path = config['REPORT']
 table_path = config['TABLE']
 
-hospital_occupancy_configuration = {"CHU-SJ": {"Intensive": 0.95, "Intermediate": 0.95},
+hospital_occupancy_configuration = {"CHU-SJ": {"Intensive": 0.90, "Intermediate": 0.95},
                                     "CHUQ": {"Intensive": 0.95, "Intermediate": 0.95},  
-                                    "CHUS": {"Intensive": 0.95, "Intermediate": 0.95},
-                                    "CUSM": {"Intensive": 0.95, "Intermediate": 0.95},
-                                    "HGJ": {"Intensive": 0.95, "Intermediate": 0.95},
-                                    "HMR": {"Intensive": 0.95, "Intermediate": 0.95}}
+                                    "CHUS": {"Intensive": 0.925, "Intermediate": 0.95},
+                                    "CUSM": {"Intensive": 0.90, "Intermediate": 0.925},
+                                    "HGJ": {"Intensive": 0.90, "Intermediate": 0.925},
+                                    "HMR": {"Intensive": 0.95, "Intermediate": 0.925}}
 
 
 def main():    
@@ -289,7 +289,7 @@ def save_analysis_results(results, filename):
     df = pd.DataFrame(results)
     df.to_excel(filename, index=False)
 
-def run_multiple_simulations(num_simulations=3, num_configs=5):
+def run_multiple_simulations(num_simulations=20, num_configs=20):
     """
     Run multiple simulations with the same configurations and analyze results.
     
@@ -438,7 +438,20 @@ def generate_strategy_plots(avg_scores_df, strategies, timestamp):
             plt.figure(figsize=(15, 10))
             
             strategy_col = f'score_strategy_{i}'
-            plt.bar(avg_scores_df['configuration_id'], avg_scores_df[strategy_col])
+            scores = avg_scores_df[strategy_col]
+            
+            # Calculate y-axis limits
+            score_min = scores.min()
+            score_max = scores.max()
+            y_range = score_max - score_min
+            y_min = max(0, score_min - y_range * 0.1)
+            y_max = min(1, score_max + y_range * 0.1)
+            
+            # Create x-axis values explicitly
+            x_values = range(1, len(scores) + 1)
+            
+            # Plot with explicit x values
+            plt.bar(x_values, scores)
             
             plt.title(f"Average Scores Across All Simulations for Strategy {i}\n" +
                      f"(Weights: Intensive={strategy['intensive_weight']}, " +
@@ -446,11 +459,14 @@ def generate_strategy_plots(avg_scores_df, strategies, timestamp):
                      f"Distance={strategy['distance_weight']})")
             plt.xlabel("Configuration ID")
             plt.ylabel("Average Score")
-            plt.ylim(0, 1)
+            plt.ylim(y_min, y_max)
             
-            # Add value labels on top of each bar
-            for idx, value in enumerate(avg_scores_df[strategy_col]):
-                plt.text(idx + 1, value, f'{value:.3f}', 
+            # Set x-axis ticks explicitly
+            plt.xticks(x_values)
+            
+            # Add value labels
+            for idx, value in enumerate(scores, 1):  # Start enumeration from 1
+                plt.text(idx, value, f'{value:.4f}',
                         ha='center', va='bottom')
             
             plt.grid(True, alpha=0.3)
@@ -462,14 +478,28 @@ def save_results_to_excel(results_df, avg_scores_df, strategies, timestamp):
     excel_path = f"output/simulation_analysis_{timestamp}.xlsx"
     
     with pd.ExcelWriter(excel_path) as writer:
-        # Save strategy definitions
+        # Existing saves
         pd.DataFrame(strategies).to_excel(writer, sheet_name='Strategies', index=True)
-        
-        # Save raw simulation results
         results_df.to_excel(writer, sheet_name='Raw_Results', index=False)
-        
-        # Save average scores
         avg_scores_df.to_excel(writer, sheet_name='Average_Scores', index=False)
+        
+        # Add best configurations per strategy
+        best_configs = []
+        for i in range(len(strategies)):
+            strategy_col = f'score_strategy_{i}'
+            best_config = avg_scores_df.loc[avg_scores_df[strategy_col].idxmax()]
+            
+            best_configs.append({
+                'Strategy_ID': i,
+                'Intensive_Weight': strategies[i]['intensive_weight'],
+                'Intermediate_Weight': strategies[i]['intermediate_weight'],
+                'Distance_Weight': strategies[i]['distance_weight'],
+                'Configuration_ID': best_config['configuration_id'],
+                'Score': best_config[strategy_col]
+            })
+        
+        # Save best configurations summary
+        pd.DataFrame(best_configs).to_excel(writer, sheet_name='Best_Configs_Per_Strategy', index=False)
 
 if __name__ == "__main__":
     run_multiple_simulations()

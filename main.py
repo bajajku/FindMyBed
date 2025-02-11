@@ -218,17 +218,12 @@ def find_optimal_configurations(all_results):
         for _, row in df.iterrows():
             metrics = row['metrics']
             
-            # Calculate normalized distance score
+            # Calculate distance score
             avg_distance = metrics['global']['avg_travel_distance']
-            max_distance = metrics['global']['max_travel_distance']
             std_distance = metrics['global']['std_travel_distance']
-            
-            # Normalize std_distance to 0-1 range by dividing by max_distance
-            normalized_std_distance = std_distance / max_distance
-            distance_x = normalized_std_distance * (avg_distance / max_distance)
-            distance_score = 1 - distance_x
+            distance_score = 1 / (1 + avg_distance * std_distance)
 
-            # Calculate occupancy balance scores
+            # Calculate occupancy scores for each hospital
             occupancy_variations = {hospital: {
                 'intensive': metrics[hospital]['std_intensive_occupancy'],
                 'intermediate': metrics[hospital]['std_intermediate_occupancy']
@@ -237,16 +232,12 @@ def find_optimal_configurations(all_results):
             # Calculate intensive care score
             intensive_std = np.mean([v['intensive'] for v in occupancy_variations.values()])
             intensive_avg = np.mean([metrics[h]['avg_intensive_occupancy'] for h in metrics if h != 'global'])
-            intensive_max = max([metrics[h]['max_intensive_occupancy'] for h in metrics if h != 'global'])
-            intensive_x = intensive_std * (intensive_avg / intensive_max)
-            intensive_score = 1 - intensive_x
+            intensive_score = 1 / (1 + intensive_avg * intensive_std)
 
             # Calculate intermediate care score
             intermediate_std = np.mean([v['intermediate'] for v in occupancy_variations.values()])
             intermediate_avg = np.mean([metrics[h]['avg_intermediate_occupancy'] for h in metrics if h != 'global'])
-            intermediate_max = max([metrics[h]['max_intermediate_occupancy'] for h in metrics if h != 'global'])
-            intermediate_x = intermediate_std * (intermediate_avg / intermediate_max)
-            intermediate_score = 1 - intermediate_x
+            intermediate_score = 1 / (1 + intermediate_avg * intermediate_std)
             
             # Calculate weighted score
             score = (
@@ -289,7 +280,7 @@ def save_analysis_results(results, filename):
     df = pd.DataFrame(results)
     df.to_excel(filename, index=False)
 
-def run_multiple_simulations(num_simulations=20, num_configs=20):
+def run_multiple_simulations(num_simulations=10, num_configs=30):
     """
     Run multiple simulations with the same configurations and analyze results.
     
@@ -389,17 +380,12 @@ def calculate_scores(df, weights):
     for _, row in df.iterrows():
         metrics = row['metrics']
         
-        # Calculate normalized distance score
+        # Calculate distance score
         avg_distance = metrics['global']['avg_travel_distance']
-        max_distance = metrics['global']['max_travel_distance']
         std_distance = metrics['global']['std_travel_distance']
-        
-        # Normalize std_distance to 0-1 range by dividing by max_distance
-        normalized_std_distance = std_distance / max_distance
-        distance_x = normalized_std_distance * (avg_distance / max_distance)
-        distance_score = 1 - distance_x
+        distance_score = 1 / (1 + avg_distance * std_distance)
 
-        # Calculate occupancy balance scores
+        # Calculate occupancy scores for each hospital
         occupancy_variations = {hospital: {
             'intensive': metrics[hospital]['std_intensive_occupancy'],
             'intermediate': metrics[hospital]['std_intermediate_occupancy']
@@ -408,16 +394,12 @@ def calculate_scores(df, weights):
         # Calculate intensive care score
         intensive_std = np.mean([v['intensive'] for v in occupancy_variations.values()])
         intensive_avg = np.mean([metrics[h]['avg_intensive_occupancy'] for h in metrics if h != 'global'])
-        intensive_max = max([metrics[h]['max_intensive_occupancy'] for h in metrics if h != 'global'])
-        intensive_x = intensive_std * (intensive_avg / intensive_max)
-        intensive_score = 1 - intensive_x
+        intensive_score = 1 / (1 + intensive_avg * intensive_std)
 
         # Calculate intermediate care score
         intermediate_std = np.mean([v['intermediate'] for v in occupancy_variations.values()])
         intermediate_avg = np.mean([metrics[h]['avg_intermediate_occupancy'] for h in metrics if h != 'global'])
-        intermediate_max = max([metrics[h]['max_intermediate_occupancy'] for h in metrics if h != 'global'])
-        intermediate_x = intermediate_std * (intermediate_avg / intermediate_max)
-        intermediate_score = 1 - intermediate_x
+        intermediate_score = 1 / (1 + intermediate_avg * intermediate_std)
         
         # Calculate weighted score
         score = (

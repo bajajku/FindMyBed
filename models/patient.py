@@ -2,11 +2,6 @@ from dataclasses import dataclass
 from typing import List, Tuple, Optional
 from utils.constants import ARRIVAL_TIMES
 
-'''
-   Separated Patient from SimulatedPatient, as to serve different purposes
-   Promotion of code reusability and readability, 
-   and Single Responsibility Principle (SRP)
-'''
 @dataclass
 class Patient:
     """
@@ -31,55 +26,37 @@ class Patient:
     bedType: str = ""
     homeHospital: Optional[str] = None
 
-# Simulated patient is sub class of Patient
 @dataclass
-class SimulatedPatient:
+class SimulatedPatient(Patient):
     """
     Represents a patient in the simulation system with additional tracking attributes.
 
     Attributes:
-        patientType (str): Type/category of the patient
-        gpsPos (Tuple[float, float]): Geographic coordinates of patient location
         postalCode (str): Postal code of patient location
-        del24HrPlus (bool): If delivery is 24+ hours
-        transportNeedCnt (int): Number of transport needs/requirements
-        specialNeedType (str): Type of special need
-        specialNeeds (List[str]): List of specific special needs
         arrival_time (int): Patient's arrival time
-        aniGpsPos (list): Initial position at the dispatcher
         discharged (bool): Whether patient has been discharged
         arrived_at_hospital (bool): Whether patient has reached the hospital
         queue_position (int): Patient's position in queue
-        bedType (str): Type of bed required, defaults to empty string
+        assignedHospital (str): Hospital assigned for transport
+        distanceToHospital (int): Distance to the assigned hospital
+        aniGpsPos (list): Initial position at the dispatcher
+        condition (int): Patient's medical condition severity
+        firstSiteCode (str): Code of the first hospital site considered
+        nearestHospital (str): Nearest hospital based on distance
+        bestOccupancyHospital (str): Best hospital based on occupancy
     """
-    # We set these up
-    patientType: str
-    # del24HrPlus: bool
-    transportNeedCnt: int
-    specialNeedType: str
-    specialNeeds: List[str]
-    
-    discharged: bool
-    arrived_at_hospital: bool
-    queue_position: int
-    assignedHospital: str = ""
-    homeHospital: Optional[str] = None
-    distanceToHospital : int = 0
-    aniGpsPos: list = None
-    arrival_time: int = 0
-
-
-    #From the excel sheet
-    gpsPos: Tuple[float, float] = (0,0)
     postalCode: str = ""
-    bedType: str = ""
+    arrival_time: int = 0
+    discharged: bool = False
+    arrived_at_hospital: bool = False
+    queue_position: int = 0
+    assignedHospital: str = ""
+    distanceToHospital: int = 0
+    aniGpsPos: Optional[List[float]] = None
     condition: int = 0
     firstSiteCode: str = ""
-
-    # we will decide these based on algorithm
-    nearestHospital :str = ""
+    nearestHospital: str = ""
     bestOccupancyHospital: str = ""
-
 
     def get_arrival_time_index(self) -> int:
         return ARRIVAL_TIMES.index(self.arrival_time)

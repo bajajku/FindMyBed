@@ -255,7 +255,13 @@ def simulate_hospital_system(num_days, excel, hospital_occupancy_configuration):
     patients_df.to_excel("output/patients.xlsx", index=False)
     return results
 
-def simulate_hospital_system_without_animation(num_days, excel, hospital_occupancy_configuration):
+def simulate_hospital_system_without_animation(
+    num_days,
+    excel,
+    hospital_occupancy_configuration,
+    output_results_path="output/simulation.csv",
+    output_patients_path="output/patients.csv"
+):
     global total_patients  # Declare total_patients as global within the function
     index = 0
     data_loader = DataLoader()
@@ -345,8 +351,8 @@ def simulate_hospital_system_without_animation(num_days, excel, hospital_occupan
     patients_df = pd.DataFrame(patients_data)
 
     # Save the results to Excel files
-    results_df.to_excel("output/simulation.xlsx", index=False)
-    patients_df.to_excel("output/patients.xlsx", index=False)
+    results_df.to_csv(output_results_path, index=False)
+    patients_df.to_csv(output_patients_path, index=False)
     
     return results
 

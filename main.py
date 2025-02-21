@@ -102,11 +102,17 @@ def analyze_simulation_results(results, patients_df):
             'std_intermediate_occupancy': hospital_data['Intermediate Occupancy Rate'].std(),
         }
     
-    # 2. Calculate travel distance metrics
+        # Compute min and max for normalization
+    d_min = patients_df['Assigned Distance'].min()
+    d_max = patients_df['Assigned Distance'].max()
+
+# Calculate travel distance metrics
     metrics['global'] = {
         'avg_travel_distance': patients_df['Assigned Distance'].mean(),
         'max_travel_distance': patients_df['Assigned Distance'].max(),
         'std_travel_distance': patients_df['Assigned Distance'].std(),
+        'avg_normalized_distance': (patients_df['Assigned Distance'].mean() - d_min) / (d_max - d_min),
+        'std_normalized_distance': patients_df['Assigned Distance'].std() / (d_max - d_min),
         'total_patients': len(patients_df),
         'patients_at_nearest': (patients_df['is it assigned to the nearest hospital']).mean() * 100,
         'patients_at_best_occupancy': (patients_df['is it assigned to the best occupancy rate hospital']).mean() * 100,
@@ -222,8 +228,8 @@ def find_optimal_configurations(all_results):
             metrics = row['metrics']
             
             # Calculate distance score
-            avg_distance = metrics['global']['avg_travel_distance']
-            std_distance = metrics['global']['std_travel_distance']
+            avg_distance = metrics['global']['avg_normalized_distance']
+            std_distance = metrics['global']['std_normalized_distance']
             distance_score = 1 / (1 + avg_distance * std_distance)
 
             # Calculate occupancy scores for each hospital
@@ -293,7 +299,7 @@ def run_multiple_simulations(num_simulations=10, num_configs=5):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Generate fixed set of configurations
-    all_combinations = list(product(occupancy_rates, repeat=len(hospitals)))[:num_configs]
+    all_combinations = list(product(occupancy_rates, repeat=len(hospitals))) #[:num_configs]
     configs = [
         {hospital: {"Intensive": rate, "Intermediate": rate}
          for hospital, rate in zip(hospitals, rates)}
@@ -438,8 +444,9 @@ def calculate_scores(df, weights):
         metrics = row['metrics']
         
         # Calculate distance score
-        avg_distance = metrics['global']['avg_travel_distance']
-        std_distance = metrics['global']['std_travel_distance']
+        avg_distance = metrics['global']['avg_normalized_distance']
+        std_distance = metrics['global']['std_normalized_distance']
+
         distance_score = 1 / (1 + avg_distance * std_distance)
 
         # Calculate occupancy scores for each hospital

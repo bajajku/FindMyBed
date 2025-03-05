@@ -90,16 +90,22 @@ def analyze_simulation_results(results, patients_df):
     for hospital in results_df['Hospital'].unique():
         hospital_data = results_df[results_df['Hospital'] == hospital]
         
+        intensive_min = hospital_data['Intensive Occupancy Rate'].min()
+        intensive_max = hospital_data['Intensive Occupancy Rate'].max()
+        
+        intermediate_min = hospital_data['Intermediate Occupancy Rate'].min()
+        intermediate_max = hospital_data['Intermediate Occupancy Rate'].max()
+        
         metrics[hospital] = {
-            'avg_intensive_occupancy': hospital_data['Intensive Occupancy Rate'].mean(),
-            'min_intensive_occupancy': hospital_data['Intensive Occupancy Rate'].min(),
-            'max_intensive_occupancy': hospital_data['Intensive Occupancy Rate'].max(),
-            'std_intensive_occupancy': hospital_data['Intensive Occupancy Rate'].std(),
+            'avg_intensive_occupancy': (hospital_data['Intensive Occupancy Rate'].mean() - intensive_min) / (intensive_max - intensive_min),
+            'min_intensive_occupancy': intensive_min,
+            'max_intensive_occupancy': intensive_max,
+            'std_intensive_occupancy': (hospital_data['Intensive Occupancy Rate'].std() - intensive_min) / (intensive_max - intensive_min),
             
-            'avg_intermediate_occupancy': hospital_data['Intermediate Occupancy Rate'].mean(),
-            'min_intermediate_occupancy': hospital_data['Intermediate Occupancy Rate'].min(),
-            'max_intermediate_occupancy': hospital_data['Intermediate Occupancy Rate'].max(),
-            'std_intermediate_occupancy': hospital_data['Intermediate Occupancy Rate'].std(),
+            'avg_intermediate_occupancy': (hospital_data['Intermediate Occupancy Rate'].mean() - intermediate_min) / (intermediate_max - intermediate_min),
+            'min_intermediate_occupancy': intermediate_min,
+            'max_intermediate_occupancy': intermediate_max,
+            'std_intermediate_occupancy': (hospital_data['Intermediate Occupancy Rate'].std() - intermediate_min) / (intermediate_max - intermediate_min),
         }
     
         # Compute min and max for normalization

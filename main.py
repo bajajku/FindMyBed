@@ -96,29 +96,36 @@ def analyze_simulation_results(results, patients_df):
         intermediate_min = hospital_data['Intermediate Occupancy Rate'].min()
         intermediate_max = hospital_data['Intermediate Occupancy Rate'].max()
         
+        # Avoid division by zero
+        intensive_range = max(intensive_max - intensive_min, 0.001)
+        intermediate_range = max(intermediate_max - intermediate_min, 0.001)
+        
         metrics[hospital] = {
-            'avg_intensive_occupancy': (hospital_data['Intensive Occupancy Rate'].mean() - intensive_min) / (intensive_max - intensive_min),
+            'avg_intensive_occupancy': (hospital_data['Intensive Occupancy Rate'].mean() - intensive_min) / intensive_range,
             'min_intensive_occupancy': intensive_min,
             'max_intensive_occupancy': intensive_max,
-            'std_intensive_occupancy': (hospital_data['Intensive Occupancy Rate'].std() - intensive_min) / (intensive_max - intensive_min),
+            'std_intensive_occupancy': hospital_data['Intensive Occupancy Rate'].std() / intensive_range,  # Don't subtract min from std
             
-            'avg_intermediate_occupancy': (hospital_data['Intermediate Occupancy Rate'].mean() - intermediate_min) / (intermediate_max - intermediate_min),
+            'avg_intermediate_occupancy': (hospital_data['Intermediate Occupancy Rate'].mean() - intermediate_min) / intermediate_range,
             'min_intermediate_occupancy': intermediate_min,
             'max_intermediate_occupancy': intermediate_max,
-            'std_intermediate_occupancy': (hospital_data['Intermediate Occupancy Rate'].std() - intermediate_min) / (intermediate_max - intermediate_min),
+            'std_intermediate_occupancy': hospital_data['Intermediate Occupancy Rate'].std() / intermediate_range,  # Don't subtract min from std
         }
     
-        # Compute min and max for normalization
+    # Compute min and max for normalization
     d_min = patients_df['Assigned Distance'].min()
     d_max = patients_df['Assigned Distance'].max()
+    
+    # Avoid division by zero
+    d_range = max(d_max - d_min, 0.001)
 
 # Calculate travel distance metrics
     metrics['global'] = {
         'avg_travel_distance': patients_df['Assigned Distance'].mean(),
         'max_travel_distance': patients_df['Assigned Distance'].max(),
         'std_travel_distance': patients_df['Assigned Distance'].std(),
-        'avg_normalized_distance': (patients_df['Assigned Distance'].mean() - d_min) / (d_max - d_min),
-        'std_normalized_distance': patients_df['Assigned Distance'].std() / (d_max - d_min),
+        'avg_normalized_distance': (patients_df['Assigned Distance'].mean() - d_min) / d_range,
+        'std_normalized_distance': patients_df['Assigned Distance'].std() / d_range,
         'total_patients': len(patients_df),
         'patients_at_nearest': (patients_df['is it assigned to the nearest hospital']).mean() * 100,
         'patients_at_best_occupancy': (patients_df['is it assigned to the best occupancy rate hospital']).mean() * 100,
@@ -126,176 +133,12 @@ def analyze_simulation_results(results, patients_df):
     
     return metrics
 
-
-def run_grid_search():
-    """
-    Generate all possible configurations, run simulations, and analyze results.
-
-    Returns:
-        all_configurations_results: List of all configurations results
-    """
-
-    # Our hospitals
-    hospitals = ["CHU-SJ", "CHUQ", "CHUS", "CUSM", "HGJ", "HMR"]
-    occupancy_rates = [0.90, 0.925, 0.95] # Occupancy thresholds to test
-    # Create timestamp for unique file names
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # Initialize results storage
-    all_configurations_results = []
-    
-    # Generate all possible combinations
-    all_combinations = list(product(occupancy_rates, repeat=len(hospitals)))
-    # Take only first 10 combinations for testing
-    total_configs = len(all_combinations) # 6^6 = 46656
-
-
-    print(f"Starting test grid search with {total_configs} configurations...")
-
-    # Add tqdm progress bar
-    for i, rates in enumerate(tqdm(all_combinations[:10], total=10, desc="Running grid search"), 1):
-        config = {
-            hospital: {"Intensive": rate, "Intermediate": rate}
-            for hospital, rate in zip(hospitals, rates)
-        }
-        
-        try:
-            # Run simulation
-            # This simulation follows all recommendation criteria.
-            results = simulate_hospital_system_without_animation(
-                num_days=number_of_days,
-                excel=excel_path,
-                hospital_occupancy_configuration=config
-            )
-            
-            # Load the generated files for analysis
-            results_df = pd.read_excel("output/simulation.xlsx")
-            patients_df = pd.read_excel("output/patients.xlsx")
-            
-            # Analyze results
-            metrics = analyze_simulation_results(results, patients_df)
-            
-            # Store configuration and its metrics
-            config_results = {
-                'configuration_id': i,
-                'config': str(config),
-                'metrics': metrics
-            }
-            
-            all_configurations_results.append(config_results)
-            
-            # Save intermediate results
-            if i % 100 == 0:
-                save_analysis_results(all_configurations_results, f"output/grid_search_analysis_{timestamp}.xlsx")
-                # print(f"Completed {i}/{total_configs} configurations ({(i/total_configs)*100:.1f}%)")
-                
-        except Exception as e:
-            print(f"Error in configuration {i}:")
-            print(f"Configuration: {config}")
-            print(f"Error details: {str(e)}")
-            continue
-    
-    # Find optimal configurations and save to single file
-    optimal_configs = find_optimal_configurations(all_configurations_results)
-    
-    return all_configurations_results
-
-def find_optimal_configurations(all_results):
-    """
-    Find optimal configurations based on different optimization strategies.
-    Returns top 5 configurations for each strategy in a single Excel file.
-    """
-    df = pd.DataFrame(all_results)
-    
-    # Define weight ranges for grid search (step size of 0.1)
-    weight_range = np.arange(0.2, 0.6, 0.1)  # [0.2, 0.3, 0.4, 0.5, 0.6]
-    
-    # Generate all possible weight combinations that sum to 1
-    strategies = []
-    for intensive in weight_range:
-        for intermediate in weight_range:
-            for distance in weight_range:
-                # Check if weights sum to approximately 1
-                if abs(intensive + intermediate + distance - 1.0) < 0.001:
-                    strategies.append({
-                        'intensive_weight': round(intensive, 2),
-                        'intermediate_weight': round(intermediate, 2),
-                        'distance_weight': round(distance, 2)
-                    })
-    
-    print(f"Total strategies to evaluate: {len(strategies)}")
-    
-    # Calculate scores for each strategy
-    for i, weights in enumerate(strategies):
-        strategy_name = f"strategy_{i}"
-        scores = []
-        
-        for _, row in df.iterrows():
-            metrics = row['metrics']
-            
-            # Calculate distance score
-            avg_distance = metrics['global']['avg_normalized_distance']
-            std_distance = metrics['global']['std_normalized_distance']
-            distance_score = 1 / (1 + avg_distance * std_distance)
-
-            # Calculate occupancy scores for each hospital
-            occupancy_variations = {hospital: {
-                'intensive': metrics[hospital]['std_intensive_occupancy'],
-                'intermediate': metrics[hospital]['std_intermediate_occupancy']
-            } for hospital in metrics if hospital != 'global'}
-            
-            # Calculate intensive care score
-            intensive_std = np.mean([v['intensive'] for v in occupancy_variations.values()])
-            intensive_avg = np.mean([metrics[h]['avg_intensive_occupancy'] for h in metrics if h != 'global'])
-            intensive_score = 1 / (1 + intensive_avg * intensive_std)
-
-            # Calculate intermediate care score
-            intermediate_std = np.mean([v['intermediate'] for v in occupancy_variations.values()])
-            intermediate_avg = np.mean([metrics[h]['avg_intermediate_occupancy'] for h in metrics if h != 'global'])
-            intermediate_score = 1 / (1 + intermediate_avg * intermediate_std)
-            
-            # Calculate weighted score
-            score = (
-                distance_score * weights['distance_weight'] +
-                intensive_score * weights['intensive_weight'] +
-                intermediate_score * weights['intermediate_weight']
-            )
-            
-            scores.append(round(score, 4))
-
-        df[f'score_{strategy_name}'] = scores
-    
-    # Save results to Excel
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    excel_path = f"output/optimization_results_{timestamp}.xlsx"
-    
-    with pd.ExcelWriter(excel_path) as writer:
-        # Save strategy weights
-        pd.DataFrame(strategies).to_excel(writer, sheet_name='Strategy_Weights', index=True)
-        
-        # Save top 5 configurations for each strategy
-        for i in range(len(strategies)):
-            strategy_name = f"strategy_{i}"
-            # Only include configuration details and the score for this specific strategy
-            top_5 = df.nlargest(5, f'score_{strategy_name}')[
-                ['configuration_id', 'config', f'score_{strategy_name}']
-            ]
-            # Rename the score column to make it clearer
-            top_5 = top_5.rename(columns={f'score_{strategy_name}': 'score'})
-            top_5.to_excel(writer, sheet_name=f'Top5_Strategy_{i}', index=False)
-        
-        # Save all results
-        df.to_excel(writer, sheet_name='All_Results', index=False)
-    
-    print(f"Results saved to: {excel_path}")
-    return df
-
 def save_analysis_results(results, filename):
     """Save analysis results to Excel file."""
     df = pd.DataFrame(results)
     df.to_excel(filename, index=False)
 
-def run_multiple_simulations(num_simulations=10, num_configs=5):
+def run_multiple_simulations(num_simulations=10, num_configs=20):
     """
     Run multiple simulations with the same configurations and analyze results.
     """
@@ -305,7 +148,7 @@ def run_multiple_simulations(num_simulations=10, num_configs=5):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Generate fixed set of configurations
-    all_combinations = list(product(occupancy_rates, repeat=len(hospitals))) #[:num_configs]
+    all_combinations = list(product(occupancy_rates, repeat=len(hospitals)))[:num_configs]
     configs = [
         {hospital: {"Intensive": rate, "Intermediate": rate}
          for hospital, rate in zip(hospitals, rates)}

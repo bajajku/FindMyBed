@@ -2,17 +2,6 @@
 from typing import List, Tuple, Dict, Any
 from models.patient import Patient
 from utils.constants import *
-import yaml
-
-# Load YAML file
-with open("config.yaml", "r") as file:
-    config = yaml.safe_load(file)
-
-# Access the dictionary
-intensive_threshold = config['INTENSIVE_OCCUPANCY_THRESHOLDS']
-intermediate_threshold = config['INTERMEDIATE_OCCUPANCY_THRESHOLDS']
-
-
 
 class Hospital:
     """

@@ -6,3 +6,5 @@ __pycache__/
 output/
 logs/
 
+analysis_output/
+analysis_output2/

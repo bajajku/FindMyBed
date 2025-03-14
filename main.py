@@ -148,7 +148,7 @@ def run_multiple_simulations(num_simulations=10, num_configs=20):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Generate fixed set of configurations
-    all_combinations = list(product(occupancy_rates, repeat=len(hospitals)))[:num_configs]
+    all_combinations = list(product(occupancy_rates, repeat=len(hospitals))) #[:num_configs]
     configs = [
         {hospital: {"Intensive": rate, "Intermediate": rate}
          for hospital, rate in zip(hospitals, rates)}

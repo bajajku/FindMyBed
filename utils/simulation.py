@@ -16,7 +16,7 @@ from utils.animation import initialize_screen, draw_hospitals, draw_patient, ani
 import pandas as pd
 from datetime import timedelta
 from concurrent.futures import ThreadPoolExecutor
-import logging
+# import #logging
 
 
 # concerned with simulation
@@ -453,19 +453,19 @@ def create_patient(hour, patient):
 
     return patient
 
-def log_patient_attributes(patient):
-    logging.info("Patient Created:")
-    logging.info(f"  Postal Code: {patient.postalCode}")
-    logging.info(f"  Special Needs: {', '.join(patient.specialNeeds)}")
-    logging.info(f"  Arrival Time: {patient.arrival_time}:00")
-    logging.info(f"  GPS Position: {patient.gpsPos}")
-    logging.info(f"  Patient Type: {patient.patientType}")
-    logging.info(f"  Delivery within 24 Hours: {patient.del24HrPlus}")
-    logging.info(f"  Transport Need Count: {patient.transportNeedCnt}")
-    logging.info(f"  Animation GPS Position: {patient.aniGpsPos}")
-    logging.info(f"  Discharged: {patient.discharged}")
-    logging.info(f"  Arrived at Hospital: {patient.arrived_at_hospital}")
-    logging.info(f"  Queue Position: {patient.queue_position}")
+# def log_patient_attributes(patient):
+#     #logging.info("Patient Created:")
+#     #logging.info(f"  Postal Code: {patient.postalCode}")
+#     #logging.info(f"  Special Needs: {', '.join(patient.specialNeeds)}")
+#     #logging.info(f"  Arrival Time: {patient.arrival_time}:00")
+#     #logging.info(f"  GPS Position: {patient.gpsPos}")
+#     #logging.info(f"  Patient Type: {patient.patientType}")
+#     #logging.info(f"  Delivery within 24 Hours: {patient.del24HrPlus}")
+#     #logging.info(f"  Transport Need Count: {patient.transportNeedCnt}")
+#     #logging.info(f"  Animation GPS Position: {patient.aniGpsPos}")
+#     #logging.info(f"  Discharged: {patient.discharged}")
+#     #logging.info(f"  Arrived at Hospital: {patient.arrived_at_hospital}")
+#     #logging.info(f"  Queue Position: {patient.queue_position}")
 
 def process_patient(patient, recommendation_system, hospitals, patients_data, current_date, arrivedDischarged):
 
